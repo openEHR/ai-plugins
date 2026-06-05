@@ -1,0 +1,20 @@
+{
+  "name": "openehr",
+  "description": "AI-assistant plugins for openEHR — official plugin marketplace of the openEHR Foundation.",
+  "owner": {
+    "name": "openEHR Foundation",
+    "url": "https://openehr.org"
+  },
+  "plugins": [
+    {
+      "name": "openehr-specs",
+      "description": "Skills for creating, editing, and reviewing openEHR specification documents (AsciiDoc and OpenAPI/ITS-REST), managing the specification governance process, and ensuring content quality and convention compliance.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Sebastian Iancu"
+      },
+      "source": "./plugins/openehr-specs",
+      "category": "development"
+    }
+  ]
+}

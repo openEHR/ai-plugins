@@ -1,0 +1,26 @@
+{
+  "name": "openehr-specs",
+  "displayName": "openEHR Specifications",
+  "version": "0.1.0",
+  "description": "Skills for creating, editing, and reviewing openEHR specification documents (AsciiDoc and OpenAPI/ITS-REST), managing the specification governance process, and ensuring content quality and convention compliance.",
+  "author": {
+    "name": "Sebastian Iancu"
+  },
+  "homepage": "https://github.com/openEHR/ai-plugins",
+  "repository": "https://github.com/openEHR/ai-plugins",
+  "license": "Apache-2.0",
+  "keywords": [
+    "openehr",
+    "specifications",
+    "asciidoc",
+    "publishing",
+    "governance",
+    "review",
+    "amendment-record",
+    "cross-references",
+    "openapi",
+    "its-rest",
+    "bmm"
+  ],
+  "skills": "./skills/"
+}
