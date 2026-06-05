@@ -2,7 +2,7 @@
 
 Notable changes to the plugins in this repository. Format follows [Keep a Changelog](https://keepachangelog.com); versions refer to individual plugins (see [docs/versioning.md](docs/versioning.md)).
 
-## openehr-specs 0.2.0
+## openehr-specs 0.2.0 — 2026-06-05
 
 Adds autonomous subagents and user-invoked commands around the existing seven skills:
 
