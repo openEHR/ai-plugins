@@ -201,6 +201,7 @@ The `{spec_tickets}` attribute resolves to the specifications site ticket URL pa
 2. Search `global_vars.adoc` for infrastructure attributes
 3. Follow the naming patterns above to construct the expected name, then verify it exists
 
-The files are at:
-- `/src/openehr/specifications-AA_GLOBAL/docs/boilerplate/global_vars.adoc`
-- `/src/openehr/specifications-AA_GLOBAL/docs/references/reference_definitions.adoc`
+The files live in the `openEHR/specifications-AA_GLOBAL` repository (use a local sibling checkout
+if present, otherwise read them on GitHub):
+- [`docs/boilerplate/global_vars.adoc`](https://github.com/openEHR/specifications-AA_GLOBAL/blob/master/docs/boilerplate/global_vars.adoc)
+- [`docs/references/reference_definitions.adoc`](https://github.com/openEHR/specifications-AA_GLOBAL/blob/master/docs/references/reference_definitions.adoc)

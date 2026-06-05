@@ -40,7 +40,7 @@ Skills are namespaced by the plugin and invoked as `/openehr-specs:<skill>`:
 /openehr-specs:class-generation   # regenerate class tables/diagrams from BMM
 ```
 
-Type `/openehr` in the slash menu to list all skills together, or just describe the task (e.g. "review this openEHR spec before release") and the matching skill activates automatically. See the [plugin README](plugins/openehr-specs/README.md) for the full skill list and invocation details.
+Type `/openehr` in the slash menu to list the available skills and commands, or just describe the task (e.g. "review this openEHR spec before release") and the matching skill activates automatically. The plugin also ships **subagents** (`spec-reviewer`, `xref-auditor`, `identifier-grounding`) that Claude dispatches for heavy, multi-file, or verification work. See the [plugin README](plugins/openehr-specs/README.md) for the full inventory and invocation details.
 
 ## Documentation
 
