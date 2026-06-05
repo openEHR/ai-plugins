@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate marketplace and plugin manifests, and SKILL.md frontmatter.
+"""Validate marketplace and plugin manifests, and skill/agent/command frontmatter.
 
 Checks both Claude Code (``.claude-plugin/``) and Cursor (``.cursor-plugin/``) layouts.
 
@@ -55,6 +55,27 @@ def validate_skills(plugin_dir: Path):
             err(f"{rel}: frontmatter name '{fm_name.group(1)}' != directory '{skill_dir.name}'")
 
 
+def validate_md_components(plugin_dir: Path, subdir: str, *, require_name: bool):
+    """Validate flat .md components (agents/, commands/): frontmatter present with the
+    required fields, and any `name` matches the filename stem."""
+    comp_dir = plugin_dir / subdir
+    if not comp_dir.is_dir():
+        return
+    for md in sorted(comp_dir.glob("*.md")):
+        rel = md.relative_to(ROOT)
+        m = re.match(r"\A---\n(.*?)\n---\n", md.read_text(), re.DOTALL)
+        if not m:
+            err(f"{rel}: missing YAML frontmatter")
+            continue
+        front = m.group(1)
+        for field in (("name", "description") if require_name else ("description",)):
+            if not re.search(rf"^{field}:", front, re.MULTILINE):
+                err(f"{rel}: frontmatter missing '{field}'")
+        fm_name = re.search(r"^name:\s*(\S+)", front, re.MULTILINE)
+        if fm_name and fm_name.group(1) != md.stem:
+            err(f"{rel}: frontmatter name '{fm_name.group(1)}' != filename '{md.stem}'")
+
+
 def validate_manifest_paths(plugin_dir: Path, plugin_name: str, plugin: dict):
     for field in MANIFEST_FIELDS:
         value = plugin.get(field)
@@ -101,6 +122,8 @@ def validate_plugin_entry(name: str, version: str, plugin_dir: Path, manifest_su
 
     validate_manifest_paths(plugin_dir, name, plugin)
     validate_skills(plugin_dir)
+    validate_md_components(plugin_dir, "agents", require_name=True)
+    validate_md_components(plugin_dir, "commands", require_name=False)
 
 
 def validate_marketplace(mp_path: Path, manifest_subdir: str, label: str):
@@ -172,4 +195,4 @@ if __name__ == "__main__":
         for e in errors:
             print(f"  - {e}")
         sys.exit(1)
-    print("OK: Claude and Cursor manifests, plugin metadata, and skills are valid")
+    print("OK: Claude and Cursor manifests, plugin metadata, skills, agents, and commands are valid")

@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "openehr",
-  "description": "AI-assistant plugins for openEHR — official plugin marketplace of the openEHR Foundation.",
+  "description": "AI-assistant plugins for openEHR \u2014 official plugin marketplace of the openEHR Foundation.",
   "owner": {
     "name": "openEHR Foundation",
     "url": "https://openehr.org"
@@ -10,7 +10,7 @@
     {
       "name": "openehr-specs",
       "description": "Skills for creating, editing, and reviewing openEHR specification documents (AsciiDoc and OpenAPI/ITS-REST), managing the specification governance process, and ensuring content quality and convention compliance.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {
         "name": "Sebastian Iancu"
       },
