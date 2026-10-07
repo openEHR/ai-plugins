@@ -4,6 +4,8 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ## Unreleased
 
+## openehr-specs 0.3.0 (2026-10-07)
+
 ### Changed
 
 - Skills point to the matching subagents and commands: `review` explains when to review inline or dispatch `spec-reviewer`, `xref-auditor`, or `identifier-grounding`; `authoring`, `class-generation`, and `governance` mention `/openehr-specs:publish`, `/openehr-specs:regen-classes`, and `/openehr-specs:amend`.
