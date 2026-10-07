@@ -1,0 +1,96 @@
+# AGENTS.md
+
+Guidance for AI coding agents working in **{{repo_name}}**.
+
+## What this repo is
+
+`{{repo_name}}` is the **document {{#if bmm_schema_id}}+ model {{/if}}source** for the openEHR **{{component}}** ({{component_title}}) component. It is a *specification* repo, not software: the deliverables are the HTML specs at {{published_url}}. Sources are **AsciiDoc** prose{{#if bmm_schema_id}} plus the **BMM** schema `computable/BMM/{{bmm_schema_id}}.bmm.json`{{/if}}; the committed `docs/*.html` files are build artefacts.
+
+`manifest.json` is the source of truth for which documents exist, their `spec_status`, releases, and the `{{jira_project}}` Jira roadmap. Published documents: {{documents}}.
+
+<!-- TODO(scaffold): add one paragraph on what is distinctive about this component: its scope and which other components it builds on. -->
+
+## Layout
+
+- `docs/<document>/master.adoc` plus `masterNN-*.adoc` chapters (`master00` = amendment record); `manifest_vars.adoc` is generated from `manifest.json` on publish.
+{{#if bmm_schema_id}}
+- `computable/BMM/{{bmm_schema_id}}.bmm.json` — the BMM; source of truth for all classes.
+- `docs/UML/classes/` — **generated** class tables, named `org.openehr.<component>.<package>.<class>.adoc` (hence `{pkg}` in chapter includes, and `-q` when publishing).
+{{/if}}
+- `.asciidoctorconfig` — attributes for editor previews (`:component:`, `:imagesdir:`).
+
+<!-- openehr-scaffold:begin plugin -->
+## Use the `openehr-specs@openehr` plugin
+
+The plugin carries the spec-authoring know-how — **prefer its skills/agents over ad-hoc edits.** Don't re-derive their workflows here. `.claude/settings.json` registers the `openehr` marketplace and enables the plugin; Claude Code asks you to trust the folder first. To install it by hand: `/plugin marketplace add openEHR/ai-plugins`, then `/plugin install openehr-specs@openehr`.
+
+| Task | Use |
+|------|-----|
+| Create/edit a spec, chapter, `master.adoc`, or `manifest.json` | skill `openehr-specs:authoring` |
+| Spec prose style — overviews, semantics, design rationale | skill `openehr-specs:content-patterns` |
+{{#if bmm_schema_id}}
+| Regenerate class tables/diagrams from BMM (`bmm-publisher`) | skill `openehr-specs:class-generation` |
+{{/if}}
+| Amendment record (`master00-amendment_record.adoc`) | skill `openehr-specs:amendment-record` |
+| Releases, CR/PR, lifecycle status, Jira workflow | skill `openehr-specs:governance` |
+| Quality / convention review of a document | skill `openehr-specs:review` |
+| Whole-document convention review (all chapters) | agent `openehr-specs:spec-reviewer` |
+| Fact-check class/attribute/function names in prose | agent `openehr-specs:identifier-grounding` |
+| Audit `{openehr_*}` attributes + `<<anchor>>` cross-refs | agent `openehr-specs:xref-auditor` |
+| Local HTML preview of this component (you run it) | `/openehr-specs:publish {{component}}` |
+| Check this repo against the standard file set | `/openehr-specs:scaffold` |
+<!-- openehr-scaffold:end plugin -->
+
+<!-- openehr-scaffold:begin build -->
+## Build tool invocation
+
+No build tooling lives in this repo. All `specifications-XX` repos, including `specifications-AA_GLOBAL` (boilerplate, references), are cloned as siblings under one parent directory; Docker is the only prerequisite. Run from that parent directory:
+
+```bash
+# render HTML. The image is published from specifications-AA_GLOBAL; its entrypoint passes -q
+# (package-qualified class files). Use `Release-X.Y.Z` instead of `development` for a release build.
+docker run --rm -u $(id -u):$(id -g) -v "$PWD:/documents/" ghcr.io/openehr/asciidoctor development {{component}}
+```
+
+The build prints `generated <file>` and exits 0 even when includes are missing, so read the log: any `ERROR` or `include file not found` line means incomplete output. It also rewrites the tracked `docs/*.html` artefacts.
+{{#if bmm_schema_id}}
+
+```bash
+# regenerate class tables (NEVER hand-edit docs/UML/classes/*.adoc) — run from this repo's root.
+# Pass the repo BMM by PATH: a bare schema id ({{bmm_schema_id}}) uses the image's bundled copy, which lags this repo.
+OUT=$(mktemp -d)
+docker run --rm --user $(id -u):$(id -g) \
+  -v "$PWD/computable/BMM/{{bmm_schema_id}}.bmm.json":/in/{{bmm_schema_id}}.bmm.json:ro \
+  -v "$OUT":/out \
+  ghcr.io/openehr/bmm-publisher legacy-adoc /in/{{bmm_schema_id}}.bmm.json -o /out
+# then diff "$OUT" against docs/UML/classes and copy over the tables you changed
+```
+
+To change a class/attribute/function/invariant, edit the BMM schema and regenerate — never touch the generated tables (see skill `openehr-specs:class-generation`).
+{{/if}}
+<!-- openehr-scaffold:end build -->
+{{#if bmm_schema_id}}
+
+## Gotchas
+
+- BMM `documentation` strings pass through bmm-publisher's `formatText()`: `{attr}` is escaped, so write literal values (e.g. `latest`, not `{base_release}`); same-document `<<_x_class,X>>` xrefs work; use `×`, not `*`.
+{{/if}}
+
+<!-- openehr-scaffold:begin conventions -->
+## Conventions
+
+### Commit messages
+
+- **Format:** `Changes for <KEY> - <what changed>`, one line, for example `Changes for {{jira_project}}-42 - fix typos in the overview chapter`. Say what changed in the specification, not which file.
+- **Several tickets:** join the numbers, `Changes for {{jira_project}}-49/50 - <what changed>`.
+- **Every commit that has a Jira ticket carries its key.** Take it from, in order: the user, the branch name (`feat/{{jira_project}}-42-<slug>`), or the Jira issue the task links to (the `atlassian-openehr` MCP server can look an issue up). Never invent or guess a key.
+- **Which key:** `{{jira_project}}` for this component (change requests), `SPECPR` for problem reports, `SPECPUB` for publishing and tooling issues, or the owning component's key (`SPECAM`, `SPECRM`, ...) when the change belongs there. See skill `openehr-specs:governance`.
+- **No ticket:** write a plain summary without a key and say so in the pull request; do not use a placeholder key.
+- Some history, mostly in other components, puts the key last, `<what changed> ({{jira_project}}-42)`. It is understood, but use the leading form here.
+- A change to published specification text also needs an amendment-record entry with the same ticket (skill `openehr-specs:amendment-record`).
+- Do not stage regenerated `docs/*.html` or generated class tables together with source changes unless the task is to refresh them.
+
+### Branches
+
+- Branch from `{{default_branch}}` as `feat/<KEY>-<slug>` or `fix/<KEY>-<slug>`, for example `feat/{{jira_project}}-42-template-id`, and merge to `{{default_branch}}` by pull request.
+<!-- openehr-scaffold:end conventions -->

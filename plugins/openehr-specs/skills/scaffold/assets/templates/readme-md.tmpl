@@ -1,0 +1,13 @@
+# {{repo_name}}
+
+{{component_description}}: the openEHR specification sources for the **{{component}}** component.
+
+- Published specifications: {{published_url}}
+- Layout, build and commit conventions: [AGENTS.md](AGENTS.md)
+- Licence: {{license_name}}, see [LICENSE](LICENSE)
+
+To render a local HTML preview, run this from the directory that holds the `specifications-*` clones (Docker is the only prerequisite):
+
+```bash
+docker run --rm -u $(id -u):$(id -g) -v "$PWD:/documents/" ghcr.io/openehr/asciidoctor development {{component}}
+```

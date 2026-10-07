@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Validate marketplace and plugin manifests, and skill/agent frontmatter.
+"""Validate marketplace and plugin manifests, skill/agent frontmatter, and bundled template sets.
 
 Checks both Claude Code (``.claude-plugin/``) and Cursor (``.cursor-plugin/``) layouts.
 
 Usage: python3 scripts/validate.py   (from the repo root)
 """
+import importlib.util
 import json
 import re
 import sys
@@ -53,6 +54,27 @@ def validate_skills(plugin_dir: Path):
         fm_name = re.search(r"^name:\s*(\S+)", front, re.MULTILINE)
         if fm_name and fm_name.group(1) != skill_dir.name:
             err(f"{rel}: frontmatter name '{fm_name.group(1)}' != directory '{skill_dir.name}'")
+
+
+def validate_template_sets(plugin_dir: Path):
+    """A skill that ships assets/template-set.json carries its own checker (scripts/scaffold.py)."""
+    for tset in sorted(plugin_dir.glob("skills/*/assets/template-set.json")):
+        skill_dir = tset.parent.parent
+        rel = skill_dir.relative_to(ROOT)
+        script = skill_dir / "scripts" / "scaffold.py"
+        if not script.is_file():
+            err(f"{rel}: template-set.json without scripts/scaffold.py")
+            continue
+        try:
+            spec = importlib.util.spec_from_file_location("scaffold_check", script)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            problems = module.check_template_set(skill_dir)
+        except Exception as exc:  # a broken script must fail validation, not crash it
+            err(f"{rel}: cannot run scripts/scaffold.py check: {exc!r}")
+            continue
+        for problem in problems:
+            err(f"{rel}: template set: {problem}")
 
 
 def validate_md_components(plugin_dir: Path, subdir: str):
@@ -185,6 +207,8 @@ def main():
         validate_marketplace(mp_path, subdir, label)
 
     validate_cross_manifest_versions()
+    for plugin_dir in sorted(d for d in (ROOT / "plugins").iterdir() if d.is_dir()):
+        validate_template_sets(plugin_dir)  # once per plugin, not once per marketplace
 
 
 if __name__ == "__main__":
@@ -194,4 +218,4 @@ if __name__ == "__main__":
         for e in errors:
             print(f"  - {e}")
         sys.exit(1)
-    print("OK: Claude and Cursor manifests, plugin metadata, skills, and agents are valid")
+    print("OK: Claude and Cursor manifests, plugin metadata, skills, template sets, and agents are valid")

@@ -16,7 +16,7 @@ Each plugin lives under `plugins/<plugin-name>/` and must contain:
 - `.claude-plugin/plugin.json`: Claude Code plugin manifest (name, version, description, author, license, keywords)
 - `.cursor-plugin/plugin.json`: Cursor plugin manifest (keep name, version, and metadata in sync with the Claude manifest; declare `skills` as `./skills/`)
 - `README.md`: purpose, installation, and component inventory (skills, subagents)
-- `skills/`: one subdirectory per skill, each with a `SKILL.md` (YAML frontmatter and markdown body) and an optional `references/` subdirectory for supplementary content
+- `skills/`: one subdirectory per skill, each with a `SKILL.md` (YAML frontmatter and markdown body) and optional `references/`, `assets/` and `scripts/` subdirectories for supplementary content, templates and bundled scripts
 
 A plugin may also contain:
 
@@ -39,6 +39,7 @@ The plugin manifests, the marketplace entries, and the release tag must all carr
   3. **Anti-triggers** — a short "Not for …" that routes each overlapping case to the sibling skill or external plugin that owns it (e.g. archetype work → the `openehr-assistant` plugin).
 - Keep skill content factual and grounded in openEHR specifications; do not invent identifiers, paths, or conventions.
 - Reference files go in `references/` next to the SKILL.md; keep `SKILL.md` bodies focused (none of the current ones exceeds 300 lines) and push bulky supporting material to `references/`.
+- A skill may also bundle `scripts/` and `assets/` (the `scaffold` skill does). Call a script as `${CLAUDE_SKILL_DIR}/scripts/<name>` in the body and in `allowed-tools`, keep it to the standard library, say in the skill what it does when the interpreter is missing, and test it under `scripts/test_*.py` in this repo (CI runs them). A skill that installs versioned content states a revision and a migration path, as `scaffold` does in `assets/template-set.json`.
 - Skill bodies that generate or review AsciiDoc must agree with the [spec style guide](spec-style-guide.md) — when changing one, check the other.
 
 ## Subagent and Action-Skill Authoring

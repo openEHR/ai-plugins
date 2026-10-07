@@ -13,7 +13,8 @@ ai-plugins/
 ├── .claude-plugin/marketplace.json    # Claude Code marketplace manifest
 ├── .cursor-plugin/marketplace.json    # Cursor marketplace manifest
 ├── docs/                              # Contributor and user documentation
-├── scripts/validate.py                # Manifest and frontmatter validation (CI)
+├── scripts/validate.py                # Manifest, frontmatter and template-set validation (CI)
+├── scripts/test_scaffold.py           # Unit tests for the scaffold skill's script (CI)
 ├── CHANGELOG.md                       # Release notes per plugin
 └── plugins/<plugin-name>/             # One directory per plugin
     ├── .claude-plugin/plugin.json     # Claude Code plugin manifest
@@ -21,7 +22,8 @@ ai-plugins/
     ├── README.md                      # Plugin purpose, install, and component inventory
     ├── skills/<skill-name>/           # Knowledge/workflow skills; user-only actions set disable-model-invocation: true
     │   ├── SKILL.md                   # Skill definition (YAML frontmatter + body)
-    │   └── references/                # Optional supplementary content
+    │   ├── references/                # Optional supplementary content
+    │   └── assets/, scripts/              # Optional bundled templates and scripts (see `scaffold`)
     └── agents/<agent>.md              # Autonomous subagents (context-isolated, multi-file)
 ```
 
@@ -30,7 +32,7 @@ Current plugins: `openehr-specs` (skills, including user-only action skills, and
 ## Key Conventions
 
 - Plugin names: `openehr-<domain>` (mandatory prefix — flat global namespace); skill names: terse activity nouns with no prefix (auto-namespaced as `<plugin>:<skill>`). User-only action skills and subagents follow the same no-prefix rule (`spec-reviewer` is the one exception).
-- Component choice follows the *nature of the work*: **skills** = knowledge/workflows (model- or user-invoked); **user-only action skills** (`publish`, `regen-classes`) = user-initiated actions, also in `skills/`, marked `disable-model-invocation: true` so their descriptions stay out of context and they don't compete with knowledge-skill triggering (Claude Code treats `commands/` as the older format, so new actions are skills); **subagents** (`agents/`) = context-heavy, multi-file, or adversarial work that would otherwise pollute the main context. Action skills and agents reference their sibling knowledge skill rather than duplicating it.
+- Component choice follows the *nature of the work*: **skills** = knowledge/workflows (model- or user-invoked); **user-only action skills** (`publish`, `regen-classes`, `scaffold`) = user-initiated actions, also in `skills/`, marked `disable-model-invocation: true` so their descriptions stay out of context and they don't compete with knowledge-skill triggering (Claude Code treats `commands/` as the older format, so new actions are skills); **subagents** (`agents/`) = context-heavy, multi-file, or adversarial work that would otherwise pollute the main context. Action skills and agents reference their sibling knowledge skill rather than duplicating it.
 - Skill `description` frontmatter is lean (~50–75 words): one what+scope sentence → a few representative triggers → short "Not for …" anti-triggers routing to the right sibling/plugin.
 - Keep each `SKILL.md` body a lean overview (quick-reference + pointers); push bulky detail (tables, templates, format specs) into `references/` so it loads only on demand.
 - Versions must stay in sync across both plugin manifests (`.claude-plugin/` and `.cursor-plugin/`), both marketplace entries, and the release tag (`{name}--v{version}`).
@@ -42,21 +44,22 @@ Full details: [docs/skill-authoring.md](docs/skill-authoring.md)
 
 ## Development
 
-Pure-content repository (JSON manifests + markdown skills) — no build step, package manager, or test suite.
+Pure-content repository (JSON manifests + markdown skills) — no build step or package manager. The one script, the `scaffold` skill's `scripts/scaffold.py`, has unit tests: `python3 -m unittest discover -s scripts -p 'test_*.py'` (runs in CI).
 
-- **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent frontmatter fields, component paths — runs in CI; it does not check description length, inventories, or the release tag)
+- **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent frontmatter fields, component paths, and the `scaffold` template set's integrity — runs in CI; it does not check description length, inventories, or the release tag)
 - **Local testing**: [docs/testing.md](docs/testing.md); **versioning/releases**: [docs/versioning.md](docs/versioning.md)
 - **End-user installation**: [docs/install.md](docs/install.md)
 - **Generating/editing AsciiDoc for `specifications-XX` repos**: follow [docs/spec-style-guide.md](docs/spec-style-guide.md); skill bodies must agree with it — when changing one, check the other.
 
 ## Component Dependencies
 
-The skills are pure content; the subagents and the `publish` and `regen-classes` action skills rely on external tools and degrade
+The skills are pure content; the subagents and the `publish`, `regen-classes` and `scaffold` action skills rely on external tools and degrade
 gracefully when one is absent (each says so in its prompt):
 
 - **`spec-reviewer`, `xref-auditor`** — need a `specifications-XX` checkout and (for attribute resolution) the sibling `specifications-AA_GLOBAL`.
 - **`xref-auditor`, `identifier-grounding`** — use **WebFetch** to read spec Markdown twins (`.html` → `.md`); `identifier-grounding` additionally prefers the **`openehr-assistant` MCP** (`type_specification_get`) when connected, falling back to the twin.
 - **`regen-classes`** — needs **Docker** (`ghcr.io/openehr/bmm-publisher`).
+- **`scaffold`** — needs **`python3`** (standard library only) to run its bundled `scripts/scaffold.py`, and says so and stops when it is missing. It writes into the repository it is run in, so it plans first and never overwrites a hand-edited file without being told to.
 - **`publish`** — needs **Docker** and sibling `specifications-AA_GLOBAL` and component checkouts. It runs the published `ghcr.io/openehr/asciidoctor` image, which bundles the toolchain and `spec_publish.sh`; the boilerplate and references are still read from the AA_GLOBAL checkout. It checks that each HTML output was rebuilt and that the log has no missing includes, because the script reports success even when it built nothing or dropped the class tables.
 
 None are bundled (the `openehr-assistant` MCP is interactively authenticated, not redistributable); document them, don't assume them.
