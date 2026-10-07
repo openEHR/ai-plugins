@@ -8,7 +8,7 @@ The plugins in this repository are distributed as a dual marketplace: [Claude Co
 
 Inside a Claude Code session:
 
-```
+```text
 /plugin marketplace add openEHR/ai-plugins
 /plugin install openehr-specs@openehr
 ```
@@ -17,7 +17,7 @@ The marketplace name is `openehr`, so installed plugins are addressed as `<plugi
 
 ### Update
 
-```
+```text
 /plugin marketplace update openehr
 /plugin update openehr-specs
 ```
@@ -34,12 +34,13 @@ claude plugin details openehr-specs
 
 ## Cursor
 
-Add this repository as a plugin marketplace (from **Settings → Plugins**, or your team’s documented marketplace URL), then install **openehr-specs**. The repo root must contain `.cursor-plugin/marketplace.json`; each plugin under `plugins/<name>/` has its own `.cursor-plugin/plugin.json`.
+Cursor installs plugins from the **Customize** page. To add this repository as a marketplace, import it as a team marketplace, which needs a Teams or Enterprise plan:
 
-After changing skills locally, reload or reinstall the plugin so Cursor picks up updates. See [plugins/openehr-specs/README.md](../plugins/openehr-specs/README.md) for the skill inventory.
+1. Open **Dashboard → Plugins & MCPs**.
+2. Under **Team Marketplaces**, click **Add Marketplace**, then **Import from Repo**.
+3. Paste `https://github.com/openEHR/ai-plugins`.
+4. Install **openehr-specs** from **Customize**.
 
-## Available Plugins
+See the [Cursor plugin documentation](https://cursor.com/docs/plugins) for the full flow. To try a local copy, see [testing.md](testing.md#local-testing).
 
-| Plugin | Purpose |
-|--------|---------|
-| `openehr-specs` | Creating, editing, and reviewing openEHR specification documents (AsciiDoc and OpenAPI/ITS-REST), specification governance, content quality and convention compliance |
+The repo root contains `.cursor-plugin/marketplace.json`, and each plugin under `plugins/<name>/` has its own `.cursor-plugin/plugin.json`. See [plugins/openehr-specs/README.md](../plugins/openehr-specs/README.md) for the component inventory.
