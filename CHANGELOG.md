@@ -8,6 +8,7 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 - `scaffold` skill (user-only, `/openehr-specs:scaffold`): initialises a specification repository, or brings an existing one up to the standard file set. It installs `AGENTS.md` (the `openehr-specs@openehr` plugin table, the Docker build invocation, and commit and branch conventions built around the Jira ticket key, `Changes for SPECXX-NN - <what changed>`), `.claude/CLAUDE.md`, `.claude/settings.json` (registers the `openehr` marketplace, enables `openehr-specs` and three other plugins, and pre-approves `git add`, `git commit`, `git diff`, WebFetch on `specifications.openehr.org` and three read-only Atlassian MCP calls, as BASE, RM and ITS-REST do today), `manifest.json`, `.gitignore`, `.asciidoctorconfig`, `LICENSE` (CC BY-SA 3.0, or Apache 2.0 for `ITS-*`) and `README.md`. It plans before it writes, reads the component, title, Jira key, BMM schema and licence from the repo, and never overwrites a hand-edited file without being told to.
 - The file set is versioned: `assets/template-set.json` holds a revision, the variables and a strategy per file (seed, whole, JSON merge, ensure-lines, managed regions in `AGENTS.md`), and each repo records its revision and file hashes in `.claude/scaffold.json`, so a later run calculates the migration path from the recorded revision to the latest. `scripts/scaffold.py` needs `python3` (standard library only).
+- `docs/quick-start.md` (a first session, from install to an HTML preview) and `docs/prompting-guide.md` (which prompt to use for each authoring situation).
 
 ### Changed
 
@@ -32,6 +33,7 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ### Removed
 
+- `docs/spec-style-guide.md`. Most of what it restated (register, document structure, cross-reference and figure conventions) lives in `content-patterns`, `authoring` and `review`, so it was a second copy to keep in step. The conventions that were not in a skill (admonitions, code blocks, tables) moved to `authoring/references/asciidoc-syntax.md`, which `authoring` and `content-patterns` point to.
 - `/openehr-specs:amend`, folded into `amendment-record`. Use `/openehr-specs:amendment-record <SPECXX-NN[,SPECPR-NN] — summary>` or a plain request. Removing a user-facing entry point is a major change under [docs/versioning.md](docs/versioning.md); the maintainer decides the bump at release.
 
 ## openehr-specs 0.3.0 (2026-10-07)

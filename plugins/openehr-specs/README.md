@@ -64,7 +64,7 @@ In Claude Code, each skill is namespaced by the plugin, so it is invoked as **`/
 2. **Browse the group**: type `/openehr` in the slash menu to list the plugin's skills together, or fuzzy-type a name (e.g. `review`) to jump straight to it.
 3. **Let it trigger automatically**: Claude loads the right skill (or dispatches the right subagent) when your request matches its description. For example, "review this openEHR spec before release" activates `review` / `spec-reviewer`, and "regenerate the class tables for specifications-BASE" activates `class-generation`, with no slash command needed. (The action skills `/openehr-specs:publish`, `/openehr-specs:regen-classes` and `/openehr-specs:scaffold` are user-only and never auto-trigger.)
 
-Most skills act on the spec you are working in, so run them from a checkout of a `specifications-XX` repo (or name the target spec/file in your request).
+Most skills act on the spec you are working in, so run them from a checkout of a `specifications-XX` repo (or name the target spec/file in your request). For a first session, see the [quick start](../../docs/quick-start.md); for example prompts by situation, the [prompting guide](../../docs/prompting-guide.md).
 
 > **Note:** newly installed or edited skills become available in the **next** Claude Code session.
 

@@ -40,7 +40,6 @@ The plugin manifests, the marketplace entries, and the release tag must all carr
 - Keep skill content factual and grounded in openEHR specifications; do not invent identifiers, paths, or conventions.
 - Reference files go in `references/` next to the SKILL.md; keep `SKILL.md` bodies focused (none of the current ones exceeds 300 lines) and push bulky supporting material to `references/`.
 - A skill may also bundle `scripts/` and `assets/` (the `scaffold` skill does). Call a script as `${CLAUDE_SKILL_DIR}/scripts/<name>` in the body and in `allowed-tools`, keep it to the standard library, say in the skill what it does when the interpreter is missing, and test it under `scripts/test_*.py` in this repo (CI runs them). A skill that installs versioned content states a revision and a migration path, as `scaffold` does in `assets/template-set.json`.
-- Skill bodies that generate or review AsciiDoc must agree with the [spec style guide](spec-style-guide.md) — when changing one, check the other.
 
 ## Subagent and Action-Skill Authoring
 

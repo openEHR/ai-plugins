@@ -256,6 +256,7 @@ that the log has no `ERROR` or `include file not found` lines. The build rewrite
   {openehr_rm_data_types}#dv_quantity[DV_QUANTITY^]
   ```
 - **Cross-references to classes**: Use `{classes_url_root}` for linking to the class index.
+- **Admonitions, code blocks, tables**: follow `references/asciidoc-syntax.md` when adding a note, a code example, or a table.
 - **Jira ticket references**: `{spec_tickets}/SPECRM-87[SPECRM-87^]`
 - **External references**: Check `reference_definitions.adoc` first — it has hundreds of pre-defined URLs for HL7, W3C, ISO, IETF, Wikipedia, SNOMED, etc. If an attribute is missing, add it to `specifications-AA_GLOBAL/docs/references/reference_definitions.adoc` (a separate repo and commit) following the naming pattern, and tell the user the change spans two repos.
 

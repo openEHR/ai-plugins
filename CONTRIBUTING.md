@@ -19,7 +19,6 @@ Test your changes by installing the marketplace locally — see [docs/testing.md
 ## Conventions
 
 - Plugin/skill structure and naming: [docs/skill-authoring.md](docs/skill-authoring.md)
-- AsciiDoc style for spec-related content: [docs/spec-style-guide.md](docs/spec-style-guide.md)
 - Versioning and releases: [docs/versioning.md](docs/versioning.md)
 - Ground everything in the published [openEHR specifications](https://specifications.openehr.org) — never invent class names, attributes, paths, or identifiers.
 
@@ -34,7 +33,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org): `type(scope): s
 
 1. Branch from `main`.
 2. Run the checks locally: `python3 scripts/validate.py` and `python3 -m unittest discover -s scripts -p 'test_*.py'`
-3. If you changed plugin content, add a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md). Do not bump the version; maintainers do that at release ([docs/versioning.md](docs/versioning.md)). If you added, removed, or renamed a skill or subagent, also update the inventories in the plugin's `README.md` and in the root [README.md](README.md).
+3. If you changed plugin content, add a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md). Do not bump the version; maintainers do that at release ([docs/versioning.md](docs/versioning.md)). If you added, removed, or renamed a skill or subagent, also update the inventories in the plugin's `README.md` and in the root [README.md](README.md), and the skill and subagent names used in the [prompting guide](docs/prompting-guide.md).
 4. Test skill triggering locally ([docs/testing.md](docs/testing.md)).
 5. Open the PR and complete the checklist in the template. CI must pass.
 

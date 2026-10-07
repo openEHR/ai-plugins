@@ -44,3 +44,8 @@ Cursor installs plugins from the **Customize** page. To add this repository as a
 See the [Cursor plugin documentation](https://cursor.com/docs/plugins) for the full flow. To try a local copy, see [testing.md](testing.md#local-testing).
 
 The repo root contains `.cursor-plugin/marketplace.json`, and each plugin under `plugins/<name>/` has its own `.cursor-plugin/plugin.json`. See [plugins/openehr-specs/README.md](../plugins/openehr-specs/README.md) for the component inventory.
+
+## Next steps
+
+- [quick-start.md](quick-start.md): a first session on a real specification repository.
+- [prompting-guide.md](prompting-guide.md): which prompt to use for each authoring situation.
