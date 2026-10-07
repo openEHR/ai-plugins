@@ -135,7 +135,7 @@ properties:
 
 - Schema file names use PascalCase matching the RM class name
 - Schemas reference other schemas via relative `$ref` paths
-- `title` should match the RM class name (e.g., `COMPOSITION`, `EHR_STATUS`, `RESULT_SET`)
+- Set `title` to the RM class name (e.g., `COMPOSITION`, `EHR_STATUS`, `RESULT_SET`)
 - Use `description` with `|` block scalar for multi-line Markdown
 - Include `example` values where they aid understanding
 - Prefixed schemas (`UM*`, `U*`) are internal/simplified variants — see build tooling docs

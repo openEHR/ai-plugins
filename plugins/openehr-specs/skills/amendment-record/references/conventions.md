@@ -52,8 +52,8 @@ Release boundaries are marked with a full-width header row spanning all 4 column
 ```
 
 Where `XX` is the component abbreviation (e.g., `RM`, `AM`, `BASE`) and `N.N.N` is the
-release version. Place the boundary row **after** all entries belonging to that release
-(i.e., above the entries from the previous release).
+release version. The row labels the entries **below** it: place it directly above the newest entry
+that shipped in that release, and below any later, unreleased entries.
 
 ```asciidoc
 |[[latest_issue]]5.2.1

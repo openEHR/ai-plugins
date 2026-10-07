@@ -8,7 +8,7 @@ Skills, subagents, and commands for authors working in `specifications-XX` and `
 
 From the [ai-plugins](https://github.com/openEHR/ai-plugins) marketplace:
 
-```
+```text
 /plugin marketplace add openEHR/ai-plugins
 /plugin install openehr-specs@openehr
 ```
@@ -31,36 +31,38 @@ Add the marketplace from this repository (or a fork), then install `openehr-spec
 
 ## Subagents
 
-Context-isolated agents for heavy, multi-file, or verification work — dispatched by Claude (or ask for them by name). Each degrades gracefully when an optional dependency is absent.
+Context-isolated subagents for heavy, multi-file, or verification work, dispatched by Claude (or ask for them by name). Each says in its prompt what it does when an optional dependency is absent, for example by marking a check `UNCHECKED`.
 
-| Agent | Purpose | Needs |
+| Subagent | Purpose | Needs |
 |-------|---------|-------|
 | `spec-reviewer` | Runs the full `review` check catalog across an entire spec document, returns a findings report | `specifications-XX` (+ `AA_GLOBAL` for attribute checks) |
-| `xref-auditor` | Verifies every `{openehr_*}` attribute and `<<anchor>>` resolves; checks cross-spec deep-link anchors against the target's Markdown twin | WebFetch (optional) |
+| `xref-auditor` | Verifies every `{openehr_*}` attribute and `<<anchor>>` resolves; checks cross-spec deep-link anchors against the target's Markdown twin | `specifications-XX` (+ `AA_GLOBAL` to resolve attributes); WebFetch (optional, for cross-spec anchors) |
 | `identifier-grounding` | Fact-checks every RM/AM/BASE class/attribute a draft names against the published spec; flags invented identifiers | `openehr-assistant` MCP or WebFetch (optional) |
+
+`AA_GLOBAL` is the `specifications-AA_GLOBAL` repository, which holds the boilerplate, publishing scripts, and styles shared by all spec repos. A Markdown twin is the Markdown version of a published spec page: swap `.html` for `.md` in its URL.
 
 ## Commands
 
-User-invoked actions (they do not auto-trigger). Invoke as `/openehr-specs:<command>`.
+User-invoked actions (they do not auto-trigger). Invoke as `/openehr-specs:<command>`. Each command wraps a skill that holds the knowledge: `amend` uses `amendment-record`, `regen-classes` uses `class-generation`, and `publish` follows the publish step in `authoring`. The skill triggers from a plain request; the command runs only when you type it.
 
 | Command | Argument | Action |
 |---------|----------|--------|
-| `/openehr-specs:amend` | `<SPECXX-NN — summary>` | Add an amendment-record entry (version bump, anchors, Jira refs) |
-| `/openehr-specs:regen-classes` | `<schema-id>` | Regenerate class tables/diagrams via `bmm-publisher` (needs Docker) |
-| `/openehr-specs:publish` | `<component>` | Build a local HTML preview via the `AA_GLOBAL` publisher |
+| `/openehr-specs:amend` | `<SPECXX-NN[,SPECPR-NN] — summary>` | Add an amendment-record entry (version bump, anchors, Jira refs) |
+| `/openehr-specs:regen-classes` | `<schema-id> [-d <dependency-schema> ...]` | Regenerate class tables and diagrams via `bmm-publisher` (needs Docker) |
+| `/openehr-specs:publish` | `<component> [spec-id]` | Build a local HTML preview with the `AA_GLOBAL` publisher (needs a sibling `specifications-AA_GLOBAL` checkout; falls back to Docker when the script cannot run) |
 
 ## Usage
 
-Each skill is namespaced by the plugin, so it is invoked as **`/openehr-specs:<skill>`**. There are three ways to reach a skill:
+In Claude Code, each skill is namespaced by the plugin, so it is invoked as **`/openehr-specs:<skill>`**. There are three ways to reach a skill:
 
-1. **Invoke it explicitly** — type the command, optionally with an argument:
-   ```
+1. **Invoke it explicitly**: type its name, optionally with an argument:
+   ```text
    /openehr-specs:authoring
    /openehr-specs:review
    /openehr-specs:class-generation
    ```
-2. **Browse the group** — type `/openehr` in the slash menu to list the plugin's skills and commands together, or fuzzy-type a name (e.g. `review`) to jump straight to it.
-3. **Let it trigger automatically** — Claude loads the right skill (or dispatches the right subagent) when your request matches its description. For example, "review this openEHR spec before release" activates `review` / `spec-reviewer`, and "regenerate the class tables for specifications-BASE" activates `class-generation` — no command needed. (Commands like `/openehr-specs:amend` are user-only and never auto-trigger.)
+2. **Browse the group**: type `/openehr` in the slash menu to list the plugin's skills and commands together, or fuzzy-type a name (e.g. `review`) to jump straight to it.
+3. **Let it trigger automatically**: Claude loads the right skill (or dispatches the right subagent) when your request matches its description. For example, "review this openEHR spec before release" activates `review` / `spec-reviewer`, and "regenerate the class tables for specifications-BASE" activates `class-generation`, with no command needed. (Commands like `/openehr-specs:amend` are user-only and never auto-trigger.)
 
 Most skills act on the spec you are working in, so run them from a checkout of a `specifications-XX` repo (or name the target spec/file in your request).
 

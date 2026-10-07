@@ -89,7 +89,7 @@ The `_{key_attribute}_` attribute {records/identifies/contains} {what and why}.
 - Refer to classes in monospace: `COMPOSITION`, `VERSION<T>`
 - Refer to attributes in italic-monospace: `_uid_`, `_commit_audit_`
 - When describing an attribute, use the form: "The `_attribute_` attribute {verb} {what}."
-- When describing a function, use the form: "The `_function_()_` function {verb} {what}."
+- When describing a function, use the form: "The `_function()_` function {verb} {what}."
 - Qualify attribute references with their class when ambiguous: `VERSION._uid_`, `VERSIONED_OBJECT._uid_`
 
 ### Example (from RM Common — VERSION)

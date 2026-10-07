@@ -1,12 +1,12 @@
 ---
 name: governance
 description: >
-  Manage the openEHR specification governance lifecycle — releases, change requests (CR/PR), and
-  lifecycle states (DEVELOPMENT/TRIAL/STABLE…). This skill should be used when the user asks to
-  create or tag a release, prepare a release branch, update the manifest for a release, submit or
-  manage a CR/PR, promote a spec's status, or discuss the openEHR change process or Jira workflow.
-  Not for clinical/archetype governance, amendment-record authoring (use amendment-record), or
-  non-openEHR release management.
+  Manage openEHR specification governance: releases, change requests (CR/PR), versioning, and
+  lifecycle states (Planning, Development, Trial, Stable, Paused, Retired). This skill should be
+  used when the user asks to create, tag, or fix a release, update release entries in
+  `manifest.json`, raise or progress a CR/PR, promote a spec's status, propose a new spec, or
+  explain the SEC change process. Not for amendment entries (amendment-record), pre-release
+  document review (review), local previews (authoring), or clinical/archetype governance.
 ---
 
 # openEHR Specification Governance
@@ -19,7 +19,7 @@ specifications.openehr.org/governance.
 
 - **authoring** — document scaffolding, repo layout, boilerplate structure
 - **amendment-record** — detailed amendment record authoring conventions
-- **review** — pre-release quality review of spec documents
+- **review** — pre-release quality review of spec documents (the `spec-reviewer` and `xref-auditor` subagents run it across a whole spec or component)
 
 ## Specification Lifecycle States
 
@@ -44,7 +44,7 @@ The Specifications Editorial Committee (SEC) reviews promotion criteria three mo
 target dates. Unmet criteria may trigger a single three-month extension; subsequent failure
 results in retirement.
 
-The `spec_status` field in `manifest.json` and `manifest_vars.adoc` tracks this state.
+The `spec_status` field in `manifest.json` and `manifest_vars.adoc` carries this state in upper case (for example `DEVELOPMENT`, `TRIAL`, `STABLE`, `PAUSED`, `RETIRED`; the full list is in `../authoring/references/manifest-spec-entry.md`). Keep both copies identical. To promote a spec, confirm that the SEC has approved the promotion, then set `spec_status` identically in both files.
 
 ## Versioning
 
@@ -72,6 +72,7 @@ without triggering a new release number.
 - Each CR documents a specific modification to one or more specifications
 - CRs reference the PRs they address
 - Reference format in specs: `{spec_tickets}/SPECRM-NNN[SPECRM-NNN^]`
+- If the user is not an SEC member, direct them to raise a PR on the `SPECPR` tracker instead
 
 ## Change Request Lifecycle
 
@@ -123,7 +124,7 @@ dates, allocating CRs to releases.
 ### Release Naming
 
 - Releases: `Release-N.N.N` (e.g., `Release-1.0.4`)
-- Fix releases: `Release-N.N.NvN` (e.g., `Release-1.0.4v1`) — for post-release corrections
+- Fix releases: `Release-N.N.NvM` (e.g., `Release-1.0.4v1`) — for post-release corrections
 
 ### Steps to Create a Release
 
@@ -131,19 +132,14 @@ Read `references/release-checklist.md` for the full step-by-step checklist.
 
 The high-level process:
 
-1. **Jira**: Close all CRs and PRs for this release. Create saved searches for the release versions.
-2. **manifest.json**: Set the release date, verify `spec_status` for each spec, ensure Jira links are correct.
-3. **Git**: Create a release branch (`Release-N.N.N`), publish with `-l Release-N.N.N`, commit, tag (annotated), push.
+1. **Jira** (a user task, not doable from the repo): ask the user to confirm that all CRs and PRs for the release are closed and the saved searches exist, then continue.
+2. **manifest.json**: Set the release date, verify `spec_status` for each spec, ensure Jira links are correct, and prepend the next-cycle `releases` entry with an empty `date`.
+3. **Git**: Create a release branch (`Release-N.N.N`), publish in release mode with the exact command in the checklist (do not use `/openehr-specs:publish`; it builds previews only), commit, and create the annotated tag. Ask the user before pushing.
 4. **Webhook**: The push triggers the specifications.openehr.org server to pull and deploy.
 
 ### Steps to Fix a Release
 
-1. Check out the release branch
-2. Make corrections to source files
-3. Republish with the original release label
-4. Commit and add a new annotated tag: `Release-N.N.NvN+1`
-5. Push (webhook overwrites the deployed release)
-6. Merge fixes back into `master`
+Follow the Fix Release section of `references/release-checklist.md`.
 
 ## Creating a New Specification
 
@@ -152,6 +148,9 @@ New specifications are proposed via PR or CR. The SEC verifies:
 - Structural placement within the specification library
 - Scope consistency with existing specifications
 - Component location
+
+To scaffold the document and its `manifest.json` entry once identifier and placement are agreed,
+follow the **authoring** skill ("Creating a New Specification Document").
 
 ### Required Structure
 

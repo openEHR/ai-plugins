@@ -1,11 +1,12 @@
 ---
 name: amendment-record
 description: >
-  Author or update amendment records in openEHR specification documents — the
+  Author or update amendment records in openEHR specification documents: the
   `master00-amendment_record.adoc` table in `specifications-XX` repos. This skill should be used
-  when the user asks to add or update an amendment entry, add a CR/PR reference, mark a release
-  boundary, or update the `latest_issue`/`latest_issue_date` anchors. Not for general spec authoring
-  (use authoring), the release process (use governance), or non-openEHR documents.
+  when the user asks to add or update an amendment entry, choose the document version bump, add a
+  CR/PR reference, mark a release boundary, or fix the `latest_issue`/`latest_issue_date` anchors.
+  Not for the ITS-REST amendment record (use its-rest), general spec authoring (use authoring), the
+  release process (use governance), or non-openEHR documents.
 ---
 
 # openEHR Specification Amendment Record Authoring
@@ -14,7 +15,8 @@ The amendment record tracks every change to an openEHR specification document. I
 `master00-amendment_record.adoc` in each spec directory within the `specifications-XX`
 repositories (RM, AM, BASE, LANG, PROC, SM, QUERY, CNF, TERM, ITS-*) and is included in
 `master.adoc` after the front matter. The conventions here are specific to the openEHR
-specification ecosystem and its Jira-based change management process.
+specification ecosystem and its Jira-based change management process. The `specifications-ITS-REST`
+record is an HTML table, not this file; use the `its-rest` skill for it.
 
 For detailed lookups — Jira project keys, CR/PR linking phrasing, release-boundary placement,
 multi-raiser formatting, multi-change grouping, and detail-text style — see
@@ -49,7 +51,7 @@ multi-raiser formatting, multi-change grouping, and detail-text style — see
 |===
 ```
 
-The four columns are **Issue** (version, only on the first entry of a group; blank for
+Fill the four columns as follows: **Issue** (version, only on the first entry of a group; blank for
 subsequent entries in the same version), **Details** (change description + Jira refs),
 **Raiser** (name(s)), and **Completed** (`dd Mon yyyy`).
 
@@ -75,8 +77,8 @@ B Naess
 
 ### Entry Order
 
-Entries are **most-recent-first**. New entries go at the **top** of the table (immediately
-after the header row). Mark release boundaries with a full-width row — see
+Order entries **most-recent-first**: insert each new entry at the **top** of the table, immediately
+after the header row. Mark release boundaries with a full-width row — see
 `references/conventions.md`.
 
 ### Column Format
@@ -103,10 +105,10 @@ The issue number tracks the **document version**, independent of the component r
 
 ## Checklist for Adding an Entry
 
-1. Read the existing amendment record to understand the current version and format
-2. Determine whether this is a patch, minor, or major version bump
+1. Read the existing amendment record to understand the current version and format. Ask the author for the raiser name(s) if not given, and copy the name style of the existing entries.
+2. Choose the Issue number: bump patch, minor, or major per the table above, or reuse the top entry's number when the change ships in the same version increment (see "Grouping Multiple Changes" in `references/conventions.md`). If the right bump is unclear, state the assumed bump and let the author confirm.
 3. Add the new entry at the **top** of the table (after the header row)
-4. Move `[[latest_issue]]` and `[[latest_issue_date]]` anchors to the new entry
+4. Move `[[latest_issue]]` and `[[latest_issue_date]]` anchors to the new entry. When the version is reused, leave the Issue cell of the previous top entry blank.
 5. Reference all relevant Jira CRs and PRs (see `references/conventions.md` for keys/phrasing)
-6. If this is the first entry after a release, add a release boundary row below the new entry
-7. Verify the date format is `dd Mon yyyy` (e.g., `17 Nov 2022`)
+6. If this is the first entry after a release, add a release boundary row directly below the new entry, labelled with the release just completed (the newest release with a date in the `releases` array of `manifest.json`; ask the author if unsure)
+7. Use today's date as the completion date unless the author gives one (ask if uncertain), in the format `dd Mon yyyy` (e.g., `17 Nov 2022`)

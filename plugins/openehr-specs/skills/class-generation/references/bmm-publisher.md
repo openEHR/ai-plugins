@@ -75,7 +75,7 @@ docker run --rm --user $(id -u):$(id -g) \
   -v ./out:/app/output \
   ghcr.io/openehr/bmm-publisher asciidoc -v openehr_rm_1.2.0 -d openehr_base_1.3.0
 
-# Legacy per-class tables straight into a spec repo's docs/UML/classes
+# Legacy per-class tables -> ./out/UML/classes (copy into the spec repo's docs/UML/classes)
 docker run --rm --user $(id -u):$(id -g) \
   -v ./out:/app/output \
   ghcr.io/openehr/bmm-publisher legacy-adoc -o /app/output/UML/classes openehr_base_1.3.0

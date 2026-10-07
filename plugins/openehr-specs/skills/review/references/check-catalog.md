@@ -4,7 +4,10 @@ The full check list for the `review` skill, grouped by category. Each check has 
 severity (ERROR / WARNING / INFO), and the condition. Collect findings per category and report
 them with `file:line` references.
 
-XREF checks rely on the attribute naming patterns in `../authoring/references/cross-references.md`.
+XREF checks rely on the attribute naming patterns in `../../authoring/references/cross-references.md`.
+
+The `spec-reviewer` subagent (`../../../agents/spec-reviewer.md`) reads this file; keep the check IDs
+and table format stable.
 
 ## 1. Document Structure (STRUCT)
 
@@ -69,12 +72,12 @@ XREF checks rely on the attribute naming patterns in `../authoring/references/cr
 |----|----------|-------|
 | ADOC-01 | WARNING | Class/type names use monospace: `` `COMPOSITION` ``, `` `DV_TEXT` `` |
 | ADOC-02 | WARNING | Attribute names use italic-in-monospace: `` `_uid_` ``, `` `_value_` `` |
-| ADOC-03 | WARNING | No hand-written class definition tables — should `include::{uml_export_dir}/classes/...` the BMM-generated tables (regenerate via the `class-generation` skill, not by hand) |
+| ADOC-03 | WARNING | Class definition tables are included from the BMM-generated files (`include::{uml_export_dir}/classes/...`), not hand-written (regenerate via the `class-generation` skill) |
 | ADOC-04 | INFO | TBD markers use `[.tbd]` role followed by `*TBD*: (description)` |
 | ADOC-05 | INFO | Deprecated markers use `[.deprecated]` role followed by `*Deprecated*: (explanation)` |
 | ADOC-06 | INFO | Bibliographic citations use `cite:[Key]` or `citenp:[Key]` syntax |
 
-## 7. Manifest Consistency (MANIFEST)
+## 7. Manifest Consistency (MAN)
 
 | ID | Severity | Check |
 |----|----------|-------|
@@ -89,6 +92,6 @@ XREF checks rely on the attribute naming patterns in `../authoring/references/cr
 |----|----------|-------|
 | CONTENT-01 | WARNING | Chapter files start with a level-1 heading (`= Chapter Title`) |
 | CONTENT-02 | WARNING | Chapters defining a package/model begin with an Overview subsection |
-| CONTENT-03 | INFO | No hardcoded URLs to `specifications.openehr.org` — use attributes instead |
+| CONTENT-03 | INFO | Hardcoded `specifications.openehr.org` URLs are reported once, under XREF-03; raise no second finding here |
 | CONTENT-04 | INFO | Inventory of all `[.tbd]` markers with their locations |
 | CONTENT-05 | INFO | Inventory of all `[.deprecated]` markers with their locations |

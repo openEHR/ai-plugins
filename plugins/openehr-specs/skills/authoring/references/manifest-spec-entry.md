@@ -27,7 +27,7 @@ Each component's `manifest.json` contains a `specifications` array. Here is the 
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `id` | Yes | Identifier string matching the spec directory name under `docs/`. Lowercase, underscored. |
+| `id` | Yes | Identifier string matching the spec directory name under `docs/` exactly (case-sensitive). Existing ids mix styles (for example `ehr`, `ADL2`, `archetype_profile`), so follow the style already used in the component. |
 | `title` | Yes | Full title shown on front page below the openEHR logo. |
 | `title_short` | No | Short title used in the component index page. |
 | `description` | Yes | Usually `"openEHR <Title> specification"`. Used for hover text and browser tab titles. |
@@ -35,7 +35,7 @@ Each component's `manifest.json` contains a `specifications` array. Here is the 
 | `micro_summary` | No | Shortened version of summary for the home page box. May be empty. |
 | `classes` | No | Key RM/AM classes. Each is linked to the spec source location on the specifications site. |
 | `copyright_year` | Yes | Year of first publication (e.g., `"2003"`). |
-| `spec_status` | Yes | One of: `DEVELOPMENT`, `TRIAL`, `STABLE`, `SUPERSEDED`, `OBSOLETE`, `RETIRED`. |
+| `spec_status` | Yes | One of: `DEVELOPMENT`, `TRIAL`, `STABLE`, `PAUSED`, `SUPERSEDED`, `OBSOLETE`, `RETIRED`. Keep it identical to `:spec_status:` in `manifest_vars.adoc`. |
 | `keywords` | Yes | Comma-separated keywords affecting search engines. |
 | `notes` | No | Array of `{link, text}` objects pointing to wiki pages or other supplementary material. |
 
