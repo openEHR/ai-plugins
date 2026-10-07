@@ -12,6 +12,8 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 - `its-rest`: added a "Reviewing Changes" section and clearer endpoint and schema steps.
 - `class-generation`: the workflow picks the command by layout and says where to place the output.
 - `governance`: the release steps ask the user to confirm the Jira state and to approve the push; fix-release steps live in the release checklist.
+- Subagent definitions follow the current agent-development format: a prose trigger description, a "When to invoke" section, and a "do not use" pointer to the right sibling.
+- `identifier-grounding` is limited to read-only tools plus the `openehr-assistant` type-specification tools; it could previously write files.
 
 ### Fixed
 
@@ -21,7 +23,8 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 - `review`: the manifest check prefix is `MAN` (was `MANIFEST`), and hardcoded URLs are reported once.
 - `its-rest`: the schema `title` and file-name rules no longer contradict `file-formats.md`.
 - `regen-classes` no longer sends users without Docker to a dev container that also needs Docker.
-- `spec-reviewer` finds the check catalog by path lookup instead of a repo-relative path.
+- `spec-reviewer` and `xref-auditor` find their reference files by path lookup instead of a repo-relative path.
+- `identifier-grounding` counts new and skipped identifiers in its summary line.
 - Plugin README: subagent dependencies and command arguments match their definitions.
 
 ## openehr-specs 0.2.0 (2026-06-05)

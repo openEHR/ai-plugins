@@ -48,5 +48,6 @@ The plugin manifests, the marketplace entries, and the release tag must all carr
 - Both are flat markdown files with YAML frontmatter. `scripts/validate.py` requires `name` and `description` for a subagent and `description` for a command, and checks that any `name` matches the filename.
 - Mark every command `disable-model-invocation: true`, so it does not compete with knowledge skills for triggering. CI does not check this.
 - Commands and subagents point to the sibling skill that holds the knowledge; they do not repeat it.
-- The ~50–75 word guideline above is written for skills. Existing subagent descriptions are longer because they carry `<example>` blocks that show when to dispatch.
+- The ~50–75 word guideline above is written for skills. Write a subagent `description` as one line: the trigger conditions, then two to four typical triggers in prose, then a pointer to a "When to invoke" section in the agent body that holds the worked scenarios. Keep `: ` and ` #` out of the plain YAML value.
+- Give a subagent only the `tools` it needs. A verifier gets read-only tools; name an MCP tool under both server prefixes (`mcp__<server>__<tool>` and `mcp__plugin_<plugin>_<server>__<tool>`).
 - State in the prompt what the component does when an external tool is missing. For example, `xref-auditor` marks cross-spec anchors `UNCHECKED` when it has no web access.
