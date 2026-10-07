@@ -10,7 +10,7 @@
     {
       "name": "openehr-specs",
       "description": "Skills for creating, editing, and reviewing openEHR specification documents (AsciiDoc and OpenAPI/ITS-REST), managing the specification governance process, and ensuring content quality and convention compliance.",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "author": {
         "name": "Sebastian Iancu"
       },

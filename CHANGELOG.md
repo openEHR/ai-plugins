@@ -4,37 +4,40 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ## Unreleased
 
+## openehr-specs 0.4.0 (2026-10-07)
+
 ### Added
 
-- `scaffold` skill (user-only, `/openehr-specs:scaffold`): initialises a specification repository, or brings an existing one up to the standard file set. It installs `AGENTS.md` (the `openehr-specs@openehr` plugin table, the Docker build invocation, and commit and branch conventions built around the Jira ticket key, `Changes for SPECXX-NN - <what changed>`), `.claude/CLAUDE.md`, `.claude/settings.json` (registers the `openehr` marketplace, enables `openehr-specs` and three other plugins, and pre-approves `git add`, `git commit`, `git diff`, WebFetch on `specifications.openehr.org` and three read-only Atlassian MCP calls, as BASE, RM and ITS-REST do today), `manifest.json`, `.gitignore`, `.asciidoctorconfig`, `LICENSE` (CC BY-SA 3.0, or Apache 2.0 for `ITS-*`) and `README.md`. It plans before it writes, reads the component, title, Jira key, BMM schema and licence from the repo, and never overwrites a hand-edited file without being told to.
-- The file set is versioned: `assets/template-set.json` holds a revision, the variables and a strategy per file (seed, whole, JSON merge, ensure-lines, managed regions in `AGENTS.md`), and each repo records its revision and file hashes in `.claude/scaffold.json`, so a later run calculates the migration path from the recorded revision to the latest. `scripts/scaffold.py` needs `python3` (standard library only).
+- `scaffold` skill (user-only, `/openehr-specs:scaffold`): initialises a specification repository, or brings an existing one up to the standard file set: `AGENTS.md` (plugin table, Docker build invocation, Jira-key commit and branch conventions), `.claude/CLAUDE.md`, `.claude/settings.json`, `manifest.json`, `.gitignore`, `.asciidoctorconfig`, `LICENSE` and `README.md`. It plans before it writes, reads the component, title, Jira key, BMM schema and licence from the repo, and never overwrites a hand-edited file without being told to. Needs `python3`.
+- `scaffold`: `.claude/settings.json` registers the `openehr` marketplace, enables `openehr-specs` and three other plugins, and pre-approves `git add`, `git commit`, `git diff`, WebFetch on `specifications.openehr.org` and three read-only Atlassian MCP calls, as BASE, RM and ITS-REST do today.
+- `scaffold`: the file set is versioned. `assets/template-set.json` holds a revision, and each repo records its revision and file hashes in `.claude/scaffold.json`, so a later run upgrades the repo along the recorded migration path.
+- `authoring` reference `asciidoc-syntax.md`: admonition, code-block and table conventions, linked from `authoring` and `content-patterns`.
 - `docs/quick-start.md` (a first session, from install to an HTML preview) and `docs/prompting-guide.md` (which prompt to use for each authoring situation).
 
 ### Changed
 
 - `publish` and `regen-classes` moved from `commands/` to `skills/` as user-only skills (`disable-model-invocation: true`). Claude Code treats `commands/` as the older format, so the plugin no longer ships that directory. The `/openehr-specs:publish` and `/openehr-specs:regen-classes` names are unchanged.
-- `scripts/validate.py` also checks the `scaffold` template set (templates exist and render, revisions have migration files, the digest matches), and CI runs the unit tests in `scripts/test_scaffold.py`.
-- `scripts/validate.py` no longer checks a `commands/` directory; the user-only skills are validated as skills.
-- `publish`, `authoring`, and the release checklist run the published `ghcr.io/openehr/asciidoctor` image instead of `openehr/asciidoctor`, which is only the tag of a local `docker build`.
-- `publish` runs only the published image; the local-script branch is gone. That branch ran `spec_publish.sh -f -v` without `-q`, so every `{pkg}` class-table include failed (70 errors on BASE, with about 80% of the table blocks missing from the HTML) while the script still printed "generated" and exited 0. The image's entrypoint passes `-q`; on BASE the same image builds with no errors. The AA_GLOBAL checkout is still required, because the boilerplate and reference definitions are read from it. `authoring` shows the image first and says to pass `-q` with a local toolchain.
-- `publish` and `regen-classes` keep only the runnable steps and guardrails; the background stays in `authoring` and `class-generation`.
 - `amendment-record` takes over the `amend` command: it accepts the same arguments (`argument-hint`), locates the amendment record, checks the working-tree diff, and stops after showing the diff. It no longer pre-approves `Read`, `Edit`, and `Bash` as the command did.
-
-### Security
-
-- `publish` and `regen-classes` no longer pre-approve every shell command while they run. `allowed-tools` was a bare `Bash`, which also covered `git commit` and `git push`. It now lists only the Docker image each skill runs, plus `docker --version` for `regen-classes`. A command that does not match a pattern asks for approval as usual.
-
-### Fixed
-
-- `publish` no longer lists a `[spec-id]` argument, because the publisher builds whole components. It stops and asks when `$ARGUMENTS` is empty: the image takes exactly one component, and the bare script would rebuild every sibling repo. It always builds as `development`; a `Release-N.N.N` build belongs to `governance`.
-- `publish` no longer trusts the build's `generated <file>` line, which is printed and exits 0 even when `asciidoctor` failed or includes are missing. It compares output timestamps before and after the build, scans the log for `ERROR` and `include file not found` lines, and reports each HTML file that was not rebuilt. `authoring` carries the same warning for a manual build.
-- `regen-classes` keeps the layout rule (`legacy-adoc` or `asciidoc`) and stops and asks when `$ARGUMENTS` is empty.
-- `amendment-record`: a direct run states an assumed version bump and proceeds instead of pausing, and it stops after the diff only when invoked directly, not inside a release or authoring flow.
+- `publish`, `authoring`, and the release checklist run the published `ghcr.io/openehr/asciidoctor` image instead of `openehr/asciidoctor`.
+- `publish` runs only the published image. The local-script branch is gone because it omitted `-q`, so every `{pkg}` class-table include failed. The `specifications-AA_GLOBAL` checkout is still required. `authoring` says to pass `-q` with a local toolchain.
+- `publish` and `regen-classes` keep only the runnable steps and guardrails; the background stays in `authoring` and `class-generation`.
+- `scripts/validate.py` also checks the `scaffold` template set (templates exist and render, revisions have migration files, the digest matches) and no longer checks a `commands/` directory. CI runs the unit tests in `scripts/test_scaffold.py`.
 
 ### Removed
 
-- `docs/spec-style-guide.md`. Most of what it restated (register, document structure, cross-reference and figure conventions) lives in `content-patterns`, `authoring` and `review`, so it was a second copy to keep in step. The conventions that were not in a skill (admonitions, code blocks, tables) moved to `authoring/references/asciidoc-syntax.md`, which `authoring` and `content-patterns` point to.
-- `/openehr-specs:amend`, folded into `amendment-record`. Use `/openehr-specs:amendment-record <SPECXX-NN[,SPECPR-NN] — summary>` or a plain request. Removing a user-facing entry point is a major change under [docs/versioning.md](docs/versioning.md); the maintainer decides the bump at release.
+- `/openehr-specs:amend`, folded into `amendment-record`. Use `/openehr-specs:amendment-record <SPECXX-NN[,SPECPR-NN] — summary>` or a plain request. Removing a user-facing entry point is a major change under [docs/versioning.md](docs/versioning.md); it is released as a minor bump because the plugin is below 1.0.
+- `docs/spec-style-guide.md`. The admonition, code-block and table conventions moved to `authoring/references/asciidoc-syntax.md`; the rest was already in `content-patterns`, `authoring` and `review`.
+
+### Fixed
+
+- `publish` no longer lists a `[spec-id]` argument, because the publisher builds whole components. It stops and asks when `$ARGUMENTS` is empty and always builds as `development`; a `Release-N.N.N` build belongs to `governance`.
+- `publish` no longer trusts the build's `generated <file>` line, which is printed even when `asciidoctor` failed or includes are missing. It compares output timestamps before and after the build, scans the log for `ERROR` and `include file not found`, and reports each HTML file that was not rebuilt. `authoring` carries the same warning.
+- `regen-classes` keeps the layout rule (`legacy-adoc` or `asciidoc`) and stops and asks when `$ARGUMENTS` is empty.
+- `amendment-record`: a direct run states an assumed version bump and proceeds instead of pausing, and it stops after the diff only when invoked directly, not inside a release or authoring flow.
+
+### Security
+
+- `publish` and `regen-classes` no longer pre-approve every shell command while they run. `allowed-tools` was a bare `Bash`, which also covered `git commit` and `git push`. It now lists only the Docker image each skill runs, plus `docker --version` for `regen-classes`.
 
 ## openehr-specs 0.3.0 (2026-10-07)
 
