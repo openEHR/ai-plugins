@@ -6,6 +6,9 @@
 .DS_Store
 Thumbs.db
 
+# Python bytecode (from the scaffold script and its tests)
+__pycache__/
+
 # Claude Code local settings
 .claude/settings.local.json
 

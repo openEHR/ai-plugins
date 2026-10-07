@@ -31,11 +31,12 @@ Add the marketplace from this repository (or a fork), then install `openehr-spec
 
 ### User-only action skills
 
-Two skills run only when you type them: they do not auto-trigger, and their descriptions stay out of the session context. Each wraps a knowledge skill: `regen-classes` uses `class-generation`, and `publish` follows the preview step in `authoring`.
+Three skills run only when you type them: they do not auto-trigger, and their descriptions stay out of the session context. `regen-classes` wraps `class-generation`, and `publish` follows the preview step in `authoring`; `scaffold` carries its own template set.
 
 | Skill | Argument | Action |
 |-------|----------|--------|
 | `/openehr-specs:regen-classes` | `<schema-id> [-d <dependency-schema> ...]` | Regenerate class tables and diagrams via `bmm-publisher` (needs Docker) |
+| `/openehr-specs:scaffold` | `[component id]` | Initialise a specification repo, or upgrade an existing one, to the standard file set: `AGENTS.md` (plugin table, build, Jira-key commit conventions), `.claude/` settings, `manifest.json`, `.gitignore`, `.asciidoctorconfig`, `LICENSE`, `README.md`. `.claude/settings.json` registers the `openehr` marketplace, enables four plugins and pre-approves `git add`, `git commit`, `git diff`, WebFetch on `specifications.openehr.org` and three read-only Atlassian MCP calls. Plans before it writes, and records a revision in `.claude/scaffold.json` so later runs can upgrade the repo. Needs `python3`; written for Claude Code (its script path comes from `${CLAUDE_SKILL_DIR}`) |
 | `/openehr-specs:publish` | `<component>` | Build a local HTML preview with the published `ghcr.io/openehr/asciidoctor` image (needs Docker and a sibling `specifications-AA_GLOBAL` checkout; checks that the HTML was rebuilt and the class tables resolved) |
 
 ## Subagents
@@ -61,7 +62,7 @@ In Claude Code, each skill is namespaced by the plugin, so it is invoked as **`/
    /openehr-specs:class-generation
    ```
 2. **Browse the group**: type `/openehr` in the slash menu to list the plugin's skills together, or fuzzy-type a name (e.g. `review`) to jump straight to it.
-3. **Let it trigger automatically**: Claude loads the right skill (or dispatches the right subagent) when your request matches its description. For example, "review this openEHR spec before release" activates `review` / `spec-reviewer`, and "regenerate the class tables for specifications-BASE" activates `class-generation`, with no slash command needed. (The action skills `/openehr-specs:publish` and `/openehr-specs:regen-classes` are user-only and never auto-trigger.)
+3. **Let it trigger automatically**: Claude loads the right skill (or dispatches the right subagent) when your request matches its description. For example, "review this openEHR spec before release" activates `review` / `spec-reviewer`, and "regenerate the class tables for specifications-BASE" activates `class-generation`, with no slash command needed. (The action skills `/openehr-specs:publish`, `/openehr-specs:regen-classes` and `/openehr-specs:scaffold` are user-only and never auto-trigger.)
 
 Most skills act on the spec you are working in, so run them from a checkout of a `specifications-XX` repo (or name the target spec/file in your request).
 

@@ -1,0 +1,158 @@
+{
+  "id": "openehr-specs/scaffold",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "released": "2026-10-07",
+      "summary": "Initial set: AGENTS.md (plugin, build, conventions regions), .claude/CLAUDE.md and settings.json, manifest.json, .gitignore, .asciidoctorconfig, LICENSE, README.md.",
+      "digest": "27be97e72c5c80329ed51091f36c7db81bae89732bcfa133ea7203f0b2a697ae"
+    }
+  ],
+  "variables": {
+    "component": {
+      "required": true,
+      "pattern": "^[A-Z][A-Z0-9]*(-[A-Z0-9]+)*$",
+      "description": "Component id, as in manifest.json `id` (BASE, RM, ITS-REST)."
+    },
+    "repo_name": {
+      "default": "specifications-{{component}}",
+      "description": "Repository name."
+    },
+    "component_title": {
+      "required": true,
+      "description": "Formal component name, for example 'Base Model'."
+    },
+    "component_description": {
+      "default": "openEHR {{component_title}} Component",
+      "description": "One-line description used by manifest.json and README.md."
+    },
+    "keywords": {
+      "default": "{{component_title|lower}}, openehr",
+      "description": "Component keywords for manifest.json."
+    },
+    "jira_project": {
+      "default": "SPEC{{component}}",
+      "pattern": "^SPEC[A-Z]+$",
+      "description": "Jira project key of the component's change requests (SPECBASE, SPECRM). Not derivable for hyphenated ids: ITS-REST uses SPECITS."
+    },
+    "jira_open_issues": {
+      "default": "",
+      "description": "Jira filter id of the open-issues list (manifest.json jira.open_issues); empty until it exists."
+    },
+    "first_release": {
+      "default": "0.1.0",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Id of the first release entry in manifest.json. Planning and Development use 0.y.z (see skill governance)."
+    },
+    "published_url": {
+      "default": "https://specifications.openehr.org/releases/{{component}}/",
+      "description": "Where the rendered specifications are published."
+    },
+    "default_branch": {
+      "default": "master",
+      "description": "Default branch of the repository (master in every existing specifications-* repo)."
+    },
+    "license": {
+      "default": "cc-by-sa-3.0",
+      "default_if": [
+        {
+          "var": "component",
+          "matches": "^ITS(-|$)",
+          "value": "apache-2.0"
+        }
+      ],
+      "choices": [
+        "cc-by-sa-3.0",
+        "apache-2.0"
+      ],
+      "description": "Licence: cc-by-sa-3.0 for the AsciiDoc specifications, apache-2.0 for the ITS-* technical artefacts."
+    },
+    "license_name": {
+      "derived": {
+        "from": "license",
+        "map": {
+          "cc-by-sa-3.0": "Creative Commons Attribution-ShareAlike 3.0 Unported",
+          "apache-2.0": "Apache License 2.0"
+        }
+      },
+      "description": "Display name of the licence."
+    },
+    "bmm_schema_id": {
+      "default": "",
+      "pattern": "^$|^openehr_[a-z0-9_]+_[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "BMM schema id (openehr_base_1.3.0) when the repo holds computable/BMM/<id>.bmm.json; empty otherwise. Switches on the class-generation sections."
+    },
+    "documents": {
+      "default": "none yet (add them to `manifest.json`)",
+      "description": "Published document ids, read from manifest.json when present."
+    }
+  },
+  "files": [
+    {
+      "id": "agents",
+      "target": "AGENTS.md",
+      "template": "agents-md.tmpl",
+      "strategy": "regions"
+    },
+    {
+      "id": "claude-md",
+      "target": ".claude/CLAUDE.md",
+      "template": "claude-md.tmpl",
+      "strategy": "whole"
+    },
+    {
+      "id": "claude-settings",
+      "target": ".claude/settings.json",
+      "template": "claude-settings.json.tmpl",
+      "strategy": "json-merge"
+    },
+    {
+      "id": "manifest",
+      "target": "manifest.json",
+      "template": "manifest-json.tmpl",
+      "strategy": "seed"
+    },
+    {
+      "id": "gitignore",
+      "target": ".gitignore",
+      "template": "gitignore.tmpl",
+      "strategy": "ensure-lines"
+    },
+    {
+      "id": "asciidoctorconfig",
+      "target": ".asciidoctorconfig",
+      "template": "asciidoctorconfig.tmpl",
+      "strategy": "ensure-lines",
+      "key": "^:!?([A-Za-z0-9_-]+)!?:"
+    },
+    {
+      "id": "license",
+      "target": "LICENSE",
+      "template_var": "license",
+      "templates": {
+        "cc-by-sa-3.0": "license-cc-by-sa-3.0.txt",
+        "apache-2.0": "license-apache-2.0.txt"
+      },
+      "strategy": "seed",
+      "alternatives": [
+        "LICENSE.md",
+        "LICENSE.txt",
+        "LICENCE",
+        "COPYING"
+      ]
+    },
+    {
+      "id": "readme",
+      "target": "README.md",
+      "template": "readme-md.tmpl",
+      "strategy": "seed",
+      "alternatives": [
+        "README.adoc",
+        "README",
+        "README.rst",
+        "README.txt"
+      ]
+    }
+  ]
+}

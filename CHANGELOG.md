@@ -4,9 +4,15 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ## Unreleased
 
+### Added
+
+- `scaffold` skill (user-only, `/openehr-specs:scaffold`): initialises a specification repository, or brings an existing one up to the standard file set. It installs `AGENTS.md` (the `openehr-specs@openehr` plugin table, the Docker build invocation, and commit and branch conventions built around the Jira ticket key, `Changes for SPECXX-NN - <what changed>`), `.claude/CLAUDE.md`, `.claude/settings.json` (registers the `openehr` marketplace, enables `openehr-specs` and three other plugins, and pre-approves `git add`, `git commit`, `git diff`, WebFetch on `specifications.openehr.org` and three read-only Atlassian MCP calls, as BASE, RM and ITS-REST do today), `manifest.json`, `.gitignore`, `.asciidoctorconfig`, `LICENSE` (CC BY-SA 3.0, or Apache 2.0 for `ITS-*`) and `README.md`. It plans before it writes, reads the component, title, Jira key, BMM schema and licence from the repo, and never overwrites a hand-edited file without being told to.
+- The file set is versioned: `assets/template-set.json` holds a revision, the variables and a strategy per file (seed, whole, JSON merge, ensure-lines, managed regions in `AGENTS.md`), and each repo records its revision and file hashes in `.claude/scaffold.json`, so a later run calculates the migration path from the recorded revision to the latest. `scripts/scaffold.py` needs `python3` (standard library only).
+
 ### Changed
 
 - `publish` and `regen-classes` moved from `commands/` to `skills/` as user-only skills (`disable-model-invocation: true`). Claude Code treats `commands/` as the older format, so the plugin no longer ships that directory. The `/openehr-specs:publish` and `/openehr-specs:regen-classes` names are unchanged.
+- `scripts/validate.py` also checks the `scaffold` template set (templates exist and render, revisions have migration files, the digest matches), and CI runs the unit tests in `scripts/test_scaffold.py`.
 - `scripts/validate.py` no longer checks a `commands/` directory; the user-only skills are validated as skills.
 - `publish`, `authoring`, and the release checklist run the published `ghcr.io/openehr/asciidoctor` image instead of `openehr/asciidoctor`, which is only the tag of a local `docker build`.
 - `publish` runs only the published image; the local-script branch is gone. That branch ran `spec_publish.sh -f -v` without `-q`, so every `{pkg}` class-table include failed (70 errors on BASE, with about 80% of the table blocks missing from the HTML) while the script still printed "generated" and exited 0. The image's entrypoint passes `-q`; on BASE the same image builds with no errors. The AA_GLOBAL checkout is still required, because the boilerplate and reference definitions are read from it. `authoring` shows the image first and says to pass `-q` with a local toolchain.

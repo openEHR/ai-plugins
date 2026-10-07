@@ -42,7 +42,7 @@ In Claude Code, skills are namespaced by the plugin and invoked as `/openehr-spe
 
 Type `/openehr` in the slash menu to list the available skills, or describe the task (for example, "review this openEHR spec before release") and Claude loads the matching skill when the request fits its description.
 
-The plugin also ships **subagents** (`spec-reviewer`, `xref-auditor`, `identifier-grounding`) that Claude dispatches for heavy, multi-file, or verification work, and two **user-only action skills** (`/openehr-specs:regen-classes`, `/openehr-specs:publish`) that run only when you type them. The [plugin README](plugins/openehr-specs/README.md) has the full inventory and invocation details.
+The plugin also ships **subagents** (`spec-reviewer`, `xref-auditor`, `identifier-grounding`) that Claude dispatches for heavy, multi-file, or verification work, and three **user-only action skills** (`/openehr-specs:regen-classes`, `/openehr-specs:publish`, `/openehr-specs:scaffold`) that run only when you type them. The [plugin README](plugins/openehr-specs/README.md) has the full inventory and invocation details.
 
 ## Documentation
 
