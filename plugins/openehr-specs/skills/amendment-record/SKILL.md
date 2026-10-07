@@ -7,6 +7,7 @@ description: >
   CR/PR reference, mark a release boundary, or fix the `latest_issue`/`latest_issue_date` anchors.
   Not for the ITS-REST amendment record (use its-rest), general spec authoring (use authoring), the
   release process (use governance), or non-openEHR documents.
+argument-hint: "[SPECXX-NN[,SPECPR-NN] — one-line summary of the change]"
 ---
 
 # openEHR Specification Amendment Record Authoring
@@ -103,12 +104,24 @@ The issue number tracks the **document version**, independent of the component r
 | Error corrections, typos, clarifications, formatting | Patch (x.y.**Z**) | 5.2.0 → 5.2.1 |
 | Major restructuring or rewrite | Major (**X**.y.z) | 4.x.x → 5.0.0 |
 
+## Direct Invocation
+
+Run the checklist below from `/openehr-specs:amendment-record <SPECXX-NN[,SPECPR-NN] — summary>` or from
+a plain request ("add an amendment entry for SPECRM-142"). Take the CR/PR key(s) and the change
+description from `$ARGUMENTS`; when it is empty, take them from the user's message. Ask for anything
+still missing. Example arguments:
+
+```text
+SPECRM-142 — add tags to LOCATABLE; addresses SPECPR-401
+```
+
 ## Checklist for Adding an Entry
 
-1. Read the existing amendment record to understand the current version and format. Ask the author for the raiser name(s) if not given, and copy the name style of the existing entries.
-2. Choose the Issue number: bump patch, minor, or major per the table above, or reuse the top entry's number when the change ships in the same version increment (see "Grouping Multiple Changes" in `references/conventions.md`). If the right bump is unclear, state the assumed bump and let the author confirm.
+1. Locate the spec's `master00-amendment_record.adoc` (ask which spec when several are in scope) and read it to understand the current version and format. Ask the author for the raiser name(s) if not given, and copy the name style of the existing entries.
+2. Choose the Issue number: bump patch, minor, or major per the table above, or reuse the top entry's number when the change ships in the same version increment (see "Grouping Multiple Changes" in `references/conventions.md`). If the right bump is unclear, state the assumed bump and proceed; the diff in step 8 lets the author correct it. Run `git -C <repo> status --short` and `git -C <repo> diff --stat` when the change is already in the working tree, so the entry describes what actually changed.
 3. Add the new entry at the **top** of the table (after the header row)
 4. Move `[[latest_issue]]` and `[[latest_issue_date]]` anchors to the new entry. When the version is reused, leave the Issue cell of the previous top entry blank.
-5. Reference all relevant Jira CRs and PRs (see `references/conventions.md` for keys/phrasing)
+5. Reference all relevant Jira CRs and PRs (see `references/conventions.md` for keys, phrasing, and detail-text style)
 6. If this is the first entry after a release, add a release boundary row directly below the new entry, labelled with the release just completed (the newest release with a date in the `releases` array of `manifest.json`; ask the author if unsure)
-7. Use today's date as the completion date unless the author gives one (ask if uncertain), in the format `dd Mon yyyy` (e.g., `17 Nov 2022`)
+7. Use today's date as the completion date unless the author gives one (ask if uncertain; do not guess), in the format `dd Mon yyyy` (e.g., `17 Nov 2022`)
+8. When invoked directly, show the diff of the record (`git -C <repo> diff -- <record>`) and stop; do not publish or commit unless asked. Inside a larger flow (a release, an authoring task), return to that flow instead.

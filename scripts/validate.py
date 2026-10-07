@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate marketplace and plugin manifests, and skill/agent/command frontmatter.
+"""Validate marketplace and plugin manifests, and skill/agent frontmatter.
 
 Checks both Claude Code (``.claude-plugin/``) and Cursor (``.cursor-plugin/``) layouts.
 
@@ -32,7 +32,7 @@ def load_json(path: Path, label: str) -> dict | None:
 
 def validate_skills(plugin_dir: Path):
     skills_dir = plugin_dir / "skills"
-    # Plugins may ship commands/agents only; skip when no skills directory.
+    # Plugins may ship agents only; skip when no skills directory.
     if not skills_dir.is_dir():
         return
     for skill_dir in sorted(d for d in skills_dir.iterdir() if d.is_dir()):
@@ -55,9 +55,9 @@ def validate_skills(plugin_dir: Path):
             err(f"{rel}: frontmatter name '{fm_name.group(1)}' != directory '{skill_dir.name}'")
 
 
-def validate_md_components(plugin_dir: Path, subdir: str, *, require_name: bool):
-    """Validate flat .md components (agents/, commands/): frontmatter present with the
-    required fields, and any `name` matches the filename stem."""
+def validate_md_components(plugin_dir: Path, subdir: str):
+    """Validate flat .md components (agents/): frontmatter present with the required
+    fields, and any `name` matches the filename stem."""
     comp_dir = plugin_dir / subdir
     if not comp_dir.is_dir():
         return
@@ -68,7 +68,7 @@ def validate_md_components(plugin_dir: Path, subdir: str, *, require_name: bool)
             err(f"{rel}: missing YAML frontmatter")
             continue
         front = m.group(1)
-        for field in (("name", "description") if require_name else ("description",)):
+        for field in ("name", "description"):
             if not re.search(rf"^{field}:", front, re.MULTILINE):
                 err(f"{rel}: frontmatter missing '{field}'")
         fm_name = re.search(r"^name:\s*(\S+)", front, re.MULTILINE)
@@ -122,8 +122,7 @@ def validate_plugin_entry(name: str, version: str, plugin_dir: Path, manifest_su
 
     validate_manifest_paths(plugin_dir, name, plugin)
     validate_skills(plugin_dir)
-    validate_md_components(plugin_dir, "agents", require_name=True)
-    validate_md_components(plugin_dir, "commands", require_name=False)
+    validate_md_components(plugin_dir, "agents")
 
 
 def validate_marketplace(mp_path: Path, manifest_subdir: str, label: str):
@@ -195,4 +194,4 @@ if __name__ == "__main__":
         for e in errors:
             print(f"  - {e}")
         sys.exit(1)
-    print("OK: Claude and Cursor manifests, plugin metadata, skills, agents, and commands are valid")
+    print("OK: Claude and Cursor manifests, plugin metadata, skills, and agents are valid")
