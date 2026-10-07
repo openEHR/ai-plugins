@@ -4,8 +4,8 @@ Each plugin is versioned independently using [semver](https://semver.org), adapt
 
 | Bump | When |
 |------|------|
-| **Major** | A skill, subagent, or command is removed or renamed, or its behavior or scope changes incompatibly |
-| **Minor** | A skill, subagent, or command is added, or an existing one's coverage is meaningfully expanded |
+| **Major** | A skill (including a user-only action skill) or subagent is removed or renamed, or its behavior or scope changes incompatibly |
+| **Minor** | A skill or subagent is added, or an existing one's coverage is meaningfully expanded |
 | **Patch** | Typos, clarifications, and reference fixes, with no change in behavior |
 
 ## Release Steps

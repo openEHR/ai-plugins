@@ -19,19 +19,18 @@ ai-plugins/
     ├── .claude-plugin/plugin.json     # Claude Code plugin manifest
     ├── .cursor-plugin/plugin.json     # Cursor plugin manifest
     ├── README.md                      # Plugin purpose, install, and component inventory
-    ├── skills/<skill-name>/           # Knowledge/workflow skills (model- or user-invoked)
+    ├── skills/<skill-name>/           # Knowledge/workflow skills; user-only actions set disable-model-invocation: true
     │   ├── SKILL.md                   # Skill definition (YAML frontmatter + body)
     │   └── references/                # Optional supplementary content
-    ├── agents/<agent>.md              # Autonomous subagents (context-isolated, multi-file)
-    └── commands/<command>.md          # User-invoked action commands (disable-model-invocation)
+    └── agents/<agent>.md              # Autonomous subagents (context-isolated, multi-file)
 ```
 
-Current plugins: `openehr-specs` (skills, subagents, and commands). `plugins/openehr-specs/README.md` is its inventory: update it, and the root `README.md`, whenever a component is added, removed, or renamed. `validate.py` checks neither.
+Current plugins: `openehr-specs` (skills, including user-only action skills, and subagents). `plugins/openehr-specs/README.md` is its inventory: update it, and the root `README.md`, whenever a component is added, removed, or renamed. `validate.py` checks neither.
 
 ## Key Conventions
 
-- Plugin names: `openehr-<domain>` (mandatory prefix — flat global namespace); skill names: terse activity nouns with no prefix (auto-namespaced as `<plugin>:<skill>`). Commands and subagents follow the same no-prefix rule (`spec-reviewer` is the one exception).
-- Component choice follows the *nature of the work*: **skills** = knowledge/workflows (model- or user-invoked); **commands** (`commands/`) = user-initiated actions, marked `disable-model-invocation: true` so they don't compete with knowledge-skill triggering; **subagents** (`agents/`) = context-heavy, multi-file, or adversarial work that would otherwise pollute the main context. Commands/agents reference their sibling knowledge skill rather than duplicating it.
+- Plugin names: `openehr-<domain>` (mandatory prefix — flat global namespace); skill names: terse activity nouns with no prefix (auto-namespaced as `<plugin>:<skill>`). User-only action skills and subagents follow the same no-prefix rule (`spec-reviewer` is the one exception).
+- Component choice follows the *nature of the work*: **skills** = knowledge/workflows (model- or user-invoked); **user-only action skills** (`publish`, `regen-classes`) = user-initiated actions, also in `skills/`, marked `disable-model-invocation: true` so their descriptions stay out of context and they don't compete with knowledge-skill triggering (Claude Code treats `commands/` as the older format, so new actions are skills); **subagents** (`agents/`) = context-heavy, multi-file, or adversarial work that would otherwise pollute the main context. Action skills and agents reference their sibling knowledge skill rather than duplicating it.
 - Skill `description` frontmatter is lean (~50–75 words): one what+scope sentence → a few representative triggers → short "Not for …" anti-triggers routing to the right sibling/plugin.
 - Keep each `SKILL.md` body a lean overview (quick-reference + pointers); push bulky detail (tables, templates, format specs) into `references/` so it loads only on demand.
 - Versions must stay in sync across both plugin manifests (`.claude-plugin/` and `.cursor-plugin/`), both marketplace entries, and the release tag (`{name}--v{version}`).
@@ -45,14 +44,14 @@ Full details: [docs/skill-authoring.md](docs/skill-authoring.md)
 
 Pure-content repository (JSON manifests + markdown skills) — no build step, package manager, or test suite.
 
-- **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent/command frontmatter fields, component paths — runs in CI; it does not check description length, inventories, or the release tag)
+- **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent frontmatter fields, component paths — runs in CI; it does not check description length, inventories, or the release tag)
 - **Local testing**: [docs/testing.md](docs/testing.md); **versioning/releases**: [docs/versioning.md](docs/versioning.md)
 - **End-user installation**: [docs/install.md](docs/install.md)
 - **Generating/editing AsciiDoc for `specifications-XX` repos**: follow [docs/spec-style-guide.md](docs/spec-style-guide.md); skill bodies must agree with it — when changing one, check the other.
 
 ## Component Dependencies
 
-The skills are pure content; the subagents and commands rely on external tools and degrade
+The skills are pure content; the subagents and the `publish` and `regen-classes` action skills rely on external tools and degrade
 gracefully when one is absent (each says so in its prompt):
 
 - **`spec-reviewer`, `xref-auditor`** — need a `specifications-XX` checkout and (for attribute resolution) the sibling `specifications-AA_GLOBAL`.
@@ -66,7 +65,7 @@ None are bundled (the `openehr-assistant` MCP is interactively authenticated, no
 
 - **`specifications-AA_GLOBAL`**: shared infrastructure (boilerplate, publishing scripts, styles) consumed by all spec repos
 - **`specifications-XX`**: individual component repos (RM, AM, BASE, etc.) where specs live
-- Changes to this repo never touch those repos. The plugins do edit them (for example the `authoring` skill and `/openehr-specs:amend`), but only when a user runs them inside a checkout.
+- Changes to this repo never touch those repos. The plugins do edit them (for example the `authoring` and `amendment-record` skills), but only when a user runs them inside a checkout.
 
 ## Git
 

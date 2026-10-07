@@ -26,7 +26,7 @@ A restart of the session is required for an update to take effect.
 
 ### Inspect
 
-To see a plugin's component inventory (skills, commands, agents) and its projected token cost:
+To see a plugin's component inventory (skills, agents) and its projected token cost:
 
 ```bash
 claude plugin details openehr-specs

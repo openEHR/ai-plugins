@@ -4,6 +4,23 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ## Unreleased
 
+### Changed
+
+- `publish` and `regen-classes` moved from `commands/` to `skills/` as user-only skills (`disable-model-invocation: true`). Claude Code treats `commands/` as the older format, so the plugin no longer ships that directory. The `/openehr-specs:publish` and `/openehr-specs:regen-classes` names are unchanged.
+- `scripts/validate.py` no longer checks a `commands/` directory; the user-only skills are validated as skills.
+- `publish` and `regen-classes` keep only the runnable steps and guardrails; the background stays in `authoring` and `class-generation`.
+- `amendment-record` takes over the `amend` command: it accepts the same arguments (`argument-hint`), locates the amendment record, checks the working-tree diff, and stops after showing the diff. It no longer pre-approves `Read`, `Edit`, and `Bash` as the command did.
+
+### Fixed
+
+- `publish` no longer lists a `[spec-id]` argument: the publisher builds whole components, and it rebuilds every sibling repo when given none, so the skill now stops and asks when `$ARGUMENTS` is empty. Its guardrail names the release label (`-l Release-N.N.N`) as the release flag.
+- `regen-classes` keeps the layout rule (`legacy-adoc` or `asciidoc`) and stops and asks when `$ARGUMENTS` is empty.
+- `amendment-record`: a direct run states an assumed version bump and proceeds instead of pausing, and it stops after the diff only when invoked directly, not inside a release or authoring flow.
+
+### Removed
+
+- `/openehr-specs:amend`, folded into `amendment-record`. Use `/openehr-specs:amendment-record <SPECXX-NN[,SPECPR-NN] — summary>` or a plain request. Removing a user-facing entry point is a major change under [docs/versioning.md](docs/versioning.md); the maintainer decides the bump at release.
+
 ## openehr-specs 0.3.0 (2026-10-07)
 
 ### Changed

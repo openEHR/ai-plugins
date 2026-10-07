@@ -34,7 +34,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org): `type(scope): s
 
 1. Branch from `main`.
 2. Run the validation script locally: `python3 scripts/validate.py`
-3. If you changed plugin content, add a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md). Do not bump the version; maintainers do that at release ([docs/versioning.md](docs/versioning.md)). If you added, removed, or renamed a skill, subagent, or command, also update the inventories in the plugin's `README.md` and in the root [README.md](README.md).
+3. If you changed plugin content, add a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md). Do not bump the version; maintainers do that at release ([docs/versioning.md](docs/versioning.md)). If you added, removed, or renamed a skill or subagent, also update the inventories in the plugin's `README.md` and in the root [README.md](README.md).
 4. Test skill triggering locally ([docs/testing.md](docs/testing.md)).
 5. Open the PR and complete the checklist in the template. CI must pass.
 

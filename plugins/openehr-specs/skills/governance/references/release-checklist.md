@@ -10,7 +10,7 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
   - PRs fixed: `<jira-home>/projects/SPECPR/versions/NNNNN`
   - CRs done: `<jira-home>/projects/SPEC<COMPONENT>/versions/NNNNN`
 - [ ] All specification text changes are committed
-- [ ] All amendment records are updated with CR/PR references (amendment-record skill; the user can run `/openehr-specs:amend`)
+- [ ] All amendment records are updated with CR/PR references (amendment-record skill; the user can run `/openehr-specs:amendment-record`)
 - [ ] All diagrams are up to date (generated ones via the class-generation skill; the user can run `/openehr-specs:regen-classes`)
 - [ ] Run the `spec-reviewer` and `xref-auditor` subagents on each specification in the component; resolve all ERRORs, undefined attributes, and broken anchors
 

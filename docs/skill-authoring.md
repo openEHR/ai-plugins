@@ -6,7 +6,7 @@
 - **Marketplace `name`**: `openehr` — short attribution suffix in install commands (`/plugin install openehr-specs@openehr`).
 - **Plugin names**: `openehr-<domain>` (e.g. `openehr-specs`). The `openehr-` prefix is mandatory: Claude Code plugin names live in a flat global namespace, so the prefix is what disambiguates them when users have plugins from multiple sources installed.
 - **Skill names**: terse activity nouns with **no** `openehr-` or `spec-` prefix (e.g. `authoring`, `review`, `governance`). Skills are automatically namespaced as `<plugin>:<skill>` (`openehr-specs:review`), so repeating the plugin's words in a skill name is redundant.
-- **Command and subagent names**: the same no-prefix rule applies. Name a command for its action (`amend`, `publish`, `regen-classes`) and a subagent for its job (`xref-auditor`, `identifier-grounding`). `spec-reviewer` is the one exception and keeps its name, because renaming it would be a major bump (see [versioning.md](versioning.md)).
+- **Action-skill and subagent names**: the same no-prefix rule applies. Name a user-only action skill for its action (`publish`, `regen-classes`) and a subagent for its job (`xref-auditor`, `identifier-grounding`). `spec-reviewer` is the one exception and keeps its name, because renaming it would be a major bump (see [versioning.md](versioning.md)).
 - Do not duplicate tooling that already exists elsewhere in the community (e.g. CKM/clinical-modeling MCP and plugins are provided by Cadasto) — plugins here cover ground the Foundation itself owns, such as specification authoring and (potentially) conformance.
 
 ## Plugin Layout
@@ -15,15 +15,14 @@ Each plugin lives under `plugins/<plugin-name>/` and must contain:
 
 - `.claude-plugin/plugin.json`: Claude Code plugin manifest (name, version, description, author, license, keywords)
 - `.cursor-plugin/plugin.json`: Cursor plugin manifest (keep name, version, and metadata in sync with the Claude manifest; declare `skills` as `./skills/`)
-- `README.md`: purpose, installation, and component inventory (skills, subagents, commands)
+- `README.md`: purpose, installation, and component inventory (skills, subagents)
 - `skills/`: one subdirectory per skill, each with a `SKILL.md` (YAML frontmatter and markdown body) and an optional `references/` subdirectory for supplementary content
 
 A plugin may also contain:
 
 - `agents/`: one `<agent>.md` per subagent
-- `commands/`: one `<command>.md` per user-invoked action
 
-See [Subagent and command authoring](#subagent-and-command-authoring) below.
+See [Subagent and action-skill authoring](#subagent-and-action-skill-authoring) below.
 
 ## Marketplace Manifest
 
@@ -42,12 +41,12 @@ The plugin manifests, the marketplace entries, and the release tag must all carr
 - Reference files go in `references/` next to the SKILL.md; keep `SKILL.md` bodies focused (none of the current ones exceeds 300 lines) and push bulky supporting material to `references/`.
 - Skill bodies that generate or review AsciiDoc must agree with the [spec style guide](spec-style-guide.md) — when changing one, check the other.
 
-## Subagent and Command Authoring
+## Subagent and Action-Skill Authoring
 
-- Choose by the nature of the work: a **skill** holds knowledge or a workflow, a **command** is an action the user starts, and a **subagent** takes on context-heavy, multi-file, or adversarial work that would otherwise fill the main context.
-- Both are flat markdown files with YAML frontmatter. `scripts/validate.py` requires `name` and `description` for a subagent and `description` for a command, and checks that any `name` matches the filename.
-- Mark every command `disable-model-invocation: true`, so it does not compete with knowledge skills for triggering. CI does not check this.
-- Commands and subagents point to the sibling skill that holds the knowledge; they do not repeat it.
-- The ~50–75 word guideline above is written for skills. Write a subagent `description` as one line: the trigger conditions, then two to four typical triggers in prose, then a pointer to a "When to invoke" section in the agent body that holds the worked scenarios. Keep `: ` and ` #` out of the plain YAML value.
+- Choose by the nature of the work: a **skill** holds knowledge or a workflow, a **user-only action skill** is an action the user starts, and a **subagent** takes on context-heavy, multi-file, or adversarial work that would otherwise fill the main context.
+- An action skill is an ordinary `skills/<name>/SKILL.md` with `disable-model-invocation: true`. Claude Code's [plugin components docs](https://code.claude.com/docs/en/plugins/components.md) call `commands/` the older format and say to write new actions as skills. The flag keeps the description out of context, so write it as a short menu label: trigger phrases are for model-invoked skills. CI does not check the flag.
+- A subagent is a flat markdown file with YAML frontmatter. `scripts/validate.py` requires `name` and `description` and checks that `name` matches the filename.
+- Action skills and subagents point to the sibling skill that holds the knowledge; they do not repeat it. Keep an action skill to the runnable steps and its guardrails.
+- The ~50–75 word guideline above is written for knowledge skills. Write a subagent `description` as one line: the trigger conditions, then two to four typical triggers in prose, then a pointer to a "When to invoke" section in the agent body that holds the worked scenarios. Keep `: ` and ` #` out of the plain YAML value.
 - Give a subagent only the `tools` it needs. A verifier gets read-only tools; name an MCP tool under both server prefixes (`mcp__<server>__<tool>` and `mcp__plugin_<plugin>_<server>__<tool>`).
 - State in the prompt what the component does when an external tool is missing. For example, `xref-auditor` marks cross-spec anchors `UNCHECKED` when it has no web access.

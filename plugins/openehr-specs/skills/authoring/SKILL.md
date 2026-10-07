@@ -225,7 +225,7 @@ Add the new specification entry to the `specifications` array, with `id`, `title
 ### Step 7: Preview locally
 
 Build a local HTML preview after creating or editing a spec. The user can run
-`/openehr-specs:publish <component> [spec-id]` (user-only; it wraps the commands below), or run them
+`/openehr-specs:publish <component>` (user-only; it wraps the commands below), or run them
 from the parent directory that contains all `specifications-*` repos. `-f` forces regeneration, `-v`
 is verbose, and `XX` is the component (for example `RM`):
 
@@ -262,9 +262,8 @@ publisher with `-l <label>` (see the **governance** skill).
 ### Amendment Record Updates
 
 Add an entry to the spec's amendment record for every change, following the **amendment-record**
-skill (entry order, anchors, version-bump table, Jira references). The user can run
-`/openehr-specs:amend <SPECXX-NN[,SPECPR-NN] — summary>` to have the entry added; it is a user-only
-command, so suggest it rather than invoking it.
+skill (entry order, anchors, version-bump table, Jira references). The user can also run
+`/openehr-specs:amendment-record <SPECXX-NN[,SPECPR-NN] — summary>` to have the entry added directly.
 
 ### Diagrams
 

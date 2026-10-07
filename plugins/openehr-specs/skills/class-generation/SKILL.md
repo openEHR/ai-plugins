@@ -113,7 +113,7 @@ image::ROOT:uml/classes/COMPOSITION.svg[]
 5. **Verify** by publishing the spec (see the `authoring` skill) and confirming class tables and
    diagrams render and cross-references resolve.
 
-The user-only `/openehr-specs:regen-classes` command covers steps 1 to 3 only (output to `./out`, no
+The user-only `/openehr-specs:regen-classes` skill covers steps 1 to 3 only (output to `./out`, no
 placement, no commit). When the user has already run it, continue from step 4. For a local preview,
 the user can run `/openehr-specs:publish <component>`.
 

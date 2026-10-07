@@ -116,4 +116,4 @@ Check each changed file against `references/file-formats.md`:
 - Use `authoring` for the AsciiDoc documents in `specifications-ITS-REST/docs/` (simplified_formats, smart_app_launch).
 - Leave the PHP build tooling internals in `development/` alone; consult `.junie/guidelines.md` for those. The `make` commands above are in scope.
 - Do not cover other `specifications-XX` repositories.
-- Do not apply the AsciiDoc-only tools to these sources. The `review` skill, the `spec-reviewer` and `xref-auditor` subagents, and the `/openehr-specs:amend` command expect AsciiDoc sources (`master*.adoc`); hardcoded spec URLs and the HTML amendment record are correct here.
+- Do not apply the AsciiDoc-only tools to these sources. The `review` skill, the `spec-reviewer` and `xref-auditor` subagents, and the `amendment-record` skill expect AsciiDoc sources (`master*.adoc`); hardcoded spec URLs and the HTML amendment record are correct here.
