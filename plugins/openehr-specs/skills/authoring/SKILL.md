@@ -225,19 +225,24 @@ Add the new specification entry to the `specifications` array, with `id`, `title
 ### Step 7: Preview locally
 
 Build a local HTML preview after creating or editing a spec. The user can run
-`/openehr-specs:publish <component>` (user-only; it wraps the commands below), or run them
-from the parent directory that contains all `specifications-*` repos. `-f` forces regeneration, `-v`
-is verbose, and `XX` is the component (for example `RM`):
+`/openehr-specs:publish <component>` (user-only; it wraps the command below), or run it from the
+parent directory that contains all `specifications-*` repos, with `XX` as the component (for example `RM`):
 
 ```bash
-./specifications-AA_GLOBAL/bin/spec_publish.sh -f -v XX
-# Or via Docker:
-docker run -u $(id -u):$(id -g) -v "$(pwd):/documents/" ghcr.io/openehr/asciidoctor development XX
+docker run --rm -u $(id -u):$(id -g) -v "$(pwd):/documents/" ghcr.io/openehr/asciidoctor development XX
 ```
 
-The script prints `generated <file>` and exits 0 even when `asciidoctor` is missing or failed, so check
-that each expected `docs/<spec>.html` is new or has a later modification time than before the build.
-The preview does not tag or deploy a release; that is the **governance** skill's process.
+The image bundles the toolchain, but the boilerplate and reference definitions are still read from the
+sibling `specifications-AA_GLOBAL/` checkout. Its entrypoint is `spec_publish.sh -f -r -v -t -q -l`, so
+the first argument is the release. To use a locally installed toolchain instead, run
+`./specifications-AA_GLOBAL/bin/spec_publish.sh -f -q -v XX`; always pass `-q`, because without it
+every `{pkg}` class-table include fails.
+
+The build prints `generated <file>` and exits 0 even when includes are missing or `asciidoctor` failed.
+Check that each expected `docs/<spec>.html` has a later modification time than before the build and
+that the log has no `ERROR` or `include file not found` lines. The build rewrites the tracked
+`docs/*.html` artefacts; do not stage them. The preview does not tag or deploy a release; that is the
+**governance** skill's process.
 
 ## Editing Existing Specifications
 

@@ -13,7 +13,7 @@ Install the marketplace from your working copy (inside a Claude Code session):
 
 Then exercise the skills against a checkout of a `specifications-XX` repo: confirm each skill triggers on its documented phrases (see the `description` frontmatter) and does **not** trigger on its anti-trigger cases.
 
-The user-only action skills (`publish`, `regen-classes`) run only when you type them (`/openehr-specs:<skill>`): confirm that a plain request does not start one. Subagents are dispatched when a request matches their `description`, and you can also ask for one by name: confirm both. `regen-classes` needs Docker and `publish` needs a sibling `specifications-AA_GLOBAL` checkout (see the [plugin README](../plugins/openehr-specs/README.md)).
+The user-only action skills (`publish`, `regen-classes`) run only when you type them (`/openehr-specs:<skill>`): confirm that a plain request does not start one. Subagents are dispatched when a request matches their `description`, and you can also ask for one by name: confirm both. Both need Docker, and `publish` also needs a sibling `specifications-AA_GLOBAL` checkout (see the [plugin README](../plugins/openehr-specs/README.md)).
 
 After editing skill content, reinstall (or restart the session) to pick up changes.
 
