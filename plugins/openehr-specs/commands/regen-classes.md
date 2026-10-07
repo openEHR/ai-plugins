@@ -18,8 +18,8 @@ Arguments: `$ARGUMENTS` — the schema id (without `.bmm.json`, e.g. `openehr_rm
 
 Do the following:
 
-1. **Confirm Docker is available** (`docker --version`). If not, point the user to the local
-   `bmm-publisher` dev-container path in `references/bmm-publisher.md` and stop.
+1. **Confirm Docker is available** (`docker --version`). If not, tell the user Docker is
+   required (the `bmm-publisher` image and its dev container both run on it) and stop.
 2. **Determine the output target.** Default to a working directory the user can inspect (e.g.
    `./out`); ask before writing directly into a `specifications-XX` repo's `docs/UML/`.
 3. **Run the generator**, mapping output ownership to the host user:
@@ -28,8 +28,9 @@ Do the following:
      -v ./out:/app/output \
      ghcr.io/openehr/bmm-publisher asciidoc -v $ARGUMENTS
    ```
-   Use `legacy-adoc -o <dir>` instead when the component consumes the legacy `docs/UML/classes`
-   layout (per the class-generation skill).
+   Use `legacy-adoc -o /app/output/UML/classes` instead when the component consumes the legacy
+   `docs/UML/classes` layout (per the class-generation skill); the tables then land in
+   `./out/UML/classes`.
 4. **Report what was generated** (list the produced `classes/`, `effective/`, diagram SVGs) and
    remind the user that generated files are never hand-edited — change the BMM and regenerate.
 5. Do not commit. If the user wants the output wired into a spec repo, follow the placement steps

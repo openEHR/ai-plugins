@@ -1,32 +1,34 @@
 ---
 name: authoring
 description: >
-  Create or edit openEHR specification documents — the AsciiDoc sources, `manifest.json`, and
-  boilerplate includes in `specifications-XX` repos. This skill should be used when the user asks to
-  create a new spec, add or edit a chapter/section, set up `master.adoc`, edit a spec
-  `manifest.json`, or work on `.adoc` files in a `specifications-XX` repo. Not for:
-  archetype/template/AQL work (openehr-assistant plugin), amendment records (use amendment-record),
-  prose style (use content-patterns), ITS-REST OpenAPI (use its-rest), or BMM class tables/diagrams
-  (use class-generation).
+  Create or edit openEHR specification AsciiDoc sources, `manifest.json` spec entries, and
+  boilerplate includes in `specifications-XX` repos. This skill should be used when the user asks
+  to scaffold a new spec, add or edit a chapter, set up `master.adoc`, add a cross-reference or
+  figure, or build a local HTML preview. Not for amendment records (amendment-record), prose
+  style (content-patterns), releases or manifest release entries (governance), ITS-REST OpenAPI
+  (its-rest), class tables (class-generation), or archetype/AQL work (openehr-assistant plugin).
 ---
 
 # openEHR Specification Document Authoring
 
-This skill covers creating and editing openEHR specification documents — the AsciiDoc sources
-that live in `specifications-XX` repositories (RM, AM, BASE, LANG, PROC, SM, QUERY, CNF, TERM, ITS-*).
+Use this skill to create and edit openEHR specification documents: the AsciiDoc sources that live
+in `specifications-XX` repositories (RM, AM, BASE, LANG, PROC, SM, QUERY, CDS, CNF, TERM, ITS-*).
 
-> **Note:** `specifications-ITS-REST` is an exception — it uses OpenAPI YAML with embedded Markdown
-> rather than the standard AsciiDoc approach. See the "ITS-REST Exception" section below.
+> **Note:** In `specifications-ITS-REST`, the OpenAPI YAML and Markdown sources are covered by the
+> **its-rest** skill. The AsciiDoc specs under its `docs/` (for example `simplified_formats`,
+> `smart_app_launch`) follow this skill.
 
 ## Related Skills
 
 - **content-patterns** — prose writing patterns for spec chapters (overview, semantics, design rationale, etc.)
 - **amendment-record** — dedicated guide for amendment record authoring
-- **review** — checklist-driven quality review of spec documents
+- **review** — checklist-driven quality review of spec documents (the `spec-reviewer` subagent runs it over a whole spec or component)
 - **its-rest** — for OpenAPI YAML and Markdown in the ITS-REST repo
 - **governance** — release management, change requests, lifecycle governance
 - **class-generation** — regenerate the class-definition tables and UML diagrams in `docs/UML/` from BMM via `bmm-publisher`
-- **Cross-reference guide** — see `references/cross-references.md` for attribute naming patterns
+
+For attribute naming patterns, read `references/cross-references.md`. To verify that every
+`{openehr_*}` attribute and deep-link anchor resolves, dispatch the `xref-auditor` subagent.
 
 ## Repository Layout
 
@@ -51,7 +53,8 @@ specifications-XX/
 │   └── common/                # Shared content within component
 ```
 
-The `specifications-AA_GLOBAL` repo (always a sibling) provides:
+The `specifications-AA_GLOBAL` repo (expected as a sibling checkout; if absent, read its files at
+https://github.com/openEHR/specifications-AA_GLOBAL) provides:
 ```
 specifications-AA_GLOBAL/
 ├── docs/boilerplate/          # Shared AsciiDoc includes
@@ -78,11 +81,13 @@ consuming spec document.
 
 ### Step 1: Create the spec directory
 
-Under `specifications-XX/docs/`, create a directory matching the spec `id` from `manifest.json`.
+Choose the spec `id` (the SEC verifies identifier and placement for new specs; see the **governance**
+skill) and create `specifications-XX/docs/<id>/`. Use the same `id` in the `manifest.json` entry (Step 6).
 
 ### Step 2: Create `manifest_vars.adoc`
 
-This file defines per-document Asciidoctor attributes used by the boilerplate:
+Define the per-document Asciidoctor attributes that the boilerplate reads. The values below come from
+the EHR IM; replace them with the new spec's own:
 
 ```asciidoc
 :spec_title: EHR Information Model
@@ -95,13 +100,13 @@ This file defines per-document Asciidoctor attributes used by the boilerplate:
 Fields:
 - **`:spec_title:`** — The document title, displayed after the openEHR logo
 - **`:copyright_year:`** — Year of first publication (used in licence block)
-- **`:spec_status:`** — One of: `DEVELOPMENT`, `TRIAL`, `STABLE`, `SUPERSEDED`, `OBSOLETE`, `RETIRED`
+- **`:spec_status:`** — One of: `DEVELOPMENT`, `TRIAL`, `STABLE`, `PAUSED`, `SUPERSEDED`, `OBSOLETE`, `RETIRED`. Use the state the SEC assigned (see the **governance** skill) and keep it identical to `spec_status` in `manifest.json`
 - **`:keywords:`** — Comma-separated keywords for the HTML meta tag
 - **`:description:`** — One-line description for the HTML meta tag
 
 ### Step 3: Create `master.adoc`
 
-The master file follows a strict structure. Here is the canonical template:
+Write `master.adoc` from this canonical template:
 
 ```asciidoc
 //
@@ -126,6 +131,8 @@ include::{ref_dir}/docs/references/reference_definitions.adoc[]
 // ============================================= Asciidoc BODY ===============================================
 //
 
+include::master00-amendment_record.adoc[leveloffset=+1]
+
 //
 // --------------------------------------------- Preface -----------------------------------------------
 //
@@ -149,6 +156,7 @@ include::{ref_dir}/docs/references/reference_definitions.adoc[]
 //
 :sectnums:
 
+// `package_qualifiers` is set by the publisher's -q flag; :pkg: is the lower-case package prefix of the spec.
 ifdef::package_qualifiers[]
 :pkg: org.openehr.<component>.<spec>.
 endif::[]
@@ -156,12 +164,6 @@ endif::[]
 include::master01-preface.adoc[leveloffset=+1]
 include::master02-overview.adoc[leveloffset=+1]
 // ... additional chapters ...
-
-//
-// --------------------------------------------- Amendment Record -----------------------------------------------
-//
-:sectnums!:
-include::master00-amendment_record.adoc[leveloffset=+1]
 
 //
 // --------------------------------------------- REFERENCES -----------------------------------------------
@@ -172,10 +174,10 @@ include::master00-amendment_record.adoc[leveloffset=+1]
 bibliography::[]
 ```
 
-**Include order in the header matters:**
+**Keep the header includes in this order:**
 1. `book_style_settings.adoc` — sets doctype, syntax highlighter, TOC
 2. `manifest_vars.adoc` — local spec variables
-3. `global_vars.adoc` — global openEHR attributes (depends on nothing above)
+3. `global_vars.adoc` — global openEHR attributes
 
 **Front block choice:**
 - Use `full_front_block.adoc` for primary specifications (includes block diagram)
@@ -186,7 +188,7 @@ bibliography::[]
 ```asciidoc
 = Amendment Record
 
-[cols="1a,6,2,2a", options="header"]
+[cols="1,6,2,2", options="header"]
 |===
 |Issue|Details|Raiser|Completed
 
@@ -201,36 +203,39 @@ bibliography::[]
 The `[[latest_issue]]` and `[[latest_issue_date]]` anchors are required — the `doc_id_block.adoc`
 references them to display revision and date in the front matter table.
 
-Amendment record entries reference Jira tickets using `{spec_tickets}/SPECXX-NNN[SPECXX-NNN^]` syntax.
-Release boundaries are marked with a full-width header row:
-
-```asciidoc
-4+^h|*RM Release 1.1.0*
-```
+For Jira references, version bumps, and release boundaries, see the **amendment-record** skill.
 
 ### Step 5: Create chapter files
 
-Name chapters sequentially: `master01-preface.adoc`, `master02-overview.adoc`, etc.
+Name chapters sequentially: `master01-preface.adoc`, `master02-overview.adoc`, etc., and keep the
+numbering gap-free. Appendices use `masterAppA-<name>.adoc`. Start each chapter file with a
+`= Chapter Title` heading, and add a matching `include::masterNN-<name>.adoc[leveloffset=+1]` line to
+`master.adoc`.
 
-The preface (`master01-preface.adoc`) typically contains:
-- Purpose of the specification
-- Related documents
-- Conformance/status notes
-- Conventions used
+Create `master01-preface.adoc` with a `= Preface` heading and these `==` sections in order: Purpose,
+Related Documents, Status, Feedback, then optionally Conformance, Tools, and Changes from Previous
+Versions. Use the Status and Feedback link patterns in `references/cross-references.md`.
 
 ### Step 6: Update `manifest.json`
 
-Add the new specification entry to the `specifications` array.
-See `references/manifest-spec-entry.md` for the full field reference.
+Add the new specification entry to the `specifications` array, with `id`, `title`, `description`,
+`copyright_year`, `spec_status`, and `keywords` matching `manifest_vars.adoc`. See
+`references/manifest-spec-entry.md` for the full field reference.
 
-### Step 7: Publish locally
+### Step 7: Preview locally
+
+Build a local HTML preview after creating or editing a spec. The user can run
+`/openehr-specs:publish <component> [spec-id]` (user-only; it wraps the commands below), or run them
+from the parent directory that contains all `specifications-*` repos. `-f` forces regeneration, `-v`
+is verbose, and `XX` is the component (for example `RM`):
 
 ```bash
-# From the parent directory containing all specifications-XX repos:
 ./specifications-AA_GLOBAL/bin/spec_publish.sh -f -v XX
 # Or via Docker:
 docker run -u $(id -u):$(id -g) -v "$(pwd):/documents/" openehr/asciidoctor development XX
 ```
+
+The preview does not tag or deploy a release; that is the **governance** skill's process.
 
 ## Editing Existing Specifications
 
@@ -245,52 +250,30 @@ docker run -u $(id -u):$(id -g) -v "$(pwd):/documents/" openehr/asciidoctor deve
   ```
 - **Cross-references to classes**: Use `{classes_url_root}` for linking to the class index.
 - **Jira ticket references**: `{spec_tickets}/SPECRM-87[SPECRM-87^]`
-- **External references**: Check `reference_definitions.adoc` first — it has hundreds of pre-defined URLs for HL7, W3C, ISO, IETF, Wikipedia, SNOMED, etc.
+- **External references**: Check `reference_definitions.adoc` first — it has hundreds of pre-defined URLs for HL7, W3C, ISO, IETF, Wikipedia, SNOMED, etc. If an attribute is missing, add it to `specifications-AA_GLOBAL/docs/references/reference_definitions.adoc` (a separate repo and commit) following the naming pattern, and tell the user the change spans two repos.
 
-### Global Variables
+### Global Variables and URL Patterns
 
-All release version attributes follow the pattern `:{component_id}_release:` and default to `latest`.
-These are defined in `global_vars.adoc`:
-
-```
-:rm_release: latest
-:am_release: latest
-:base_release: latest
-...
-```
-
-When publishing a named release, the publisher overrides these via `-a rm_release=Release-1.0.4`.
-
-### URL Patterns in reference_definitions.adoc
-
-References follow a consistent naming convention:
-
-```
-:openehr_{component}_{spec}: {openehr_{component}_releases}/{spec}.html
-:openehr_{component}_latest_{spec}: {openehr_{component}_latest}/{spec}.html
-:openehr_{component}_development_{spec}: {openehr_{component}_development}/{spec}.html
-```
-
-When adding new references, follow this pattern exactly.
+Release-version attributes (`{rm_release}` and so on, defaulting to `latest`) and spec-link attributes
+follow fixed naming patterns; read `references/cross-references.md` before constructing one, and
+follow the pattern exactly when adding a new reference. To build a named release, pass the label to the
+publisher with `-l <label>` (see the **governance** skill).
 
 ### Amendment Record Updates
 
-When editing a specification, always update the amendment record:
-1. Add a new entry at the **top** of the table (most recent first)
-2. Reference the relevant CR/PR Jira tickets
-3. Update `[[latest_issue]]` version and `[[latest_issue_date]]` date on the new top entry
-4. For non-release changes, increment the patch version
+Add an entry to the spec's amendment record for every change, following the **amendment-record**
+skill (entry order, anchors, version-bump table, Jira references). The user can run
+`/openehr-specs:amend <SPECXX-NN[,SPECPR-NN] — summary>` to have the entry added; it is a user-only
+command, so suggest it rather than invoking it.
 
 ### Diagrams
 
-- Place SVG diagrams in `<spec-id>/diagrams/`
-- Reference as: `image::{diagrams_uri}/<filename>[...]`
+- Place hand-drawn SVG diagrams in `<spec-id>/diagrams/`. Generated UML diagrams use `{uml_diagrams_uri}`.
+- Write each figure as a titled block:
+
+  ```asciidoc
+  [.text-center]
+  .Figure title
+  image::{diagrams_uri}/<filename>.svg[id=<anchor_id>, align="center"]
+  ```
 - UML class and package diagrams are generated from the component's BMM schema by `bmm-publisher` (which renders them to SVG via PlantUML). This replaces the historical MagicDraw `.mdzip` extraction. See the **class-generation** skill to regenerate them.
-
-### ITS-REST Exception
-
-The `specifications-ITS-REST` component uses a different authoring approach:
-- REST API definitions are specified using **OpenAPI YAML** schemas, not AsciiDoc
-- Some documentation within ITS-REST is written in **Markdown** (embedded in the OpenAPI schema), not AsciiDoc
-- Not all text documents in ITS-REST follow the standard AsciiDoc conventions described above
-- The OpenAPI YAML files define REST API endpoints, request/response bodies, and include inline Markdown descriptions

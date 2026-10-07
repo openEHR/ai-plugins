@@ -5,7 +5,8 @@
 - **Repo**: `openehr/ai-plugins` — vendor-neutral; the GitHub org carries the "made by openEHR" branding.
 - **Marketplace `name`**: `openehr` — short attribution suffix in install commands (`/plugin install openehr-specs@openehr`).
 - **Plugin names**: `openehr-<domain>` (e.g. `openehr-specs`). The `openehr-` prefix is mandatory: Claude Code plugin names live in a flat global namespace, so the prefix is what disambiguates them when users have plugins from multiple sources installed.
-- **Skill and command names**: terse activity nouns with **no** `openehr-` or `spec-` prefix (e.g. `authoring`, `review`, `governance`). Skills are automatically namespaced as `<plugin>:<skill>` (`openehr-specs:review`), so repeating the plugin's words in a skill name is redundant.
+- **Skill names**: terse activity nouns with **no** `openehr-` or `spec-` prefix (e.g. `authoring`, `review`, `governance`). Skills are automatically namespaced as `<plugin>:<skill>` (`openehr-specs:review`), so repeating the plugin's words in a skill name is redundant.
+- **Command and subagent names**: the same no-prefix rule applies. Name a command for its action (`amend`, `publish`, `regen-classes`) and a subagent for its job (`xref-auditor`, `identifier-grounding`). `spec-reviewer` is the one exception and keeps its name, because renaming it would be a major bump (see [versioning.md](versioning.md)).
 - Do not duplicate tooling that already exists elsewhere in the community (e.g. CKM/clinical-modeling MCP and plugins are provided by Cadasto) — plugins here cover ground the Foundation itself owns, such as specification authoring and (potentially) conformance.
 
 ## Plugin Layout

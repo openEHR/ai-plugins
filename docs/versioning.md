@@ -10,9 +10,11 @@ Each plugin is versioned independently using [semver](https://semver.org), adapt
 
 ## Release Steps
 
+Pull requests do not bump versions. A maintainer runs these steps at release.
+
 1. Bump `version` in all four places (they must agree): the plugin's `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json`, and the matching entries in `.claude-plugin/marketplace.json` and `.cursor-plugin/marketplace.json`.
 2. Run `python3 scripts/validate.py` — checks both manifest pairs agree.
-3. Add an entry to the repo-level [CHANGELOG.md](../CHANGELOG.md).
+3. In [CHANGELOG.md](../CHANGELOG.md), move the entries under `## Unreleased` into a new `## <plugin> <version> (<date>)` section.
 4. Commit the version bump and the changelog entry. `claude plugin tag` refuses to run on a dirty working tree unless you pass `--force`.
 5. Tag the release with `claude plugin tag plugins/<name>`. It creates `{name}--v{version}` and validates only the Claude manifests; step 2 covers Cursor.
 6. Push commits and the tag.

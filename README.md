@@ -2,12 +2,12 @@
 
 [![validate](https://github.com/openEHR/ai-plugins/actions/workflows/validate.yml/badge.svg)](https://github.com/openEHR/ai-plugins/actions/workflows/validate.yml)
 [![license](https://img.shields.io/github/license/openEHR/ai-plugins)](LICENSE)
-[![Claude Code](https://img.shields.io/badge/Claude_Code-marketplace-d97757)](https://docs.claude.com/en/docs/claude-code/plugins)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-marketplace-d97757)](https://code.claude.com/docs/en/plugins)
 [![Cursor](https://img.shields.io/badge/Cursor-marketplace-111111)](https://cursor.com/docs/plugins)
 
 AI-assistant plugins for openEHR — the official plugin marketplace of the [openEHR Foundation](https://openehr.org).
 
-This repository provides AI-assisted tooling for people working on openEHR specifications — packaged as a [Claude Code](https://docs.claude.com/en/docs/claude-code/plugins) and [Cursor](https://cursor.com/docs/plugins) plugin marketplace. The skill content (`SKILL.md`, an open cross-tool format) is the canonical artifact; each assistant uses thin manifests (`.claude-plugin/` and `.cursor-plugin/`) around the same skills.
+This repository provides AI-assisted tooling for people working on openEHR specifications — packaged as a [Claude Code](https://code.claude.com/docs/en/plugins) and [Cursor](https://cursor.com/docs/plugins) plugin marketplace. The skill content (`SKILL.md`, an open cross-tool format) is the canonical artifact; each assistant uses thin manifests (`.claude-plugin/` and `.cursor-plugin/`) around the same skills.
 
 It is **not** a specification repository: the specifications live in the `specifications-XX` repos, and these plugins help the people who author them.
 

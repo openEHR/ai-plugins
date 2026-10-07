@@ -28,13 +28,13 @@ Test your changes by installing the marketplace locally — see [docs/testing.md
 Use [Conventional Commits](https://www.conventionalcommits.org): `type(scope): summary`
 
 - **Types**: `feat` (new skill or capability), `fix` (incorrect skill content/behavior), `docs`, `chore`, `ci`
-- **Scope**: the plugin or skill affected, e.g. `feat(spec-authoring): add conformance skill`, `fix(its-rest): correct build pipeline paths`
+- **Scope**: the plugin or skill affected, e.g. `feat(openehr-specs): add conformance skill`, `fix(its-rest): correct build pipeline paths`
 
 ## Pull Request Process
 
 1. Branch from `main`.
 2. Run the validation script locally: `python3 scripts/validate.py`
-3. If you changed plugin content, bump the plugin version per [docs/versioning.md](docs/versioning.md) and update [CHANGELOG.md](CHANGELOG.md). If you added, removed, or renamed a skill, subagent, or command, also update the inventories in the plugin's `README.md` and in the root [README.md](README.md).
+3. If you changed plugin content, add a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md). Do not bump the version; maintainers do that at release ([docs/versioning.md](docs/versioning.md)). If you added, removed, or renamed a skill, subagent, or command, also update the inventories in the plugin's `README.md` and in the root [README.md](README.md).
 4. Test skill triggering locally ([docs/testing.md](docs/testing.md)).
 5. Open the PR and complete the checklist in the template. CI must pass.
 

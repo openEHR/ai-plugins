@@ -1,22 +1,20 @@
 ---
 name: content-patterns
 description: >
-  Patterns for writing production-quality openEHR specification prose — overviews, class/concept
-  semantics, design rationale, and clinical examples — in `specifications-XX` repos. This skill
-  should be used when the user asks how to phrase or improve spec prose, draft a package/class
-  description, write a design-rationale or semantics section, or asks about openEHR spec writing
-  style. Not for creating or scaffolding the document or its structure (use authoring), amendment
-  records (use amendment-record), or non-openEHR writing.
+  Patterns for writing openEHR specification prose (package overviews, class/concept semantics,
+  design rationale, clinical examples, requirements sections, deprecated/TBD markers, and figure
+  introductions) in `specifications-XX` repos. This skill should be used when the user asks how to
+  phrase, draft, or improve spec prose, or about openEHR spec writing style. Not for document
+  structure (use authoring), convention checks (use review), amendment records (use
+  amendment-record), ITS-REST descriptions (use its-rest), or non-openEHR writing.
 ---
 
 # openEHR Specification Content Patterns
 
-This skill captures the recurring prose patterns found across all openEHR specification
-documents in the `specifications-XX` repositories (RM, AM, BASE, LANG, PROC, SM, QUERY,
-CNF, TERM, ITS-*), derived from the existing library and its shared infrastructure in
-`specifications-AA_GLOBAL`. Apply them when writing new chapters or sections to match the
-quality and consistency of the existing specification library. They do not apply to
-non-openEHR specifications or general technical documentation.
+Apply these recurring prose patterns when writing new chapters or sections, to match the quality
+and consistency of the existing specification library. They are derived from the openEHR
+specification documents in the `specifications-XX` repositories (RM, AM, BASE, LANG, PROC, SM,
+QUERY, CNF, TERM, ITS-*) and the shared infrastructure in `specifications-AA_GLOBAL`.
 
 ## References
 
@@ -30,7 +28,7 @@ non-openEHR specifications or general technical documentation.
 - **Formal register**: third person, present tense, no contractions, no hedging.
 - **Declarative facts first**: lead with what the model defines, not how the reader should interpret it.
 - **Design rationale where non-obvious**: explain why, not just what.
-- **Ground every claim**: reference RM classes, archetype paths, or external standards. Never invent identifiers.
+- **Ground every claim**: reference RM classes, archetype paths, or external standards. Never invent identifiers; after drafting, dispatch the `identifier-grounding` subagent to verify each class, attribute, and function name against the published specifications.
 - **Clinical examples**: use concrete clinical scenarios to illustrate abstract model concepts.
 
 ## Pattern Catalog
@@ -55,7 +53,7 @@ Pick the pattern that matches the section being written and read its detailed en
 | "This section describes..." | State what the package/class defines directly |
 | "We decided to..." | "The design uses..." / "The approach taken is..." |
 | Passive hedging ("it might be...") | Declarative statements ("it is..." / "this enables...") |
-| Inventing class or attribute names | Only reference names from the published RM/AM/BASE |
-| Explaining every attribute of a class in prose | Class definition tables are auto-generated; prose covers semantics and rationale |
+| Inventing class or attribute names | Reference only names found in the published RM/AM/BASE (see "Ground every claim" above) |
+| Explaining every attribute of a class in prose | Class definition tables are generated (see `class-generation`); prose covers semantics and rationale |
 | Orphan figures (no intro or follow-up text) | Always introduce and explain diagrams |
 | Hardcoded URLs | Use `{openehr_*}` attributes from reference_definitions.adoc |

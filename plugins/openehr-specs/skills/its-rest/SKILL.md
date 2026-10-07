@@ -3,21 +3,18 @@ name: its-rest
 description: >
   Create, edit, or review the openEHR ITS-REST API sources (OpenAPI 3.0 YAML + Markdown) in the
   `specifications-ITS-REST` repo. This skill should be used when the user asks to add or edit a REST
-  endpoint/operation/schema/response, write an operation description, review the ITS-REST spec, or
-  update its amendment record. Not for AsciiDoc specs (use authoring) — including the AsciiDoc docs
-  under `specifications-ITS-REST/docs/` (simplified_formats, smart_app_launch).
+  endpoint/operation/schema/response, write an operation description, review the ITS-REST spec, add
+  an ITS-REST amendment entry, or bundle and validate the OpenAPI specs. Not for AsciiDoc specs (use
+  authoring), including the AsciiDoc docs under `specifications-ITS-REST/docs/` (simplified_formats,
+  smart_app_launch).
 ---
 
 # openEHR ITS-REST API Specification Authoring
 
-This skill covers creating and editing the openEHR REST API specification sources in the
-`specifications-ITS-REST` repository. Unlike other `specifications-XX` repos that use
-AsciiDoc, ITS-REST uses **OpenAPI 3.0.3 YAML** with **Markdown** descriptions, split across
-many small files that are bundled into publishable artifacts.
-
-> **Exception**: The `docs/` directory contains some AsciiDoc-based specs (e.g.,
-> `simplified_formats`, `smart_app_launch`) that follow the standard openEHR authoring
-> conventions. This skill does NOT cover those — use the `authoring` skill instead.
+Create and edit the openEHR REST API specification sources in the `specifications-ITS-REST`
+repository. Unlike other `specifications-XX` repos, which use AsciiDoc, ITS-REST uses
+**OpenAPI 3.0.3 YAML** with **Markdown** descriptions, split across many small files that are
+bundled into publishable artifacts.
 
 ## References
 
@@ -66,13 +63,14 @@ Each source type has its own format and conventions — detailed in `references/
 |--------|----------|-------|
 | Top-level entry | `specifications/<domain>.openapi.yaml` | `info`/`x-status`/`x-spec`, servers, `paths` wiring operations via `$ref` |
 | Operation | `specifications/operations/<resource>_<action>.yaml` | `operationId`, summary, tags, params, requestBody, responses (all `$ref`) |
-| Schema | `specifications/schemas/<domain>/<SchemaName>.yaml` | PascalCase `title` = RM class name, properties, `$ref`s |
+| Schema | `specifications/schemas/<domain>/<SchemaName>.yaml` | PascalCase file name; `title` = RM class name; properties; `$ref`s |
 | Markdown description | `specifications/docs/<domain>/Description.md` | RFC 2119 prose, hardcoded spec URLs, `http`/`json` code examples |
 | Amendment record | `specifications/docs/overview/Amendment_record.md` | HTML table, `SPECITS` Jira links (not AsciiDoc) |
 
 ## Build Toolchain
 
-Quick reference from the `development/` directory (full details in `references/build-pipeline.md`):
+Run build commands from the `development/` directory. Docker is required; first-time setup and full
+details are in `references/build-pipeline.md`.
 
 ```bash
 make bundle SPEC=ehr        # Bundle a single spec
@@ -83,23 +81,39 @@ make all                    # Bundle all specs
 ## Adding a New Endpoint
 
 1. Create the operation file: `specifications/operations/<operation_id>.yaml`
-2. Add shared parameters to `specifications/parameters/` if new ones are needed
-3. Add shared response definitions to `specifications/responses/` if new ones are needed
-4. Add or reference schemas in `specifications/schemas/<domain>/`
-5. Wire the operation into the appropriate top-level `*.openapi.yaml` under `paths:`
-6. Update the amendment record in `specifications/docs/overview/Amendment_record.md`
-7. Bundle and validate: `cd development && make bundle SPEC=<spec> && make validate SPEC=<spec>`
+2. Reuse shared definitions from `specifications/parameters/`, `responses/`, and `headers/`. Add a new
+   file only when none fits, and copy the structure and naming of its closest sibling in the same folder.
+3. Add or reference schemas in `specifications/schemas/<domain>/`
+4. Wire the operation into the appropriate top-level `*.openapi.yaml` under `paths:` (ask the user
+   which API domain when it is unclear)
+5. Add an entry to the amendment record in `specifications/docs/overview/Amendment_record.md`. Ask the
+   user for the `SPECITS` ticket, the raiser, and the completion date; do not invent them.
+6. Bundle and validate: `cd development && make bundle SPEC=<spec> && make validate SPEC=<spec>`
 
 ## Adding a New Schema
 
-1. Create `specifications/schemas/<domain>/<SchemaName>.yaml`
-2. Reference it from the operation or parent schema via `$ref`
-3. Use `title` matching the RM class name
-4. Follow existing patterns for `required`, `type`, `properties`, and `description`
+1. Create `specifications/schemas/<domain>/<SchemaName>.yaml` (PascalCase file name)
+2. Set `title` to the RM class name
+3. Reference it from the operation or parent schema via `$ref`
+4. Follow the layout of the closest sibling schema for `required`, `type`, `properties`, and `description`
+
+## Reviewing Changes
+
+Check each changed file against `references/file-formats.md`:
+
+1. Operation: `operationId` is unique, snake_case, and equals the file name; `summary` is a short
+   imperative phrase; `tags` holds one tag; parameters, request bodies, responses, and headers use
+   `$ref` to shared definitions.
+2. Schema: the file name is PascalCase, `title` is the RM class name, and every relative `$ref` resolves.
+3. Markdown: RFC 2119 keywords are in ALL CAPS, prose is third person and present tense with no
+   contractions, spec links are hardcoded URLs, and code examples use `http` or `json` fences.
+4. Amendment record: an entry with a `SPECITS` link exists.
+5. `make bundle` and `make validate` pass for the affected spec.
 
 ## Scope Boundaries
 
-- This skill covers the **OpenAPI YAML and Markdown** sources in `specifications-ITS-REST/specifications/`
-- It does NOT cover AsciiDoc documents in `specifications-ITS-REST/docs/` (simplified_formats, smart_app_launch) — use `authoring` for those
-- It does NOT cover the PHP build tooling in `development/` — consult `.junie/guidelines.md` for that
-- It does NOT cover other `specifications-XX` repositories
+- Cover the **OpenAPI YAML and Markdown** sources in `specifications-ITS-REST/specifications/`.
+- Use `authoring` for the AsciiDoc documents in `specifications-ITS-REST/docs/` (simplified_formats, smart_app_launch).
+- Leave the PHP build tooling internals in `development/` alone; consult `.junie/guidelines.md` for those. The `make` commands above are in scope.
+- Do not cover other `specifications-XX` repositories.
+- Do not apply the AsciiDoc-only tools to these sources. The `review` skill, the `spec-reviewer` and `xref-auditor` subagents, and the `/openehr-specs:amend` command expect AsciiDoc sources (`master*.adoc`); hardcoded spec URLs and the HTML amendment record are correct here.

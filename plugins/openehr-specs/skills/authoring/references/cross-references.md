@@ -45,10 +45,10 @@ All openEHR spec references follow predictable naming. Learn the pattern rather 
 ### Component base URL
 
 ```
-:{component_id}_releases: {openehr_specs}/releases/{COMPONENT}/{component_id_release}
+:openehr_<component_id>_releases: {openehr_specs}/releases/<COMPONENT>/{<component_id>_release}
 ```
 
-Where `{component_id}` is lowercase (e.g., `rm`, `am`, `base`, `query`, `proc`, `sm`, `lang`, `cnf`, `term`).
+Where `<component_id>` is lowercase (e.g., `rm`, `am`, `base`, `query`, `proc`, `sm`, `lang`, `cds`, `cnf`, `term`) and `<COMPONENT>` is its upper-case form.
 
 Examples:
 - `:openehr_rm_releases:` resolves to `https://specifications.openehr.org/releases/RM/{rm_release}`

@@ -39,6 +39,8 @@ Context-isolated subagents for heavy, multi-file, or verification work, dispatch
 | `xref-auditor` | Verifies every `{openehr_*}` attribute and `<<anchor>>` resolves; checks cross-spec deep-link anchors against the target's Markdown twin | `specifications-XX` (+ `AA_GLOBAL` to resolve attributes); WebFetch (optional, for cross-spec anchors) |
 | `identifier-grounding` | Fact-checks every RM/AM/BASE class/attribute a draft names against the published spec; flags invented identifiers | `openehr-assistant` MCP or WebFetch (optional) |
 
+`AA_GLOBAL` is the `specifications-AA_GLOBAL` repository, which holds the boilerplate, publishing scripts, and styles shared by all spec repos. A Markdown twin is the Markdown version of a published spec page: swap `.html` for `.md` in its URL.
+
 ## Commands
 
 User-invoked actions (they do not auto-trigger). Invoke as `/openehr-specs:<command>`. Each command wraps a skill that holds the knowledge: `amend` uses `amendment-record`, `regen-classes` uses `class-generation`, and `publish` follows the publish step in `authoring`. The skill triggers from a plain request; the command runs only when you type it.

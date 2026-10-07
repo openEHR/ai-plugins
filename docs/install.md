@@ -1,6 +1,6 @@
 # Installing the openEHR Plugins
 
-The plugins in this repository are distributed as a dual marketplace: [Claude Code](https://docs.claude.com/en/docs/claude-code/plugins) (`.claude-plugin/`) and [Cursor](https://cursor.com/docs/plugins) (`.cursor-plugin/`). Skill content is shared; only the manifest layer differs.
+The plugins in this repository are distributed as a dual marketplace: [Claude Code](https://code.claude.com/docs/en/plugins) (`.claude-plugin/`) and [Cursor](https://cursor.com/docs/plugins) (`.cursor-plugin/`). Skill content is shared; only the manifest layer differs.
 
 ## Claude Code
 
