@@ -2,7 +2,11 @@
 name: regen-classes
 description: Regenerate BMM-derived class tables and UML diagrams for a component via bmm-publisher
 argument-hint: "<schema-id, e.g. openehr_rm_1.2.0> [-d <dependency-schema> ...]"
-allowed-tools: ["Bash", "Read", "Glob"]
+allowed-tools:
+  - "Bash(docker --version)"
+  - "Bash(docker run * ghcr.io/openehr/bmm-publisher *)"
+  - Read
+  - Glob
 disable-model-invocation: true
 ---
 

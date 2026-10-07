@@ -232,9 +232,11 @@ is verbose, and `XX` is the component (for example `RM`):
 ```bash
 ./specifications-AA_GLOBAL/bin/spec_publish.sh -f -v XX
 # Or via Docker:
-docker run -u $(id -u):$(id -g) -v "$(pwd):/documents/" openehr/asciidoctor development XX
+docker run -u $(id -u):$(id -g) -v "$(pwd):/documents/" ghcr.io/openehr/asciidoctor development XX
 ```
 
+The script prints `generated <file>` and exits 0 even when `asciidoctor` is missing or failed, so check
+that each expected `docs/<spec>.html` is new or has a later modification time than before the build.
 The preview does not tag or deploy a release; that is the **governance** skill's process.
 
 ## Editing Existing Specifications

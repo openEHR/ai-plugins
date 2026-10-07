@@ -57,7 +57,7 @@ gracefully when one is absent (each says so in its prompt):
 - **`spec-reviewer`, `xref-auditor`** — need a `specifications-XX` checkout and (for attribute resolution) the sibling `specifications-AA_GLOBAL`.
 - **`xref-auditor`, `identifier-grounding`** — use **WebFetch** to read spec Markdown twins (`.html` → `.md`); `identifier-grounding` additionally prefers the **`openehr-assistant` MCP** (`type_specification_get`) when connected, falling back to the twin.
 - **`regen-classes`** — needs **Docker** (`ghcr.io/openehr/bmm-publisher`).
-- **`publish`** — needs a sibling `specifications-AA_GLOBAL` checkout; it runs `bin/spec_publish.sh` and falls back to the `openehr/asciidoctor` Docker image.
+- **`publish`** — needs a sibling `specifications-AA_GLOBAL` checkout; it runs `bin/spec_publish.sh`, falls back to the published `ghcr.io/openehr/asciidoctor` Docker image when `asciidoctor`, `jq`, or `bc` is missing, and stops when Docker is missing too. It checks that each HTML output was rebuilt, because the script reports success even when it built nothing.
 
 None are bundled (the `openehr-assistant` MCP is interactively authenticated, not redistributable); document them, don't assume them.
 

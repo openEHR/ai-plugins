@@ -32,7 +32,7 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
   # From the parent directory:
   ./specifications-AA_GLOBAL/bin/spec_publish.sh -f -r -v -t -q -l Release-N.N.N XX
   # Or via Docker:
-  docker run -u $(id -u):$(id -g) -v "$(pwd):/documents/" openehr/asciidoctor Release-N.N.N XX
+  docker run -u $(id -u):$(id -g) -v "$(pwd):/documents/" ghcr.io/openehr/asciidoctor Release-N.N.N XX
   ```
 - [ ] Verify the published HTML output:
   - [ ] Front page shows correct release label and date
