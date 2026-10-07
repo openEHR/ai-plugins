@@ -46,10 +46,11 @@ The plugin also ships **subagents** (`spec-reviewer`, `xref-auditor`, `identifie
 
 ## Documentation
 
+- [docs/quick-start.md](docs/quick-start.md): a first session, from install to an HTML preview
+- [docs/prompting-guide.md](docs/prompting-guide.md): which prompt to use for each authoring situation
 - [docs/install.md](docs/install.md): installing, updating, and inspecting plugins
 - [docs/testing.md](docs/testing.md): local testing and validation (contributors)
 - [docs/skill-authoring.md](docs/skill-authoring.md): plugin and skill authoring conventions
-- [docs/spec-style-guide.md](docs/spec-style-guide.md): style guide for openEHR specification documents
 - [docs/versioning.md](docs/versioning.md): versioning and release process
 
 ## Contributing

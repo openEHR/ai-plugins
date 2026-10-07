@@ -22,6 +22,8 @@ QUERY, CNF, TERM, ITS-*) and the shared infrastructure in `specifications-AA_GLO
   AsciiDoc template, real example, and conventions for each pattern indexed below.
 - **Cross-reference attribute guide**: see `../authoring/references/cross-references.md` for
   how to find and use `{openehr_*}` attributes when writing cross-references in spec prose.
+- **Admonitions, code blocks, tables**: see `../authoring/references/asciidoc-syntax.md` for the
+  syntax of a note, a code example, or a table in a chapter.
 
 ## General Principles
 

@@ -27,7 +27,7 @@ ai-plugins/
     └── agents/<agent>.md              # Autonomous subagents (context-isolated, multi-file)
 ```
 
-Current plugins: `openehr-specs` (skills, including user-only action skills, and subagents). `plugins/openehr-specs/README.md` is its inventory: update it, and the root `README.md`, whenever a component is added, removed, or renamed. `validate.py` checks neither.
+Current plugins: `openehr-specs` (skills, including user-only action skills, and subagents). `plugins/openehr-specs/README.md` is its inventory: update it, the root `README.md`, and the skill and subagent names in `docs/prompting-guide.md`, whenever a component is added, removed, or renamed. `validate.py` checks none of them.
 
 ## Key Conventions
 
@@ -49,7 +49,6 @@ Pure-content repository (JSON manifests + markdown skills) — no build step or 
 - **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent frontmatter fields, component paths, and the `scaffold` template set's integrity — runs in CI; it does not check description length, inventories, or the release tag)
 - **Local testing**: [docs/testing.md](docs/testing.md); **versioning/releases**: [docs/versioning.md](docs/versioning.md)
 - **End-user installation**: [docs/install.md](docs/install.md)
-- **Generating/editing AsciiDoc for `specifications-XX` repos**: follow [docs/spec-style-guide.md](docs/spec-style-guide.md); skill bodies must agree with it — when changing one, check the other.
 
 ## Component Dependencies
 
