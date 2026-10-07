@@ -9,17 +9,18 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 - `publish` and `regen-classes` moved from `commands/` to `skills/` as user-only skills (`disable-model-invocation: true`). Claude Code treats `commands/` as the older format, so the plugin no longer ships that directory. The `/openehr-specs:publish` and `/openehr-specs:regen-classes` names are unchanged.
 - `scripts/validate.py` no longer checks a `commands/` directory; the user-only skills are validated as skills.
 - `publish`, `authoring`, and the release checklist run the published `ghcr.io/openehr/asciidoctor` image instead of `openehr/asciidoctor`, which is only the tag of a local `docker build`.
+- `publish` runs only the published image; the local-script branch is gone. That branch ran `spec_publish.sh -f -v` without `-q`, so every `{pkg}` class-table include failed (70 errors on BASE, with about 80% of the table blocks missing from the HTML) while the script still printed "generated" and exited 0. The image's entrypoint passes `-q`; on BASE the same image builds with no errors. The AA_GLOBAL checkout is still required, because the boilerplate and reference definitions are read from it. `authoring` shows the image first and says to pass `-q` with a local toolchain.
 - `publish` and `regen-classes` keep only the runnable steps and guardrails; the background stays in `authoring` and `class-generation`.
 - `amendment-record` takes over the `amend` command: it accepts the same arguments (`argument-hint`), locates the amendment record, checks the working-tree diff, and stops after showing the diff. It no longer pre-approves `Read`, `Edit`, and `Bash` as the command did.
 
 ### Security
 
-- `publish` and `regen-classes` no longer pre-approve every shell command while they run. `allowed-tools` was a bare `Bash`, which also covered `git commit` and `git push`. It now lists only the publisher script, the one Docker image each skill uses, and `docker --version`. A command that does not match a pattern asks for approval as usual.
+- `publish` and `regen-classes` no longer pre-approve every shell command while they run. `allowed-tools` was a bare `Bash`, which also covered `git commit` and `git push`. It now lists only the Docker image each skill runs, plus `docker --version` for `regen-classes`. A command that does not match a pattern asks for approval as usual.
 
 ### Fixed
 
-- `publish` no longer lists a `[spec-id]` argument: the publisher builds whole components, and it rebuilds every sibling repo when given none, so the skill now stops and asks when `$ARGUMENTS` is empty. Its guardrail names the release label (`-l Release-N.N.N`) as the release flag.
-- `publish` no longer trusts the script's `generated <file>` line, which `spec_publish.sh` prints and exits 0 even when `asciidoctor` is missing or failed. It checks for `asciidoctor`, `jq`, and `bc` first and uses the Docker image when one is missing, then compares output timestamps before and after the build and reports each HTML file that was not rebuilt. `authoring` carries the same warning for a manual build.
+- `publish` no longer lists a `[spec-id]` argument, because the publisher builds whole components. It stops and asks when `$ARGUMENTS` is empty: the image takes exactly one component, and the bare script would rebuild every sibling repo. It always builds as `development`; a `Release-N.N.N` build belongs to `governance`.
+- `publish` no longer trusts the build's `generated <file>` line, which is printed and exits 0 even when `asciidoctor` failed or includes are missing. It compares output timestamps before and after the build, scans the log for `ERROR` and `include file not found` lines, and reports each HTML file that was not rebuilt. `authoring` carries the same warning for a manual build.
 - `regen-classes` keeps the layout rule (`legacy-adoc` or `asciidoc`) and stops and asks when `$ARGUMENTS` is empty.
 - `amendment-record`: a direct run states an assumed version bump and proceeds instead of pausing, and it stops after the diff only when invoked directly, not inside a release or authoring flow.
 

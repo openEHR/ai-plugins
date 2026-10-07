@@ -36,7 +36,7 @@ Two skills run only when you type them: they do not auto-trigger, and their desc
 | Skill | Argument | Action |
 |-------|----------|--------|
 | `/openehr-specs:regen-classes` | `<schema-id> [-d <dependency-schema> ...]` | Regenerate class tables and diagrams via `bmm-publisher` (needs Docker) |
-| `/openehr-specs:publish` | `<component>` | Build a local HTML preview with the `AA_GLOBAL` publisher (needs a sibling `specifications-AA_GLOBAL` checkout; falls back to Docker when `asciidoctor`, `jq`, or `bc` is missing, and checks that the HTML was rebuilt) |
+| `/openehr-specs:publish` | `<component>` | Build a local HTML preview with the published `ghcr.io/openehr/asciidoctor` image (needs Docker and a sibling `specifications-AA_GLOBAL` checkout; checks that the HTML was rebuilt and the class tables resolved) |
 
 ## Subagents
 
