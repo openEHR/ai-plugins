@@ -4,6 +4,8 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ## Unreleased
 
+## openehr-specs 0.5.0 (2026-10-08)
+
 ### Changed
 
 - `class-generation` and `regen-classes` generate from the component repo's own BMM file and its sibling dependencies, mounted under `/in/` and passed by path. A bare schema id loads the copy bundled in the `bmm-publisher` image, which lags the repos and rendered an older model without any error; mounting a directory over `/app/resources` hid the bundled dependencies. `regen-classes` stops when a file is missing instead of falling back to an id.
