@@ -50,16 +50,17 @@ Each component's `manifest.json` contains a `specifications` array. Here is the 
     "specifications": [ ... ],
     "expressions": [
         {
-            "id": "openEHR_UML-RM.mdzip",
-            "type": "uml",
-            "title": "RM UML",
-            "description": "UML file for MagicDraw 19. Contains UML 2.5 standard XMI file."
+            "id": "ITS-BMM-RM",
+            "type": "url",
+            "title": "RM BMM",
+            "description": "BMM files for openEHR Reference Model classes",
+            "link": "https://github.com/openEHR/specifications-ITS-BMM/tree/master/components/RM"
         },
         {
-            "id": "openEHR_UML-BASE.mdzip",
+            "id": "ITS-BMM-BASE",
             "dependency": {
                 "component": "BASE",
-                "release": "latest"
+                "release": "development"
             }
         }
     ],
@@ -93,5 +94,6 @@ When creating a new release:
 ## Expressions Array
 
 Expressions are computable artifacts associated with the component:
-- **`type: "uml"`** — UML model file. Historically a MagicDraw `.mdzip`; class tables and diagrams are now generated from the component's BMM schema by `bmm-publisher` (see the `class-generation` skill).
-- **`dependency`** — references an expression from another component (inherited)
+- **`type: "url"`** — a link to a computable artifact. The class model is published as BMM files in `specifications-ITS-BMM`: give it the id `ITS-BMM-<COMPONENT>`, the title `<COMPONENT> BMM` and a link to `.../specifications-ITS-BMM/tree/master/components/<COMPONENT>`, as RM and BASE do.
+- **`dependency`** — references another component's expression by id (for example `ITS-BMM-BASE` in a component whose classes use BASE types), with that component and its release.
+- **`type: "uml"`** — legacy MagicDraw `.mdzip` model. Do not add one: class tables and diagrams are generated from the component's BMM by `bmm-publisher` (see the `class-generation` skill).
