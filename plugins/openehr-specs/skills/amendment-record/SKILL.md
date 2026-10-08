@@ -93,6 +93,18 @@ Reference tickets as `{spec_tickets}/SPECXX-NNN[SPECXX-NNN^]` (the `{spec_ticket
 resolves to the site ticket URL). The full project-key table and CR↔PR linking phrasing are in
 `references/conventions.md`.
 
+### No Ticket
+
+Entries without a Jira reference are established practice: 266 of the 974 entries across the
+`specifications-*` repos carry none (surveyed 2026-10-08). When a change has no ticket:
+
+- Never invent a key or write a placeholder (`SPECXX-NNN`, `TBD`).
+- Ask whether to raise one first: a problem report (`SPECPR`) for a defect, a change request in the
+  component's project for a change. If one is raised, reference it.
+- Otherwise write the Details cell without a reference, in the same style as the other entries.
+- Whether a change needs an entry at all is the author's call. When they say none is needed, for example
+  for a fix that restores published text lost by tooling, add none.
+
 ## Version Numbering
 
 The issue number tracks the **document version**, independent of the component release version
@@ -121,7 +133,7 @@ SPECRM-142 — add tags to LOCATABLE; addresses SPECPR-401
 2. Choose the Issue number: bump patch, minor, or major per the table above, or reuse the top entry's number when the change ships in the same version increment (see "Grouping Multiple Changes" in `references/conventions.md`). If the right bump is unclear, state the assumed bump and proceed; the diff in step 8 lets the author correct it. Run `git -C <repo> status --short` and `git -C <repo> diff --stat` when the change is already in the working tree, so the entry describes what actually changed.
 3. Add the new entry at the **top** of the table (after the header row)
 4. Move `[[latest_issue]]` and `[[latest_issue_date]]` anchors to the new entry. When the version is reused, leave the Issue cell of the previous top entry blank.
-5. Reference all relevant Jira CRs and PRs (see `references/conventions.md` for keys, phrasing, and detail-text style)
+5. Reference all relevant Jira CRs and PRs (see `references/conventions.md` for keys, phrasing, and detail-text style); without a ticket, follow **No Ticket** above
 6. If this is the first entry after a release, add a release boundary row directly below the new entry, labelled with the release just completed (the newest release with a date in the `releases` array of `manifest.json`; ask the author if unsure)
 7. Use today's date as the completion date unless the author gives one (ask if uncertain; do not guess), in the format `dd Mon yyyy` (e.g., `17 Nov 2022`)
 8. When invoked directly, show the diff of the record (`git -C <repo> diff -- <record>`) and stop; do not publish or commit unless asked. Inside a larger flow (a release, an authoring task), return to that flow instead.

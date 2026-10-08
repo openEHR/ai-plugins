@@ -298,6 +298,18 @@ def infer(repo, tset, set_dir, notes):
         if len(bmm) > 1:
             notes.append(f"several BMM schemas in computable/BMM ({', '.join(bmm)}): using {bmm[-1]}; "
                          "pass --var bmm_schema_id=<id> to choose another")
+        # the classes of every component but BASE refer to BASE types, which bmm-publisher only
+        # links when the BASE BMM is loaded as a dependency (-d); read it from the sibling clone
+        if not bmm[-1].startswith("openehr_base_"):
+            base_dir = repo.resolve().parent / "specifications-BASE" / "computable" / "BMM"
+            base = sorted((p.name[: -len(".bmm.json")] for p in base_dir.glob("openehr_base_*.bmm.json")),
+                          key=version_key) if base_dir.is_dir() else []
+            if base:
+                put("base_bmm_schema_id", base[-1], "sibling specifications-BASE")
+            else:
+                notes.append("no sibling specifications-BASE clone with a BMM schema: the class-table command in "
+                             "AGENTS.md will not load BASE with -d, so links to BASE types break; clone it, or "
+                             "pass --var base_bmm_schema_id=<id>")
 
     head = git(repo, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
     if head:
@@ -891,6 +903,7 @@ def sample_values(tset, bmm):
         if spec.get("required"):
             explicit[name] = "EXAMPLE" if name == "component" else "Example Title"
     explicit["bmm_schema_id"] = "openehr_example_1.0.0" if bmm else ""
+    explicit["base_bmm_schema_id"] = "openehr_base_1.0.0" if bmm else ""
     return resolve_variables(tset, explicit, {}, {})
 
 

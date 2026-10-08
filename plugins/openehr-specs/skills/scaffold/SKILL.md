@@ -38,7 +38,8 @@ AsciiDoc-specific.
 2. **Variables.** When `status` is `needs_input`, ask for each missing or invalid variable, then plan
    again with `--var name=value`. A variable whose source is `default` or starts with `inferred` is a
    guess. Ask the user to confirm the ones that matter (`license`, `jira_project`, `bmm_schema_id`,
-   `default_branch`, `first_release`, `published_url`) and list the rest in one line. Never invent a
+   `base_bmm_schema_id`, `default_branch`, `published_url`, and `first_release` only when the plan creates
+   `manifest.json`, the one file that uses it) and list the rest in one line. Never invent a
    title, a Jira key or a filter id. Values the user confirmed earlier are recorded in
    `.claude/scaffold.json` and kept; a recorded default is not, so a BMM schema added later shows up
    as a new guess to confirm. `--overwrite` and `--pin` accept only the file ids and `agents:<region>`
@@ -92,6 +93,9 @@ AsciiDoc-specific.
   `pinned` in `.claude/scaffold.json`). Changing what a region says for every repo is a change to the
   plugin's template set.
 - Run the skill again later to upgrade: the recorded revision is compared with the latest.
+- Repository-specific guidance, such as what `/init` would write into a root `CLAUDE.md`, goes into
+  `AGENTS.md` outside the regions. `.claude/CLAUDE.md` only imports `AGENTS.md`; a second `CLAUDE.md`
+  would duplicate it.
 
 To change the template set, add a revision, or understand a file strategy, read
 `${CLAUDE_SKILL_DIR}/references/maintaining.md`.
