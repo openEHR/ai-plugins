@@ -9,6 +9,7 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 - `class-generation` and `regen-classes` generate from the component repo's own BMM file and its sibling dependencies, mounted under `/in/` and passed by path. A bare schema id loads the copy bundled in the `bmm-publisher` image, which lags the repos and rendered an older model without any error; mounting a directory over `/app/resources` hid the bundled dependencies. `regen-classes` stops when a file is missing instead of falling back to an id.
 - `scaffold` template set revision 2: the `AGENTS.md` build region no longer says the repo has no build tooling, and its class-table command loads the sibling BASE BMM with `-d` (new variable `base_bmm_schema_id`, inferred from the `specifications-BASE` clone), so links to BASE types resolve. A new `AGENTS.md` gets a `TODO(scaffold)` marker for the repo's own tooling, and `.claude/CLAUDE.md` says repo guidance belongs in `AGENTS.md` outside the regions. Existing repos upgrade on the next `/openehr-specs:scaffold` run.
 - `scaffold` asks to confirm `first_release` only when it creates `manifest.json`, the one file that uses it, and its rules say where `/init`-style guidance goes.
+- `amendment-record` covers changes without a Jira ticket: no invented or placeholder key, an offer to raise one, an entry without a reference otherwise, and none when the author says none is needed.
 
 ## openehr-specs 0.4.0 (2026-10-07)
 
