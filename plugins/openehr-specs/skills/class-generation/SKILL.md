@@ -57,9 +57,11 @@ To run from a cloned `bmm-publisher` checkout instead, see "Local development" i
 | `legacy-adoc` | Flat per-class definition tables for the legacy `docs/UML/classes` layout; `-o <container-dir>` sets the target, e.g. `/app/output/UML/classes` |
 | `asciidoc` (`adoc`) | Class, effective (flattened), and definition tables plus rendered SVG class/package diagrams (current layout) |
 
-Pass schema id(s) **without** the `.bmm.json` suffix (e.g. `openehr_base_1.3.0`), or `all`. Add a
-repeatable `-d <schema>` for each dependency schema, loaded for cross-references only (not exported),
-and `-v`/`-vv` for progress or detailed logging. The other commands (`plantuml`, `embed-svg`, `yaml`,
+Pass the **component repo's own BMM file** as a path, mounted into the container under `/in/`, and a
+repeatable `-d` with the path of each dependency schema, loaded for cross-references only (not
+exported). A bare schema id (`openehr_base_1.3.0`) or `all` loads the copy **bundled in the image**,
+which lags the repos: a run from an id exits 0 but renders the older model, so use ids only to
+reproduce published output. Add `-v` to log each file read (confirm it is `/in/…`) or `-vv` for detail. The other commands (`plantuml`, `embed-svg`, `yaml`,
 `split-json`, `odin`) and all options are in `references/bmm-publisher.md`.
 
 ## Output Layouts and How Specs Consume Them
@@ -93,20 +95,27 @@ image::ROOT:uml/classes/COMPOSITION.svg[]
 
 ## Typical Workflow
 
-1. **Identify the schema** as `openehr_<component>_<version>`, e.g. `openehr_base_1.3.0`,
-   `openehr_rm_1.2.0`. Ask the user for the component and release when they are not stated;
-   `references/bmm-publisher.md` lists the bundled ids.
+1. **Locate the schema files.** Work from the component repo's root. The schema is
+   `computable/BMM/openehr_<component>_<version>.bmm.json`; each dependency comes from its sibling clone
+   (RM, AM, LANG and TERM classes refer to BASE types:
+   `../specifications-BASE/computable/BMM/openehr_base_<version>.bmm.json`). When a file is missing, say
+   which and stop rather than falling back to a bundled id.
 2. **Choose the command by layout** (see above): `legacy-adoc` for the legacy layout, `asciidoc` for
    the current one.
-3. **Generate** into a working directory, mapping ownership to the host user:
+3. **Generate** into a temporary directory, mounting the files read-only and mapping ownership to the
+   host user (RM shown, with its BASE dependency):
    ```bash
+   OUT=$(mktemp -d)
    docker run --rm --user $(id -u):$(id -g) \
-     -v ./out:/app/output \
-     ghcr.io/openehr/bmm-publisher asciidoc -v openehr_rm_1.2.0 -d openehr_base_1.3.0
+     -v "$PWD/computable/BMM/openehr_rm_1.2.0.bmm.json":/in/openehr_rm_1.2.0.bmm.json:ro \
+     -v "$PWD/../specifications-BASE/computable/BMM/openehr_base_1.3.0.bmm.json":/in/openehr_base_1.3.0.bmm.json:ro \
+     -v "$OUT":/app/output \
+     ghcr.io/openehr/bmm-publisher asciidoc -v /in/openehr_rm_1.2.0.bmm.json -d /in/openehr_base_1.3.0.bmm.json
    ```
-   For the legacy layout, run `legacy-adoc -o /app/output/UML/classes <schema> -d <dependency>`
-   instead; the tables land in `./out/UML/classes`.
-4. **Place** the output. Legacy layout: copy `./out/UML/classes/*.adoc` into the component's
+   For the legacy layout, run `legacy-adoc -v -o /app/output/UML/classes /in/<schema>.bmm.json -d
+   /in/<dependency>.bmm.json` instead; the tables land in `$OUT/UML/classes`. Without the dependency,
+   links to its types come out as `link:/classes/<Type>`.
+4. **Place** the output. Legacy layout: copy `$OUT/UML/classes/*.adoc` into the component's
    `docs/UML/classes/`. Current layout: ask the user how the component wires the
    `output/Adoc/<schema>/` content. Ask before overwriting files in a `specifications-XX` repo, and do
    not commit.
@@ -120,7 +129,9 @@ the user can run `/openehr-specs:publish <component>`.
 ## Guardrails
 
 - **Generated output is never hand-edited.** Fix the BMM schema and regenerate.
+- **Use the repo's BMM, not the bundled copy.** Mount the files under `/in/` and pass their paths. Do not
+  mount a directory over `/app/resources`: it hides the bundled schemas, so a dependency named by id is
+  then missing and the run exits 1.
 - **`resources/*.bmm.json` is upstream input** in a cloned `bmm-publisher` checkout: do not modify it
-  unless the task is specifically to change the model. With the Docker image, mount your own schemas
-  with `-v ./my-schemas:/app/resources` instead.
+  unless the task is specifically to change the model.
 - Provide cross-referenced dependency schemas with `-d` so type links resolve (e.g. RM depends on BASE).

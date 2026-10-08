@@ -34,20 +34,24 @@ From each BMM schema the tool can produce:
 
 ## Arguments and options
 
-- **Positional**: one or more schema ids **without** the `.bmm.json` extension (e.g.
-  `openehr_rm_1.2.0`), or literal `.bmm.json` paths, or `all` to process every schema in the input
-  directory.
-- **`-d <schema>`** (repeatable): a dependency schema id or path, loaded for cross-reference
+- **Positional**: one or more literal `.bmm.json` paths (the normal case: the component repo's own
+  schema, mounted into the container), or schema ids **without** the `.bmm.json` extension (e.g.
+  `openehr_rm_1.2.0`), which load the copy bundled in the image, or `all` for every bundled schema.
+  The bundled copies lag the repos, so a run from an id can render an older model without any error.
+- **`-d <schema>`** (repeatable): a dependency schema path or id, loaded for cross-reference
   resolution only — **not** exported. Accepted by `asciidoc`, `legacy-adoc`, and `plantuml`. Example:
-  RM references BASE types, so generate RM with `-d openehr_base_1.3.0`.
+  RM references BASE types, so generate RM with `-d /in/openehr_base_1.3.0.bmm.json` (the sibling BASE
+  clone's file, mounted). Without it, links to BASE types come out as `link:/classes/<Type>`.
 - **`-o <dir>`** (`legacy-adoc` only): output directory for the class `.adoc` files. Default:
   `<output>/legacy-adoc/<schema_id>` per schema.
 - **`-v`** / **`-vv`**: progress output / detailed file-write logging.
 
 ## Input / output
 
-- **Input**: BMM schemas in `resources/` (`.bmm.json`, shipped with the image). Mount your own with
-  `-v ./my-schemas:/app/resources`.
+- **Input**: `.bmm.json` files mounted into the container and passed by path (recommended:
+  `-v "$PWD/computable/BMM/<schema>.bmm.json":/in/<schema>.bmm.json:ro`), or the schemas bundled in
+  `resources/`, named by id. Mounting a directory over `/app/resources` replaces the bundled set, so a
+  dependency named by id must then be in that directory too, or the run exits 1.
 - **Output**: artefacts in `output/` — mount a volume to retrieve them: `-v ./out:/app/output`.
 - **`BMM_OUTPUT_DIR`** env var overrides the output path: `-e BMM_OUTPUT_DIR=/data/out`.
 
@@ -67,20 +71,29 @@ shipped by a given image tag.
 ## Invocation examples (Docker)
 
 ```bash
+# From a component repo's root: its own BMM plus the sibling BASE dependency, by path (the normal case)
+docker run --rm --user $(id -u):$(id -g) \
+  -v "$PWD/computable/BMM/openehr_rm_1.2.0.bmm.json":/in/openehr_rm_1.2.0.bmm.json:ro \
+  -v "$PWD/../specifications-BASE/computable/BMM/openehr_base_1.3.0.bmm.json":/in/openehr_base_1.3.0.bmm.json:ro \
+  -v ./out:/app/output \
+  ghcr.io/openehr/bmm-publisher legacy-adoc -v -o /app/output/UML/classes \
+  /in/openehr_rm_1.2.0.bmm.json -d /in/openehr_base_1.3.0.bmm.json
+
 # All bundled schemas → AsciiDoc tables + SVG diagrams
 docker run --rm -v ./out:/app/output ghcr.io/openehr/bmm-publisher asciidoc all
 
-# Single schema with a dependency, host-owned output, verbose
+# Bundled schemas by id: reproduces published output, may lag the repos
 docker run --rm --user $(id -u):$(id -g) \
   -v ./out:/app/output \
   ghcr.io/openehr/bmm-publisher asciidoc -v openehr_rm_1.2.0 -d openehr_base_1.3.0
 
-# Legacy per-class tables -> ./out/UML/classes (copy into the spec repo's docs/UML/classes)
+# Legacy per-class tables of the bundled BASE by id -> ./out/UML/classes (to compare with published output;
+# for a spec repo, use the by-path example above)
 docker run --rm --user $(id -u):$(id -g) \
   -v ./out:/app/output \
   ghcr.io/openehr/bmm-publisher legacy-adoc -o /app/output/UML/classes openehr_base_1.3.0
 
-# Your own BMM schemas
+# A directory of your own schemas replacing the bundled set (it must hold every dependency too)
 docker run --rm \
   -v ./my-schemas:/app/resources \
   -v ./out:/app/output \
