@@ -59,6 +59,13 @@ class Base(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
 
+    def base_clone(self, *schema_ids):
+        """A sibling specifications-BASE clone holding the given BMM schema ids."""
+        bmm = self.root / "specifications-BASE" / "computable" / "BMM"
+        bmm.mkdir(parents=True, exist_ok=True)
+        for schema_id in schema_ids:
+            (bmm / f"{schema_id}.bmm.json").write_text("{}", encoding="utf-8")
+
     def copy_set(self):
         dst = self.root / f"set{len(list(self.root.glob('set*')))}"
         shutil.copytree(scaffold.SET_DIR, dst, ignore=shutil.ignore_patterns("__pycache__"))
@@ -130,7 +137,8 @@ class InitTests(Base):
         self.apply()
         desc = json.loads(self.text(".claude/scaffold.json"))
         self.assertEqual(list(desc)[:2], ["template_set", "revision"])
-        self.assertEqual(desc["revision"], 1)
+        latest = json.loads((self.set_dir / "assets/template-set.json").read_text(encoding="utf-8"))["revision"]
+        self.assertEqual(desc["revision"], latest)
         self.assertEqual(desc["variables"]["component"], "DEMO")
         self.assertNotIn("license_name", desc["variables"])  # derived, not stored
         self.assertEqual(set(desc["files"]["agents"]["regions"]), {"plugin", "build", "conventions"})
@@ -143,6 +151,33 @@ class InitTests(Base):
         self.assertIn("openehr-specs:class-generation", agents)
         self.assertIn("## Gotchas", agents)
         self.assertIn("and BMM sources", self.text(".claude/CLAUDE.md"))
+
+    def test_a_base_dependency_is_loaded_with_d_in_the_class_table_command(self):
+        self.apply(bmm_schema_id="openehr_demo_1.0.0", base_bmm_schema_id="openehr_base_1.3.0")
+        agents = self.text("AGENTS.md")
+        self.assertIn('  -v "$PWD/../specifications-BASE/computable/BMM/openehr_base_1.3.0.bmm.json"'
+                      ':/in/openehr_base_1.3.0.bmm.json:ro \\\n', agents)
+        self.assertIn("  ghcr.io/openehr/bmm-publisher legacy-adoc \\\n"
+                      "  -d /in/openehr_base_1.3.0.bmm.json \\\n"
+                      "  /in/openehr_demo_1.0.0.bmm.json -o /out\n", agents)
+
+    def test_without_a_base_dependency_the_command_has_no_d_option(self):
+        self.apply(bmm_schema_id="openehr_demo_1.0.0")
+        agents = self.text("AGENTS.md")
+        self.assertNotIn("-d /in/", agents)
+        self.assertNotIn("specifications-BASE/computable", agents)
+        self.assertIn("  ghcr.io/openehr/bmm-publisher legacy-adoc \\\n"
+                      "  /in/openehr_demo_1.0.0.bmm.json -o /out\n", agents)
+
+    def test_agents_md_asks_for_the_repos_own_tooling_instead_of_denying_it(self):
+        self.apply()
+        agents = self.text("AGENTS.md")
+        self.assertNotIn("No build tooling lives in this repo", agents)
+        self.assertIn("TODO(scaffold): if this repo has its own tooling", agents)
+
+    def test_claude_md_points_repo_guidance_to_agents_md(self):
+        self.apply()
+        self.assertIn("outside the `openehr-scaffold` regions", self.text(".claude/CLAUDE.md"))
 
     def test_without_bmm_those_sections_are_absent(self):
         self.apply()
@@ -199,6 +234,31 @@ class InferTests(Base):
     def test_bmm_schema_is_found(self):
         self.put("computable/BMM/openehr_demo_1.2.0.bmm.json", "{}")
         self.assertEqual(self.plan().values["bmm_schema_id"], "openehr_demo_1.2.0")
+
+    def test_base_bmm_comes_from_the_sibling_base_clone_highest_version_first(self):
+        self.put("computable/BMM/openehr_demo_1.0.0.bmm.json", "{}")
+        self.base_clone("openehr_base_1.2.0", "openehr_base_1.10.0", "openehr_base_1.3.0")
+        plan = self.plan()
+        self.assertEqual(plan.values["base_bmm_schema_id"], "openehr_base_1.10.0")
+        self.assertTrue(plan.sources["base_bmm_schema_id"].startswith("inferred"))
+
+    def test_base_itself_gets_no_base_dependency(self):
+        repo = self.root / "specifications-BASE"
+        (repo / "computable/BMM").mkdir(parents=True)
+        (repo / "computable/BMM/openehr_base_1.3.0.bmm.json").write_text("{}", encoding="utf-8")
+        plan = self.plan(repo)
+        self.assertEqual(plan.values["base_bmm_schema_id"], "")
+        self.assertFalse(any("specifications-BASE" in w for w in plan.warnings))
+
+    def test_a_repo_without_bmm_gets_no_base_dependency(self):
+        self.base_clone("openehr_base_1.3.0")
+        self.assertEqual(self.plan().values["base_bmm_schema_id"], "")
+
+    def test_a_missing_base_clone_is_reported(self):
+        self.put("computable/BMM/openehr_demo_1.0.0.bmm.json", "{}")
+        plan = self.plan()
+        self.assertEqual(plan.values["base_bmm_schema_id"], "")
+        self.assertTrue(any("specifications-BASE" in w for w in plan.warnings), plan.warnings)
 
     def test_licence_family_is_recognised_from_the_text(self):
         text = (self.set_dir / "assets/templates/license-apache-2.0.txt").read_text(encoding="utf-8")
@@ -378,39 +438,39 @@ class UpgradeTests(Base):
         self.apply()
         self.put("AGENTS.md", self.text("AGENTS.md").replace("# AGENTS.md", "# AGENTS.md\n\nMy intro."))
         new_set = self.copy_set()
-        self.bump(new_set, edit=self.edit_conventions)
+        rev = self.bump(new_set, edit=self.edit_conventions)
         self.set_dir = new_set
         plan = self.plan()
-        self.assertEqual((plan.mode, plan.path), ("upgrade", [2]))
+        self.assertEqual((plan.mode, plan.path), ("upgrade", [rev]))
         self.assertEqual(self.actions(plan)["AGENTS.md"], "update")
         self.apply()
         agents = self.text("AGENTS.md")
         self.assertIn("a single line, for example", agents)
         self.assertIn("My intro.", agents)
-        self.assertEqual(json.loads(self.text(".claude/scaffold.json"))["revision"], 2)
+        self.assertEqual(json.loads(self.text(".claude/scaffold.json"))["revision"], rev)
         self.assertEqual(self.plan().mode, "current")
 
     def test_a_template_change_conflicts_with_a_locally_edited_region(self):
         self.apply()
         self.put("AGENTS.md", self.text("AGENTS.md").replace("understood, but use the leading form", "tolerated"))
         new_set = self.copy_set()
-        self.bump(new_set, edit=self.edit_conventions)
+        rev = self.bump(new_set, edit=self.edit_conventions)
         self.set_dir = new_set
         agents = next(a for a in self.plan().acts if a.id == "agents")
         self.assertEqual(agents.action, "conflict")
         self.apply()
         self.assertIn("tolerated", self.text("AGENTS.md"))  # kept
-        self.assertEqual(self.plan().recorded, 2)
+        self.assertEqual(self.plan().recorded, rev)
 
     def test_the_path_chains_every_revision_between_recorded_and_latest(self):
         self.apply()
         new_set = self.copy_set()
-        self.bump(new_set, steps=[{"op": "note", "text": "two"}])
-        self.bump(new_set, steps=[{"op": "note", "text": "three"}])
+        first = self.bump(new_set, steps=[{"op": "note", "text": "two"}])
+        second = self.bump(new_set, steps=[{"op": "note", "text": "three"}])
         self.set_dir = new_set
         plan = self.plan()
-        self.assertEqual(plan.path, [2, 3])
-        self.assertEqual([(s["revision"], s["text"]) for s in plan.steps], [(2, "two"), (3, "three")])
+        self.assertEqual(plan.path, [first, second])
+        self.assertEqual([(s["revision"], s["text"]) for s in plan.steps], [(first, "two"), (second, "three")])
 
     def test_rename_moves_the_file_and_keeps_its_recorded_hash(self):
         self.apply()
@@ -447,8 +507,8 @@ class UpgradeTests(Base):
     def test_a_missing_migration_file_is_an_error(self):
         self.apply()
         new_set = self.copy_set()
-        self.bump(new_set)
-        (new_set / "migrations/0002.json").unlink()
+        rev = self.bump(new_set)
+        (new_set / f"migrations/{rev:04d}.json").unlink()
         self.set_dir = new_set
         with self.assertRaises(scaffold.ScaffoldError):
             self.plan()
@@ -493,9 +553,9 @@ class CheckTests(Base):
 
     def test_a_revision_without_its_migration_file_is_flagged(self):
         dst = self.copy_set()
-        self.bump(dst)
-        (dst / "migrations/0002.json").unlink()
-        self.assertTrue(any("0002.json" in p for p in scaffold.check_template_set(dst)))
+        rev = self.bump(dst)
+        (dst / f"migrations/{rev:04d}.json").unlink()
+        self.assertTrue(any(f"{rev:04d}.json" in p for p in scaffold.check_template_set(dst)))
 
     def test_a_missing_template_and_a_broken_template_are_flagged(self):
         dst = self.copy_set()
@@ -562,7 +622,7 @@ class HardeningTests(Base):
         def edit(dst):
             path = dst / "assets/templates/agents-md.tmpl"
             text = path.read_text(encoding="utf-8")
-            text = text.replace("Docker is the only prerequisite", "Docker is the sole prerequisite")
+            text = text.replace("Docker is all you need", "Docker is all it takes")
             text = text.replace("one line, for example", "a single line, for example")
             path.write_text(text, encoding="utf-8")
 
@@ -575,7 +635,7 @@ class HardeningTests(Base):
         self.assertEqual((agents.action, regions["build"], regions["conventions"]), ("conflict", "update", "conflict"))
         self.apply()
         text = self.text("AGENTS.md")
-        self.assertIn("sole prerequisite", text)          # clean region written
+        self.assertIn("Docker is all it takes", text)     # clean region written
         self.assertIn("tolerated", text)                  # conflicting region kept
         self.assertNotIn("a single line, for example", text)
 
@@ -596,6 +656,7 @@ class HardeningTests(Base):
 
     def test_a_single_bmm_schema_gives_no_warning(self):
         self.put("computable/BMM/openehr_demo_1.0.0.bmm.json", "{}")
+        self.base_clone("openehr_base_1.3.0")  # without it, the missing BASE dependency is reported
         self.assertFalse(any("BMM" in w for w in self.plan().warnings))
 
     def test_git_warnings_distinguish_the_cases(self):

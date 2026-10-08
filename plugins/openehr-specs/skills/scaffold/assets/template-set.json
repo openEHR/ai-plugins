@@ -1,12 +1,18 @@
 {
   "id": "openehr-specs/scaffold",
-  "revision": 1,
+  "revision": 2,
   "revisions": [
     {
       "revision": 1,
       "released": "2026-10-07",
       "summary": "Initial set: AGENTS.md (plugin, build, conventions regions), .claude/CLAUDE.md and settings.json, manifest.json, .gitignore, .asciidoctorconfig, LICENSE, README.md.",
       "digest": "27be97e72c5c80329ed51091f36c7db81bae89732bcfa133ea7203f0b2a697ae"
+    },
+    {
+      "revision": 2,
+      "released": "2026-10-08",
+      "summary": "AGENTS.md build region: no longer claims the repo has no build tooling, and the class-table command loads the sibling BASE BMM with -d (new variable base_bmm_schema_id); a TODO(scaffold) marker asks new repos to describe their own tooling. .claude/CLAUDE.md says where repo guidance goes.",
+      "digest": "e973f4d599169188dcef2ae965e6f642ad58f3cea9d09ef930e923a4ca54e5b7"
     }
   ],
   "variables": {
@@ -82,6 +88,11 @@
       "default": "",
       "pattern": "^$|^openehr_[a-z0-9_]+_[0-9]+\\.[0-9]+\\.[0-9]+$",
       "description": "BMM schema id (openehr_base_1.3.0) when the repo holds computable/BMM/<id>.bmm.json; empty otherwise. Switches on the class-generation sections."
+    },
+    "base_bmm_schema_id": {
+      "default": "",
+      "pattern": "^$|^openehr_base_[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "BASE BMM schema id (openehr_base_1.3.0) that the component's classes refer to, read from the sibling specifications-BASE clone; loaded with -d when the class tables are regenerated. Empty for BASE itself and for repos without a BMM."
     },
     "documents": {
       "default": "none yet (add them to `manifest.json`)",

@@ -16,8 +16,7 @@ scaffold/
 └── scripts/scaffold.py          # plan, apply, render, diff, check, seal
 ```
 
-`migrations/` does not exist yet, because git does not track an empty directory. Create it with the first
-migration file.
+`migrations/` holds one file per revision after the first, starting with `0002.json`.
 
 From the repo root:
 
@@ -58,7 +57,8 @@ descriptor as confirmed, then inference, then a recorded default, then the defau
 names and empty required values are rejected.
 
 - Inference reads `manifest.json`, `.asciidoctorconfig`, the git remote, the directory name,
-  `computable/BMM`, `origin/HEAD` (for `default_branch`) and the `LICENSE` text.
+  `computable/BMM`, `origin/HEAD` (for `default_branch`), the `LICENSE` text, and the sibling
+  `specifications-BASE/computable/BMM` (for `base_bmm_schema_id`, the highest version; never for BASE itself).
 - The descriptor lists which recorded values were only defaults (`defaulted`). Inference replaces those, so a
   BMM schema added to the repo later is picked up as a new guess; a value the user confirmed is kept.
 - A value that fails its `pattern` is reported, not guessed: `SPEC{{component}}` is invalid for
@@ -131,6 +131,9 @@ Surveyed on 2026-10-07 across the `specifications-*` clones (18 with a git direc
 - AsciiDoc specification repos only, with an optional BMM schema. An OpenAPI repo (`specifications-ITS-REST`,
   built with `make`) needs its own variant of `AGENTS.md`; until then, pin `agents`, `claude-md` and
   `asciidoctorconfig` there.
+- One BMM dependency. The class-table command in `AGENTS.md` loads only BASE with `-d`, from the sibling
+  clone. A component whose classes also refer to another component (AM 2.x to LANG expression classes, for
+  example) needs further `-d` options, added by hand.
 - One BMM schema per repo. When several are found (AM has 1.4.0 and 2.4.0, LANG has three) the highest
   version is used and a warning lists the others; pass `--var bmm_schema_id=<id>` to choose.
 - `json-merge` rewrites the file with two-space indentation when it adds something, and any rewrite drops

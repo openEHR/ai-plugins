@@ -1,0 +1,10 @@
+{
+  "from": 1,
+  "to": 2,
+  "steps": [
+    {
+      "op": "note",
+      "text": "AGENTS.md: if this repo has its own tooling (scripts, generators, a Makefile), describe what it produces and how to run it in a section outside the openehr-scaffold regions. New installs get a TODO(scaffold) marker for this; existing files do not, because text outside the regions belongs to the repo."
+    }
+  ]
+}
