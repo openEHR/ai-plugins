@@ -82,6 +82,18 @@ class Base(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
 
+    def clone(self, component, *schemas):
+        """A sibling specifications-<component> clone holding the given BMM schemas ({id: includes} or ids)."""
+        bmm = self.root / f"specifications-{component}" / "computable" / "BMM"
+        bmm.mkdir(parents=True, exist_ok=True)
+        for schema in schemas:
+            (bmm / f"{schema}.bmm.json").write_text("{}", encoding="utf-8")
+
+    def schema(self, schema_id, *includes):
+        """A BMM schema in this repo's computable/BMM that includes the given schema ids."""
+        body = {"includes": {i: {"id": i} for i in includes}} if includes else {}
+        self.put(f"computable/BMM/{schema_id}.bmm.json", json.dumps(body))
+
     def base_clone(self, *schema_ids):
         """A sibling specifications-BASE clone holding the given BMM schema ids."""
         bmm = self.root / "specifications-BASE" / "computable" / "BMM"
@@ -177,7 +189,7 @@ class InitTests(Base):
         self.assertIn("and BMM sources", self.text(".claude/CLAUDE.md"))
 
     def test_a_base_dependency_is_loaded_with_d_in_the_class_table_command(self):
-        self.apply(bmm_schema_id="openehr_demo_1.0.0", base_bmm_schema_id="openehr_base_1.3.0")
+        self.apply(bmm_schema_id="openehr_demo_1.0.0", bmm_dependencies="openehr_base_1.3.0")
         agents = self.text("AGENTS.md")
         self.assertIn('  -v "$PWD/../specifications-BASE/computable/BMM/openehr_base_1.3.0.bmm.json"'
                       ':/in/openehr_base_1.3.0.bmm.json:ro \\\n', agents)
@@ -263,8 +275,9 @@ class InferTests(Base):
         self.put("computable/BMM/openehr_demo_1.0.0.bmm.json", "{}")
         self.base_clone("openehr_base_1.2.0", "openehr_base_1.10.0", "openehr_base_1.3.0")
         plan = self.plan()
-        self.assertEqual(plan.values["base_bmm_schema_id"], "openehr_base_1.10.0")
-        self.assertTrue(plan.sources["base_bmm_schema_id"].startswith("inferred"))
+        self.assertEqual((plan.values["bmm_dependencies"], plan.values["base_bmm_schema_id"]),
+                         ("openehr_base_1.10.0", "openehr_base_1.10.0"))
+        self.assertEqual(plan.sources["bmm_dependencies"], "inferred: includes of openehr_demo_1.0.0")
 
     def test_base_itself_gets_no_base_dependency(self):
         repo = self.root / "specifications-BASE"
@@ -315,11 +328,32 @@ class StrategyTests(Base):
         self.assertIn('"custom"', self.text("manifest.json"))
 
     def test_an_existing_readme_in_another_format_blocks_readme_md(self):
-        self.put("README.adoc", "= Demo\n")
+        self.put("README.rst", "Demo\n====\n")
         plan = self.plan()
         self.assertEqual(self.actions(plan)["README.md"], "exists-alternative")
         self.apply()
         self.assertFalse((self.repo / "README.md").exists())
+
+    def test_a_readme_adoc_is_planned_for_conversion_and_left_alone(self):
+        self.put("README.adoc", "= Demo\n")
+        act = next(a for a in self.plan().acts if a.id == "readme")
+        self.assertEqual((act.action, act.public()["convert_from"]), ("convert", "README.adoc"))
+        self.assertIn("`git mv README.adoc README.md`", act.detail)
+        result = self.apply()
+        self.assertNotIn("README.md", result["written"])
+        self.assertFalse((self.repo / "README.md").exists())
+        self.assertEqual(self.text("README.adoc"), "= Demo\n")
+
+    def test_a_readme_adoc_next_to_readme_md_is_planned_for_merging(self):
+        self.put("README.adoc", "= Demo\n")
+        self.put("README.md", "# Demo\n")
+        act = next(a for a in self.plan().acts if a.id == "readme")
+        self.assertEqual(act.action, "convert")
+        self.assertIn("merge what it says into README.md and delete it", act.detail)
+
+    def test_once_converted_the_readme_is_the_repos_own(self):
+        self.put("README.md", "# Demo\n")
+        self.assertEqual(self.actions(self.plan())["README.md"], "exists")
 
     def test_licence_detail_says_whether_the_text_is_standard(self):
         standard = (self.set_dir / "assets/templates/license-cc-by-sa-3.0.txt").read_text(encoding="utf-8")
@@ -1207,6 +1241,32 @@ class BmmTests(Base):
         self.assertEqual((plan.values["bmm_schema_id"], plan.values["bmm_schema_name"]),
                          ("openehr_its_demo_0.1.0", "its_demo"))
 
+    def test_the_its_repositories_are_never_offered_a_schema_and_docker_is_not_asked(self):
+        self.docker.schemas = {"openehr_its_rest_1.0.0": BUNDLED}
+        for component in ("ITS-XML", "ITS-BMM", "ITS-JSON", "ITS-REST"):
+            plan = self.plan(component=component, jira_project="SPECITS")
+            act = self.bmm_act(plan)
+            self.assertEqual((plan.mode, act.action, act.target), ("init", "skipped", BMM_GLOB), component)
+            self.assertIn(f"{component} holds no BMM schema of its own", act.detail)
+            self.assertEqual(plan.values["bmm_schema_id"], "")
+        self.assertEqual(self.docker.calls, [])
+        self.apply(component="ITS-REST", jira_project="SPECITS")
+        self.assertFalse((self.repo / "computable").exists())
+        self.assertNotIn("class-generation", self.text("AGENTS.md"))
+
+    def test_a_schema_id_given_for_an_its_repository_is_rejected(self):
+        plan = self.plan(component="ITS-BMM", jira_project="SPECITS", bmm_schema_id="openehr_rm_1.2.0",
+                         bmm_dependencies="openehr_base_1.3.0")
+        self.assertEqual({i["name"] for i in plan.invalid}, {"bmm_schema_id", "bmm_dependencies"})
+        self.assertIn("must be empty for ITS-BMM", plan.invalid[0]["problem"])
+        self.assertEqual(plan.acts, [])
+        self.assertEqual(self.plan(component="ITS-BMM", jira_project="SPECITS", bmm_schema_id="").invalid, [])
+
+    def test_other_its_components_are_not_excluded(self):
+        self.docker.schemas = {}
+        plan = self.plan(component="ITS-DEMO", jira_project="SPECITS")
+        self.assertEqual(self.bmm_act(plan).action, "create")
+
     def test_base_copies_its_own_schema_and_has_no_base_dependency(self):
         repo = self.root / "specifications-BASE"
         repo.mkdir()
@@ -1222,9 +1282,125 @@ class BmmTests(Base):
         del next(f for f in tset["files"] if f["id"] == "bmm")["image"]
         del tset["variables"]["bmm_rm_release"]["derived"]["match"]
         path.write_text(json.dumps(tset), encoding="utf-8")
+        next(f for f in tset["files"] if f["id"] == "readme")["convert_from"] = ["../README.adoc"]
+        next(f for f in tset["files"] if f["id"] == "bmm")["excluded_components"] = "ITS-REST"
+        path.write_text(json.dumps(tset), encoding="utf-8")
         problems = scaffold.check_template_set(dst)
         self.assertTrue(any("a bmm-seed file needs image" in p for p in problems), problems)
+        self.assertTrue(any("convert_from: '../README.adoc' must be a relative path" in p for p in problems), problems)
+        self.assertTrue(any("excluded_components must be a list" in p for p in problems), problems)
         self.assertTrue(any("'bmm_rm_release': derived needs either map or match" in p for p in problems), problems)
+
+
+class DependencyTests(Base):
+    """bmm_dependencies: what the class-table command loads with -d, read from the schema's includes."""
+
+    def test_every_included_schema_is_mounted_and_loaded_in_order(self):
+        self.schema("openehr_demo_2.4.0", "openehr_base_1.3.0", "openehr_lang_1.1.0")
+        self.clone("BASE", "openehr_base_1.3.0")
+        self.clone("LANG", "openehr_lang_1.1.0")
+        plan = self.plan()
+        self.assertEqual(plan.values["bmm_dependencies"], "openehr_base_1.3.0, openehr_lang_1.1.0")
+        self.apply()
+        agents = self.text("AGENTS.md")
+        self.assertIn('  -v "$PWD/../specifications-BASE/computable/BMM/openehr_base_1.3.0.bmm.json"'
+                      ':/in/openehr_base_1.3.0.bmm.json:ro \\\n'
+                      '  -v "$PWD/../specifications-LANG/computable/BMM/openehr_lang_1.1.0.bmm.json"'
+                      ':/in/openehr_lang_1.1.0.bmm.json:ro \\\n', agents)
+        self.assertIn("  ghcr.io/openehr/bmm-publisher legacy-adoc \\\n"
+                      "  -d /in/openehr_base_1.3.0.bmm.json \\\n"
+                      "  -d /in/openehr_lang_1.1.0.bmm.json \\\n"
+                      "  /in/openehr_demo_2.4.0.bmm.json -o /out\n", agents)
+
+    def test_a_schema_without_includes_still_loads_base(self):
+        self.schema("openehr_demo_3.1.0")  # TERM includes nothing, yet its String links need BASE
+        self.clone("BASE", "openehr_base_1.3.0")
+        self.assertEqual(self.plan().values["bmm_dependencies"], "openehr_base_1.3.0")
+
+    def test_the_included_base_version_is_preferred_when_the_clone_holds_it(self):
+        self.schema("openehr_demo_1.0.0", "openehr_base_1.2.0")
+        self.clone("BASE", "openehr_base_1.2.0", "openehr_base_1.3.0")
+        self.assertEqual(self.plan().values["bmm_dependencies"], "openehr_base_1.2.0")
+
+    def test_an_included_base_version_the_clone_lacks_falls_back_to_the_highest(self):
+        self.schema("openehr_demo_1.0.0", "openehr_base_1.1.0")
+        self.clone("BASE", "openehr_base_1.3.0")
+        plan = self.plan()
+        self.assertEqual(plan.values["bmm_dependencies"], "openehr_base_1.3.0")
+        self.assertTrue(any("includes openehr_base_1.1.0" in w and "loading openehr_base_1.3.0" in w
+                            for w in plan.warnings), plan.warnings)
+
+    def test_an_include_without_its_sibling_clone_is_left_out_and_reported(self):
+        self.schema("openehr_demo_2.4.0", "openehr_base_1.3.0", "openehr_lang_1.1.0")
+        self.clone("BASE", "openehr_base_1.3.0")
+        plan = self.plan()
+        self.assertEqual(plan.values["bmm_dependencies"], "openehr_base_1.3.0")
+        self.assertTrue(any("includes openehr_lang_1.1.0, but no sibling specifications-LANG clone" in w
+                            for w in plan.warnings), plan.warnings)
+
+    def test_a_new_include_is_picked_up_although_the_old_list_was_recorded(self):
+        self.schema("openehr_demo_2.4.0", "openehr_base_1.3.0")
+        self.clone("BASE", "openehr_base_1.3.0")
+        self.apply()
+        self.schema("openehr_demo_2.4.0", "openehr_base_1.3.0", "openehr_lang_1.1.0")
+        self.clone("LANG", "openehr_lang_1.1.0")
+        self.assertEqual(self.plan().values["bmm_dependencies"], "openehr_base_1.3.0, openehr_lang_1.1.0")
+
+    def test_an_explicit_empty_list_loads_nothing(self):
+        self.schema("openehr_demo_1.0.0", "openehr_base_1.3.0")
+        self.clone("BASE", "openehr_base_1.3.0")
+        self.apply(bmm_dependencies="")
+        self.assertNotIn("-d /in/", self.text("AGENTS.md"))
+
+    def test_a_hyphenated_component_maps_to_its_clone(self):
+        self.schema("openehr_demo_1.0.0", "openehr_base_1.3.0", "openehr_its_demo_1.0.0")
+        self.clone("BASE", "openehr_base_1.3.0")
+        self.clone("ITS-DEMO", "openehr_its_demo_1.0.0")
+        self.apply()
+        self.assertIn("../specifications-ITS-DEMO/computable/BMM/openehr_its_demo_1.0.0.bmm.json",
+                      self.text("AGENTS.md"))
+
+    def test_base_bmm_schema_id_can_no_longer_be_given(self):
+        with self.assertRaisesRegex(scaffold.ScaffoldError, "unknown variable.*base_bmm_schema_id"):
+            self.plan(base_bmm_schema_id="openehr_base_1.3.0")
+
+    def test_a_bundled_copy_brings_its_own_includes(self):
+        self.docker.schemas = {"openehr_demo_2.4.0": json.dumps(
+            {"includes": {"openehr_base_1.3.0": {"id": "openehr_base_1.3.0"},
+                          "openehr_lang_1.1.0": {"id": "openehr_lang_1.1.0"}}})}
+        self.clone("BASE", "openehr_base_1.3.0")
+        self.clone("LANG", "openehr_lang_1.1.0")
+        self.assertEqual(self.plan().values["bmm_dependencies"], "openehr_base_1.3.0, openehr_lang_1.1.0")
+
+    def test_without_a_schema_a_recorded_list_is_dropped(self):
+        self.schema("openehr_demo_1.0.0", "openehr_base_1.3.0")
+        self.clone("BASE", "openehr_base_1.3.0")
+        self.apply()
+        (self.repo / "computable/BMM/openehr_demo_1.0.0.bmm.json").unlink()
+        plan = self.plan(bmm_schema_id="")
+        self.assertEqual(plan.values["bmm_dependencies"], "")
+
+
+class EachTests(unittest.TestCase):
+    def test_each_repeats_its_body_per_item_with_filters(self):
+        out = scaffold.render("{{#each deps}}\n{{item|component}}={{item}};\n{{/each}}\nend {{x}}\n",
+                              {"deps": "openehr_base_1.3.0, openehr_its_rest_1.0.0", "x": "y"})
+        self.assertEqual(out, "BASE=openehr_base_1.3.0;\nITS-REST=openehr_its_rest_1.0.0;\nend y\n")
+
+    def test_an_empty_list_renders_nothing(self):
+        self.assertEqual(scaffold.render("a\n{{#each deps}}\nx {{item}}\n{{/each}}\nb\n", {"deps": ""}), "a\nb\n")
+
+    def test_a_block_nested_in_each_is_rejected(self):
+        with self.assertRaisesRegex(scaffold.ScaffoldError, "nested block inside"):
+            scaffold.render("{{#each d}}{{#if x}}y{{/if}}{{/each}}", {"d": "a", "x": "1"})
+
+    def test_items_are_escaped_like_any_value(self):
+        self.assertEqual(scaffold.render('{{#each d}}"{{item}}"{{/each}}', {"d": 'a"b'}, scaffold.json_escape),
+                         '"a\\"b"')
+
+    def test_item_outside_each_is_an_unknown_variable(self):
+        with self.assertRaisesRegex(scaffold.ScaffoldError, "unknown variable 'item'"):
+            scaffold.render("{{item}}", {})
 
 
 class DockerHelperTests(unittest.TestCase):

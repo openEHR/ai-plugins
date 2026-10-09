@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 errors = []
 
+BMM_SKILLS = ("bmm-authoring", "class-generation", "regen-classes", "scaffold")
 PLUGIN_NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$")
 MARKETPLACE_NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
 MANIFEST_FIELDS = ("logo", "rules", "skills", "agents", "commands", "hooks", "mcpServers")
@@ -75,6 +76,27 @@ def validate_template_sets(plugin_dir: Path):
             continue
         for problem in problems:
             err(f"{rel}: template set: {problem}")
+
+
+def validate_bmm_exclusions(plugin_dir: Path):
+    """Every skill that writes or renders a BMM schema names each repo the scaffold excludes from that
+    work (the excluded_components of its bmm-seed file), so the rule cannot drift between them."""
+    tset_path = plugin_dir / "skills" / "scaffold" / "assets" / "template-set.json"
+    if not tset_path.is_file():
+        return
+    tset = load_json(tset_path, "template set")
+    if tset is None:
+        return
+    excluded = next((f.get("excluded_components", []) for f in tset.get("files", [])
+                     if f.get("strategy") == "bmm-seed"), [])
+    for skill in BMM_SKILLS:
+        skill_md = plugin_dir / "skills" / skill / "SKILL.md"
+        if not skill_md.is_file():
+            continue
+        missing = [c for c in excluded if c not in skill_md.read_text()]
+        if missing:
+            err(f"{skill_md.relative_to(ROOT)}: does not name {', '.join(missing)}, which the scaffold "
+                "template set excludes from BMM work (files[bmm].excluded_components)")
 
 
 def validate_md_components(plugin_dir: Path, subdir: str):
@@ -209,6 +231,7 @@ def main():
     validate_cross_manifest_versions()
     for plugin_dir in sorted(d for d in (ROOT / "plugins").iterdir() if d.is_dir()):
         validate_template_sets(plugin_dir)  # once per plugin, not once per marketplace
+        validate_bmm_exclusions(plugin_dir)
 
 
 if __name__ == "__main__":

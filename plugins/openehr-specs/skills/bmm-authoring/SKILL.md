@@ -5,8 +5,9 @@ description: >
   `specifications-XX` repo. This skill should be used when the user asks to write a BMM schema from
   scratch, add, rename or remove a class, attribute, function, invariant or enumeration in the
   model, set the schema header or includes, or check or fix a `.bmm.json`. Not for regenerating class
-  tables (use class-generation), spec prose (use content-patterns), or archetype/template work
-  (openehr-assistant plugin).
+  tables (use class-generation), spec prose (use content-patterns), archetype/template work
+  (openehr-assistant plugin), or the ITS-XML, ITS-BMM, ITS-JSON and ITS-REST repos, which hold no
+  model of their own.
 allowed-tools:
   - "Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/check_bmm.py *)"
 ---
@@ -24,6 +25,15 @@ ODIN and YAML. Change the model here, and only here.
   type and function kind, what the tables show, and the spec features the toolchain does not read).
 - **Worked example**: `${CLAUDE_SKILL_DIR}/assets/openehr_demo_0.1.0.bmm.json`, one of each common construct.
 - **Checker**: `${CLAUDE_SKILL_DIR}/scripts/check_bmm.py` (Python 3.8+, standard library only, read-only).
+
+## Where It Applies
+
+Only in a component repo. Check `manifest.json` `id` (or the directory name `specifications-<id>`)
+first. In the ITS-XML, ITS-BMM, ITS-JSON and ITS-REST repos, create and edit no BMM schema. Say that
+the repo holds no model of its own, and make the change in the component's
+`specifications-<COMPONENT>/computable/BMM/` instead. ITS-BMM copies its JSON from there and
+generates its ODIN and YAML with its own `make generate`. Running the read-only checker on a file
+there is fine.
 
 ## Related Skills
 

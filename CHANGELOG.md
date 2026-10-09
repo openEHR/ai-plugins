@@ -22,8 +22,25 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ### Changed
 
+- `scaffold` template set revision 4, README: a root `README.adoc` no longer stands in for `README.md`. The plan reports it as `convert` (a rewrite, or a merge when `README.md` exists too). The skill then runs `git mv README.adoc README.md` and rewrites the markup as GitHub Markdown, by the new reference `references/readme-markdown.md`; the script writes nothing for it. `README`, `README.rst` and `README.txt` are still accepted as they are, and a repo without a README still gets one.
+- `scaffold` revision 4, ITS repositories: ITS-XML, ITS-BMM, ITS-JSON and ITS-REST are excluded from BMM work, because they hold no model of their own.
+  - The scaffold never offers them a `computable/BMM` schema, even in a new repository, and does not ask Docker.
+  - A non-empty `bmm_schema_id` or `bmm_dependencies` is reported as invalid there.
+  - `bmm-authoring` creates and edits no schema there and sends the change to the component repo.
+  - `class-generation` and `regen-classes` run no `bmm-publisher` command there.
+  - `scripts/validate.py` checks that these four skills name every repo that the template set excludes (`files[bmm].excluded_components`).
 - `class-generation`, `authoring` and `scaffold` send BMM schema edits to `bmm-authoring`.
 - `docs/prompting-guide.md` sends the class-change prompts to `bmm-authoring` and adds a section for a new component's schema.
+
+### Fixed
+
+- `scaffold` ([#10](https://github.com/openEHR/ai-plugins/issues/10)): the class-table command in `AGENTS.md` loaded only BASE with `-d`, so AM 2.4.0, which also includes LANG, rendered its LANG types (`STATEMENT_SET`, `ASSERTION`, ...) as dangling `/classes/<Type>` links.
+  - It now mounts and loads every schema the BMM includes, from the sibling clone of that schema's component. The list is the new variable `bmm_dependencies`: BASE first for every component but BASE, then the other includes.
+  - BASE stays first even when a schema does not include it. TERM includes nothing, yet needs it for its `String` links.
+  - The list is read from the schema on every run (`prefer_inferred`), so a later include is picked up.
+  - An include whose sibling clone is missing is left out, with a warning.
+  - `base_bmm_schema_id` is now derived from that list and can no longer be passed with `--var`.
+  - The template engine gains `{{#each name}}…{{/each}}` over a comma-separated value, and a `component` filter (`openehr_lang_1.1.0` → `LANG`).
 
 ## openehr-specs 0.5.0 (2026-10-08)
 

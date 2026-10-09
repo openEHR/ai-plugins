@@ -19,15 +19,19 @@ depends on BASE: `openehr_rm_1.2.0 -d openehr_base_1.3.0`). The layouts and the 
 
 If `$ARGUMENTS` is empty, ask for the schema id and stop.
 
-1. Run `docker --version`. If Docker is missing, say it is required (the image and its dev container
+1. Read `manifest.json` `id` (or take the directory name `specifications-<id>`). In the ITS-XML,
+   ITS-BMM, ITS-JSON and ITS-REST repos, say that they hold no model of their own and that
+   `bmm-publisher` is not run there, and stop. ITS-BMM regenerates its ODIN and YAML with its own
+   `make generate`.
+2. Run `docker --version`. If Docker is missing, say it is required (the image and its dev container
    both run on it) and stop.
-2. Map each id to its file and Glob that it exists: the schema to `computable/BMM/<id>.bmm.json`, and a
+3. Map each id to its file and Glob that it exists: the schema to `computable/BMM/<id>.bmm.json`, and a
    dependency `openehr_<component>_<version>` to the sibling clone's
    `../specifications-<COMPONENT>/computable/BMM/<id>.bmm.json` (component upper-cased). If one is
    missing, name it and stop; never fall back to the bundled id.
-3. Write to `./out` unless the user names another target. Ask before writing into a
+4. Write to `./out` unless the user names another target. Ask before writing into a
    `specifications-XX` repo's `docs/UML/`.
-4. Pick the command by layout (step 2 of the `class-generation` workflow): `legacy-adoc -o
+5. Pick the command by layout (step 2 of the `class-generation` workflow): `legacy-adoc -o
    /app/output/UML/classes` when the spec's chapters contain `include::{uml_export_dir}/classes/`
    (the tables land in `./out/UML/classes`), otherwise `asciidoc`. Mount each file read-only under
    `/in/`, pass the paths, and map output ownership to the host user (RM with BASE shown):
@@ -40,6 +44,6 @@ If `$ARGUMENTS` is empty, ask for the schema id and stop.
    ```
    Add one mount and one `-d /in/<id>.bmm.json` per dependency. The `-v` log lists each file read:
    check that every one is under `/in/`.
-5. List what was produced (`classes/`, `effective/`, diagram SVGs). Do not commit. Generated files are
+6. List what was produced (`classes/`, `effective/`, diagram SVGs). Do not commit. Generated files are
    never hand-edited: change the BMM and regenerate. To place the output, follow the
    `class-generation` skill.
