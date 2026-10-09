@@ -23,8 +23,8 @@
     {
       "revision": 4,
       "released": "2026-10-09",
-      "summary": "README.md: a root README.adoc is no longer accepted in its place; the plan reports it as convert (rewrite it as Markdown, or merge it into an existing README.md). The bmm file is never offered to the ITS-XML, ITS-BMM, ITS-JSON and ITS-REST repositories, and bmm_schema_id must be empty there.",
-      "digest": "35c1f9ba27c7a23ad8994f184dd04e4b702419af575a393ced8120a107b15521"
+      "summary": "README.md: a root README.adoc is no longer accepted in its place; the plan reports it as convert (rewrite it as Markdown, or merge it into an existing README.md). The bmm file is never offered to the ITS-XML, ITS-BMM, ITS-JSON and ITS-REST repositories, and bmm_schema_id must be empty there. AGENTS.md loads every schema the BMM includes with -d (bmm_dependencies, read from its includes), not BASE alone; base_bmm_schema_id is now derived from it.",
+      "digest": "ac2e9e8e3b4ab498e4c5e337e0ce79a79ed15cf45f410cc3b1fd62e2f059eac8"
     }
   ],
   "variables": {
@@ -101,10 +101,19 @@
       "pattern": "^$|^openehr_[a-z0-9_]+_[0-9]+\\.[0-9]+\\.[0-9]+$",
       "description": "BMM schema id (openehr_base_1.3.0) of computable/BMM/<id>.bmm.json, read from the repo. When a new repository is initialised without one: the highest schema the bmm-publisher image bundles for the component, else openehr_<component>_<first_release> for a new empty schema. Empty otherwise. Switches on the class-generation sections. Always empty in the ITS-XML, ITS-BMM, ITS-JSON and ITS-REST repositories."
     },
-    "base_bmm_schema_id": {
+    "bmm_dependencies": {
       "default": "",
-      "pattern": "^$|^openehr_base_[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "BASE BMM schema id (openehr_base_1.3.0) that the component's classes refer to, read from the sibling specifications-BASE clone; loaded with -d when the class tables are regenerated. Empty for BASE itself and for repos without a BMM."
+      "pattern": "^$|^openehr_[a-z0-9_]+_[0-9]+\\.[0-9]+\\.[0-9]+(\\s*,\\s*openehr_[a-z0-9_]+_[0-9]+\\.[0-9]+\\.[0-9]+)*$",
+      "prefer_inferred": true,
+      "description": "Schema ids loaded with -d when the class tables are regenerated, comma-separated: BASE first for every component but BASE (the version the BMM includes, else the highest in the sibling specifications-BASE clone), then each other schema its includes name, from the sibling clone of that component (openehr_lang_1.1.0 from specifications-LANG). Read from the repo on every run. Empty for BASE and without a BMM."
+    },
+    "base_bmm_schema_id": {
+      "derived": {
+        "from": "bmm_dependencies",
+        "match": "(?:^|,)\\s*(openehr_base_[0-9]+\\.[0-9]+\\.[0-9]+)\\s*(?:,|$)",
+        "group": 1
+      },
+      "description": "The BASE schema among bmm_dependencies, which a new empty schema includes; empty without one."
     },
     "bmm_schema_name": {
       "derived": {

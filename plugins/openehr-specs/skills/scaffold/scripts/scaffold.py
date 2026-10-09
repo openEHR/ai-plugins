@@ -163,20 +163,56 @@ def require_relative(path, where):
 
 
 # --------------------------------------------------------------------------- template engine
-# {{name}}, {{name|lower}}, {{name|upper}}, and non-nested {{#if name}}..{{/if}} and
-# {{#unless name}}..{{/unless}}. A block tag alone on a line disappears with its line.
+# {{name}}, {{name|lower}}, {{name|upper}}, {{name|component}}, and non-nested {{#if name}}..{{/if}},
+# {{#unless name}}..{{/unless}} and {{#each name}}..{{/each}}, which repeats its body for each
+# comma-separated item of the value, as {{item}}. A block tag alone on a line disappears with its line.
 
-_STANDALONE = re.compile(r"^[ \t]*(\{\{\s*[#/](?:if|unless)\b[^}]*\}\})[ \t]*\n", re.M)
+_STANDALONE = re.compile(r"^[ \t]*(\{\{\s*[#/](?:if|unless|each)\b[^}]*\}\})[ \t]*\n", re.M)
 _COND = re.compile(r"\{\{\s*#(if|unless)\s+([\w-]+)\s*\}\}(.*?)\{\{\s*/\1\s*\}\}", re.S)
-_VAR = re.compile(r"\{\{\s*([\w-]+)(?:\|(lower|upper))?\s*\}\}")
+_EACH = re.compile(r"\{\{\s*#each\s+([\w-]+)\s*\}\}(.*?)\{\{\s*/each\s*\}\}", re.S)
+_FILTERS = "lower|upper|component"
+_VAR = re.compile(r"\{\{\s*([\w-]+)(?:\|(" + _FILTERS + r"))?\s*\}\}")
+_ITEM = re.compile(r"\{\{\s*item(?:\|(" + _FILTERS + r"))?\s*\}\}")
+EACH_ITEM = "item"
 
 
 def truthy(value):
     return bool(value) and str(value).strip().lower() not in ("false", "0", "no")
 
 
+def items_of(value):
+    return [item.strip() for item in str(value).split(",") if item.strip()]
+
+
+def component_of(schema_id):
+    """openehr_lang_1.1.0 -> LANG, openehr_its_rest_1.0.0 -> ITS-REST: the specifications-<id> clone."""
+    match = re.match(r"^openehr_(.+?)_[0-9]+\.[0-9]+\.[0-9]+", schema_id)
+    return (match.group(1) if match else schema_id).upper().replace("_", "-")
+
+
+def apply_filter(value, flt):
+    if flt == "lower":
+        return value.lower()
+    if flt == "upper":
+        return value.upper()
+    if flt == "component":
+        return component_of(value)
+    return value
+
+
 def render(text, values, escape=None):
     text = _STANDALONE.sub(r"\1", text)
+
+    def each(match):
+        name, body = match.groups()
+        if name not in values:
+            raise ScaffoldError(f"template uses unknown variable '{name}'")
+        if re.search(r"\{\{\s*[#/]", body):
+            raise ScaffoldError("nested block inside {{#each}} in a template")
+        return "".join(_ITEM.sub(lambda m, i=item: (escape or str)(apply_filter(i, m.group(1))), body)
+                       for item in items_of(values[name]))
+
+    text = _EACH.sub(each, text)
 
     def cond(match):
         kind, name, body = match.groups()
@@ -185,18 +221,14 @@ def render(text, values, escape=None):
         return body if truthy(values[name]) == (kind == "if") else ""
 
     text = _COND.sub(cond, text)
-    if re.search(r"\{\{\s*[#/](?:if|unless)\b", text):
-        raise ScaffoldError("unbalanced or nested {{#if}} / {{#unless}} block in a template")
+    if re.search(r"\{\{\s*[#/](?:if|unless|each)\b", text):
+        raise ScaffoldError("unbalanced or nested {{#if}} / {{#unless}} / {{#each}} block in a template")
 
     def var(match):
         name, flt = match.groups()
         if name not in values:
             raise ScaffoldError(f"template uses unknown variable '{name}'")
-        value = str(values[name])
-        if flt == "lower":
-            value = value.lower()
-        elif flt == "upper":
-            value = value.upper()
+        value = apply_filter(str(values[name]), flt)
         return escape(value) if escape else value
 
     return _VAR.sub(var, text)
@@ -283,7 +315,7 @@ def sibling_base(repo, notes):
         return base[-1]
     notes.append("no sibling specifications-BASE clone with a BMM schema: the class-table command in "
                  "AGENTS.md will not load BASE with -d, so links to BASE types break; clone it, or "
-                 "pass --var base_bmm_schema_id=<id>")
+                 "pass --var bmm_dependencies=<ids>")
     return None
 
 
@@ -339,8 +371,6 @@ def infer(repo, tset, set_dir, notes):
         if len(bmm) > 1:
             notes.append(f"several BMM schemas in computable/BMM ({', '.join(bmm)}): using {bmm[-1]}; "
                          "pass --var bmm_schema_id=<id> to choose another")
-        if not bmm[-1].startswith("openehr_base_"):
-            put("base_bmm_schema_id", sibling_base(repo, notes), "sibling specifications-BASE")
 
     head = git(repo, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
     if head:
@@ -357,7 +387,8 @@ def infer(repo, tset, set_dir, notes):
 
 
 def resolve_variables(tset, explicit, saved, inferred, defaulted=()):
-    """Merge by priority: explicit, recorded as confirmed, inferred, recorded as a default, default."""
+    """Merge by priority: explicit, recorded as confirmed, inferred, recorded as a default, default.
+    A variable with prefer_inferred takes an inferred value ahead of a recorded one."""
     schema = tset["variables"]
     values, sources = {}, {}
     missing, invalid = [], []
@@ -365,10 +396,11 @@ def resolve_variables(tset, explicit, saved, inferred, defaulted=()):
     unconfirmed = {k: v for k, v in saved.items() if k in defaulted}
     pools = (("explicit", explicit), ("descriptor", confirmed), ("inferred", inferred),
              ("descriptor (default)", unconfirmed))
+    repo_first = (pools[0], pools[2], pools[1], pools[3])
     for name, spec in schema.items():
         if "derived" in spec:
             continue
-        for label, pool in pools:
+        for label, pool in (repo_first if spec.get("prefer_inferred") else pools):
             if name in pool:
                 entry = pool[name]
                 value, where = entry if isinstance(entry, tuple) else (entry, None)
@@ -830,12 +862,53 @@ def new_bmm(repo, spec, values, sources, notes):
     if not given:
         inferred["bmm_schema_id"] = (result["schema_id"],
                                      "bmm-publisher image" if "text" in result else "new empty schema")
-    if not result["schema_id"].startswith("openehr_base_"):
-        base = sibling_base(repo, notes)
-        if base:
-            inferred["base_bmm_schema_id"] = (base, "sibling specifications-BASE")
     result["inferred"] = inferred
     return result
+
+
+def included_ids(text):
+    """The schema ids a P_BMM schema's `includes` names, in order (empty when it cannot be read)."""
+    try:
+        includes = json.loads(text).get("includes") if text else None
+    except (ValueError, AttributeError):
+        return []
+    if not isinstance(includes, dict):
+        return []
+    return [str(v.get("id") if isinstance(v, dict) and v.get("id") else k) for k, v in includes.items()]
+
+
+def dependencies(repo, schema_id, text, notes):
+    """The schemas to load with -d when the class tables of `schema_id` are regenerated.
+
+    BASE comes first for every component but BASE, even when the schema does not include it (TERM
+    does not, yet its String links need BASE); the version the schema includes when the sibling clone
+    has it, else the clone's highest. Then each other schema the `includes` name, from the sibling
+    clone of its component (openehr_lang_1.1.0 -> ../specifications-LANG/computable/BMM/)."""
+    includes = [i for i in included_ids(text) if i != schema_id]
+    deps = []
+    if not schema_id.startswith("openehr_base_"):
+        base_dir = repo.resolve().parent / "specifications-BASE" / "computable" / "BMM"
+        wanted = next((i for i in includes if i.startswith("openehr_base_")), None)
+        if wanted and (base_dir / f"{wanted}.bmm.json").is_file():
+            deps.append(wanted)
+        else:
+            base = sibling_base(repo, notes)
+            if base:
+                if wanted:
+                    notes.append(f"{schema_id} includes {wanted}, which the sibling specifications-BASE clone "
+                                 f"does not hold: loading {base} instead")
+                deps.append(base)
+    for inc in includes:
+        if inc.startswith("openehr_base_") or inc in deps:
+            continue
+        clone = f"specifications-{component_of(inc)}"
+        if (repo.resolve().parent / clone / "computable" / "BMM" / f"{inc}.bmm.json").is_file():
+            deps.append(inc)
+        else:
+            notes.append(f"{schema_id} includes {inc}, but no sibling {clone} clone holds "
+                         f"computable/BMM/{inc}.bmm.json: the class-table command in AGENTS.md leaves it "
+                         "out, so links to its types break; clone it and run again")
+    return deps
 
 
 def build_plan(repo, set_dir, explicit, overwrite=(), pin=()):
@@ -882,9 +955,22 @@ def build_plan(repo, set_dir, explicit, overwrite=(), pin=()):
         if plan.new_bmm.get("inferred"):
             inferred.update(plan.new_bmm["inferred"])
             resolved = resolve_variables(tset, explicit, saved, inferred, defaulted)
+    schema_id = resolved[0].get("bmm_schema_id", "")
+    if (schema_id and "bmm_dependencies" in tset["variables"] and not resolved[2]
+            and resolved[0].get("component") not in excluded):
+        if plan.new_bmm and "schema_id" in plan.new_bmm:
+            text = plan.new_bmm.get("text")  # the bundled copy, or None for the empty template
+        else:
+            text = read_quiet(repo / "computable" / "BMM" / f"{schema_id}.bmm.json")
+        deps = dependencies(repo, schema_id, text, plan.notes)
+        inferred["bmm_dependencies"] = (", ".join(deps), f"includes of {schema_id}") if deps else ("", None)
+        resolved = resolve_variables(tset, explicit, saved, inferred, defaulted)
+    elif "bmm_dependencies" in tset["variables"] and not resolved[2]:
+        inferred["bmm_dependencies"] = ("", None)  # no schema, no dependencies: a recorded list is stale
+        resolved = resolve_variables(tset, explicit, saved, inferred, defaulted)
     plan.values, plan.sources, plan.missing, plan.invalid = resolved
     if plan.values.get("component") in excluded:  # the ITS repositories hold no model of their own
-        for name in ("bmm_schema_id", "base_bmm_schema_id"):
+        for name in ("bmm_schema_id", "bmm_dependencies"):
             if plan.values.get(name):
                 plan.invalid.append({"name": name, "value": plan.values[name],
                                      "problem": f"must be empty for {plan.values['component']}, which holds no "
@@ -1062,7 +1148,7 @@ def sample_values(tset, bmm):
         if spec.get("required"):
             explicit[name] = "EXAMPLE" if name == "component" else "Example Title"
     explicit["bmm_schema_id"] = "openehr_example_1.0.0" if bmm else ""
-    explicit["base_bmm_schema_id"] = "openehr_base_1.0.0" if bmm else ""
+    explicit["bmm_dependencies"] = "openehr_base_1.0.0, openehr_lang_1.0.0" if bmm else ""
     return resolve_variables(tset, explicit, {}, {})
 
 
@@ -1146,6 +1232,10 @@ def _check_template_set(set_dir):
                 problems.append(f"variable '{name}': match is not a valid regex ({exc})")
         if not derived and "default" not in spec and not spec.get("required"):
             problems.append(f"variable '{name}' needs a default or required: true")
+        if name == EACH_ITEM:
+            problems.append(f"variable '{name}': the name is reserved for the items of {{{{#each}}}}")
+        if not isinstance(spec.get("prefer_inferred", False), bool):
+            problems.append(f"variable '{name}': prefer_inferred must be true or false")
 
     for bmm in (False, True):
         values, _, missing, invalid = sample_values(tset, bmm)

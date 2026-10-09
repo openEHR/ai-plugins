@@ -60,24 +60,24 @@ The build prints `generated <file>` and exits 0 even when includes are missing, 
 # regenerate class tables (NEVER hand-edit docs/UML/classes/*.adoc) — run from this repo's root.
 # Pass the repo BMM by PATH: a bare schema id ({{bmm_schema_id}}) uses the image's bundled copy, which lags this repo.
 {{/if}}
-{{#if base_bmm_schema_id}}
-# {{component}} classes refer to BASE types: load the sibling BASE BMM with -d, or their links come out as /classes/<Type>.
+{{#if bmm_dependencies}}
+# {{component}} classes refer to types of other schemas: load each from its sibling clone with -d, or their links come out as /classes/<Type>.
 {{/if}}
 {{#if bmm_schema_id}}
 OUT=$(mktemp -d)
 docker run --rm --user $(id -u):$(id -g) \
   -v "$PWD/computable/BMM/{{bmm_schema_id}}.bmm.json":/in/{{bmm_schema_id}}.bmm.json:ro \
 {{/if}}
-{{#if base_bmm_schema_id}}
-  -v "$PWD/../specifications-BASE/computable/BMM/{{base_bmm_schema_id}}.bmm.json":/in/{{base_bmm_schema_id}}.bmm.json:ro \
-{{/if}}
+{{#each bmm_dependencies}}
+  -v "$PWD/../specifications-{{item|component}}/computable/BMM/{{item}}.bmm.json":/in/{{item}}.bmm.json:ro \
+{{/each}}
 {{#if bmm_schema_id}}
   -v "$OUT":/out \
   ghcr.io/openehr/bmm-publisher legacy-adoc \
 {{/if}}
-{{#if base_bmm_schema_id}}
-  -d /in/{{base_bmm_schema_id}}.bmm.json \
-{{/if}}
+{{#each bmm_dependencies}}
+  -d /in/{{item}}.bmm.json \
+{{/each}}
 {{#if bmm_schema_id}}
   /in/{{bmm_schema_id}}.bmm.json -o /out
 # then diff "$OUT" against docs/UML/classes and copy over the tables you changed

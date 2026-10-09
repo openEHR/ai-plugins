@@ -51,7 +51,7 @@ Existing repositories are not offered a schema.
 2. **Variables.** When `status` is `needs_input`, ask for each missing or invalid variable, then plan
    again with `--var name=value`. A variable whose source is `default` or starts with `inferred` is a
    guess. Ask the user to confirm the ones that matter (`license`, `jira_project`, `bmm_schema_id`,
-   `base_bmm_schema_id`, `default_branch`, `published_url`, and `first_release` only when the plan creates
+   `bmm_dependencies`, `default_branch`, `published_url`, and `first_release` only when the plan creates
    `manifest.json` or a new empty BMM schema, the files that use it) and list the rest in one line. In a
    new repository, `bmm_schema_id` comes from `inferred: bmm-publisher image` or `inferred: new empty
    schema`. Never invent a

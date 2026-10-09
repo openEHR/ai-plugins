@@ -35,7 +35,7 @@ Each entry of `files` names a strategy, chosen by who owns the file after it is 
 | `json-merge` | `.claude/settings.json` | Adds keys and list items that are missing. Existing values always win, so a plugin set to `false` stays `false`. The descriptor remembers every template item it has offered, so an item the user removed afterwards is left out, and only items new in a later revision are added. Invalid JSON, or a top level that is not an object, is a `conflict`; `--overwrite` replaces the file with the template. |
 | `ensure-lines` | `.gitignore`, `.asciidoctorconfig` | Appends missing lines with their comment header, and, like `json-merge`, leaves out a line the user removed after an earlier run. With a `key` regex, a line counts as present whatever its value (`:component: X`, and an unset `:name!:`); a differing value only produces a warning. |
 | `regions` | `AGENTS.md` | Regions between `<!-- openehr-scaffold:begin ID -->` and `...:end ID -->` are managed, with a hash per region. Text outside them is the repo's. A file with no markers is `upgrade-manual`. Regions are applied independently: an `update` or `add` is written even when another region conflicts. |
-| `bmm-seed` | `computable/BMM/{{bmm_schema_id}}.bmm.json` | Like `seed`, but offered only in `init` mode (or with `--overwrite bmm`) and only while `present_glob` matches nothing; otherwise `exists` or `skipped`. The content is the schema that `image` bundles in `image_dir` for the component, copied verbatim, or else the rendered template (an empty schema). Without Docker or the image the file is `blocked`, unless the user gave `bmm_schema_id`. The decision is made before the other files are planned, so `AGENTS.md` names the schema that will be written. A component in `excluded_components` (ITS-XML, ITS-BMM, ITS-JSON, ITS-REST) is never offered one, Docker is not asked, and a non-empty `bmm_schema_id` or `base_bmm_schema_id` is reported as invalid. `scripts/validate.py` checks that the `bmm-authoring`, `class-generation`, `regen-classes` and `scaffold` skills name every excluded id. At most one file uses this strategy. |
+| `bmm-seed` | `computable/BMM/{{bmm_schema_id}}.bmm.json` | Like `seed`, but offered only in `init` mode (or with `--overwrite bmm`) and only while `present_glob` matches nothing; otherwise `exists` or `skipped`. The content is the schema that `image` bundles in `image_dir` for the component, copied verbatim, or else the rendered template (an empty schema). Without Docker or the image the file is `blocked`, unless the user gave `bmm_schema_id`. The decision is made before the other files are planned, so `AGENTS.md` names the schema that will be written. A component in `excluded_components` (ITS-XML, ITS-BMM, ITS-JSON, ITS-REST) is never offered one, Docker is not asked, and a non-empty `bmm_schema_id` or `bmm_dependencies` is reported as invalid. `scripts/validate.py` checks that the `bmm-authoring`, `class-generation`, `regen-classes` and `scaffold` skills name every excluded id. At most one file uses this strategy. |
 
 `pinned` (in the descriptor, set with `--pin`) opts a file or `file:region` out for good. Regions the
 user deleted are reported as `removed`, not added back; a region the descriptor never recorded is added.
@@ -54,13 +54,23 @@ For every strategy, line endings (CRLF or LF) and the file mode are kept when a 
 `variables` in `template-set.json`: `required`, `default` (itself a template, may use earlier
 variables), `default_if` (rules by regex on another variable), `pattern`, `choices`, `derived`
 (`from` + `map`, or `from` + `match` + `group`: a regex group of the other variable, empty when it does
-not match; `bmm_schema_name` and `bmm_rm_release` split `bmm_schema_id` this way). Resolution order is explicit `--var`, then a value recorded in the repo's
-descriptor as confirmed, then inference, then a recorded default, then the default. Unknown `--var`
+not match; `bmm_schema_name` and `bmm_rm_release` split `bmm_schema_id` this way, and
+`base_bmm_schema_id` picks the BASE id out of `bmm_dependencies`), and `prefer_inferred`. Resolution order
+is explicit `--var`, then a value recorded in the repo's descriptor as confirmed, then inference, then a
+recorded default, then the default. A `prefer_inferred` variable takes the inferred value ahead of a
+recorded one, because the repo is its source of truth: `bmm_dependencies` follows the schema's `includes`
+on every run. Unknown `--var`
 names and empty required values are rejected.
 
 - Inference reads `manifest.json`, `.asciidoctorconfig`, the git remote, the directory name,
-  `computable/BMM`, `origin/HEAD` (for `default_branch`), the `LICENSE` text, and the sibling
-  `specifications-BASE/computable/BMM` (for `base_bmm_schema_id`, the highest version; never for BASE itself).
+  `computable/BMM`, `origin/HEAD` (for `default_branch`), the `LICENSE` text, and the sibling clones.
+  `bmm_dependencies` is worked out once `bmm_schema_id` is known, from that schema's `includes` (or the
+  bundled copy's, for a new repository). BASE comes first for every component but BASE, even when the schema
+  does not include it: TERM includes nothing, yet without `-d` BASE its `String` links come out as
+  `link:/classes/String`. That is the version the schema includes when `../specifications-BASE` holds it, else
+  the highest there. Then come the other included ids, each from `../specifications-<COMPONENT>/computable/BMM/`
+  (`openehr_lang_1.1.0` → `LANG`, `openehr_its_rest_…` → `ITS-REST`). An include whose clone is missing is
+  left out, with a warning.
   When a new repository is offered a BMM schema, `bmm_schema_id` comes from the bmm-publisher image
   (`docker run --rm --pull never --entrypoint ls|cat`): the highest `openehr_<component>_<x.y.z>`, with the
   component lower-cased and `-` turned into `_`. Without one it is `openehr_<component>_<first_release>`.
@@ -154,9 +164,9 @@ Surveyed on 2026-10-07 across the `specifications-*` clones (18 with a git direc
 - AsciiDoc specification repos only, with an optional BMM schema. An OpenAPI repo (`specifications-ITS-REST`,
   built with `make`) needs its own variant of `AGENTS.md`; until then, pin `agents`, `claude-md` and
   `asciidoctorconfig` there.
-- One BMM dependency. The class-table command in `AGENTS.md` loads only BASE with `-d`, from the sibling
-  clone. A component whose classes also refer to another component (AM 2.x to LANG expression classes, for
-  example) needs further `-d` options, added by hand.
+- Dependencies are not followed transitively: each schema's own `includes` is read, not its dependencies'.
+  That is enough today, because every schema an include names is BASE or names BASE itself (AM 2.4.0
+  includes BASE and LANG, and LANG includes BASE).
 - One BMM schema per repo. When several are found (AM has 1.4.0 and 2.4.0, LANG has three) the highest
   version is used and a warning lists the others; pass `--var bmm_schema_id=<id>` to choose.
 - A BMM schema is offered only in `init` mode, that is when none of the standard files exists yet. A new
