@@ -100,7 +100,8 @@ image::ROOT:uml/classes/COMPOSITION.svg[]
    `computable/BMM/openehr_<component>_<version>.bmm.json`; each dependency comes from its sibling clone
    (RM, AM, LANG and TERM classes refer to BASE types:
    `../specifications-BASE/computable/BMM/openehr_base_<version>.bmm.json`). When a file is missing, say
-   which and stop rather than falling back to a bundled id.
+   which and stop rather than falling back to a bundled id. If the schema was edited by hand, run the
+   `bmm-authoring` checker on it first.
 2. **Choose the command by layout** (see above): `legacy-adoc` for the legacy layout, `asciidoc` for
    the current one.
 3. **Generate** into a temporary directory, mounting the files read-only and mapping ownership to the
