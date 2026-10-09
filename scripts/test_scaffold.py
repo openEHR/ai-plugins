@@ -314,11 +314,32 @@ class StrategyTests(Base):
         self.assertIn('"custom"', self.text("manifest.json"))
 
     def test_an_existing_readme_in_another_format_blocks_readme_md(self):
-        self.put("README.adoc", "= Demo\n")
+        self.put("README.rst", "Demo\n====\n")
         plan = self.plan()
         self.assertEqual(self.actions(plan)["README.md"], "exists-alternative")
         self.apply()
         self.assertFalse((self.repo / "README.md").exists())
+
+    def test_a_readme_adoc_is_planned_for_conversion_and_left_alone(self):
+        self.put("README.adoc", "= Demo\n")
+        act = next(a for a in self.plan().acts if a.id == "readme")
+        self.assertEqual((act.action, act.public()["convert_from"]), ("convert", "README.adoc"))
+        self.assertIn("`git mv README.adoc README.md`", act.detail)
+        result = self.apply()
+        self.assertNotIn("README.md", result["written"])
+        self.assertFalse((self.repo / "README.md").exists())
+        self.assertEqual(self.text("README.adoc"), "= Demo\n")
+
+    def test_a_readme_adoc_next_to_readme_md_is_planned_for_merging(self):
+        self.put("README.adoc", "= Demo\n")
+        self.put("README.md", "# Demo\n")
+        act = next(a for a in self.plan().acts if a.id == "readme")
+        self.assertEqual(act.action, "convert")
+        self.assertIn("merge what it says into README.md and delete it", act.detail)
+
+    def test_once_converted_the_readme_is_the_repos_own(self):
+        self.put("README.md", "# Demo\n")
+        self.assertEqual(self.actions(self.plan())["README.md"], "exists")
 
     def test_licence_detail_says_whether_the_text_is_standard(self):
         standard = (self.set_dir / "assets/templates/license-cc-by-sa-3.0.txt").read_text(encoding="utf-8")
@@ -1205,6 +1226,32 @@ class BmmTests(Base):
         self.assertEqual((plan.values["bmm_schema_id"], plan.values["bmm_schema_name"]),
                          ("openehr_its_demo_0.1.0", "its_demo"))
 
+    def test_the_its_repositories_are_never_offered_a_schema_and_docker_is_not_asked(self):
+        self.docker.schemas = {"openehr_its_rest_1.0.0": BUNDLED}
+        for component in ("ITS-XML", "ITS-BMM", "ITS-JSON", "ITS-REST"):
+            plan = self.plan(component=component, jira_project="SPECITS")
+            act = self.bmm_act(plan)
+            self.assertEqual((plan.mode, act.action, act.target), ("init", "skipped", BMM_GLOB), component)
+            self.assertIn(f"{component} holds no BMM schema of its own", act.detail)
+            self.assertEqual(plan.values["bmm_schema_id"], "")
+        self.assertEqual(self.docker.calls, [])
+        self.apply(component="ITS-REST", jira_project="SPECITS")
+        self.assertFalse((self.repo / "computable").exists())
+        self.assertNotIn("class-generation", self.text("AGENTS.md"))
+
+    def test_a_schema_id_given_for_an_its_repository_is_rejected(self):
+        plan = self.plan(component="ITS-BMM", jira_project="SPECITS", bmm_schema_id="openehr_rm_1.2.0",
+                         base_bmm_schema_id="openehr_base_1.3.0")
+        self.assertEqual({i["name"] for i in plan.invalid}, {"bmm_schema_id", "base_bmm_schema_id"})
+        self.assertIn("must be empty for ITS-BMM", plan.invalid[0]["problem"])
+        self.assertEqual(plan.acts, [])
+        self.assertEqual(self.plan(component="ITS-BMM", jira_project="SPECITS", bmm_schema_id="").invalid, [])
+
+    def test_other_its_components_are_not_excluded(self):
+        self.docker.schemas = {}
+        plan = self.plan(component="ITS-DEMO", jira_project="SPECITS")
+        self.assertEqual(self.bmm_act(plan).action, "create")
+
     def test_base_copies_its_own_schema_and_has_no_base_dependency(self):
         repo = self.root / "specifications-BASE"
         repo.mkdir()
@@ -1220,8 +1267,13 @@ class BmmTests(Base):
         del next(f for f in tset["files"] if f["id"] == "bmm")["image"]
         del tset["variables"]["bmm_rm_release"]["derived"]["match"]
         path.write_text(json.dumps(tset), encoding="utf-8")
+        next(f for f in tset["files"] if f["id"] == "readme")["convert_from"] = ["../README.adoc"]
+        next(f for f in tset["files"] if f["id"] == "bmm")["excluded_components"] = "ITS-REST"
+        path.write_text(json.dumps(tset), encoding="utf-8")
         problems = scaffold.check_template_set(dst)
         self.assertTrue(any("a bmm-seed file needs image" in p for p in problems), problems)
+        self.assertTrue(any("convert_from: '../README.adoc' must be a relative path" in p for p in problems), problems)
+        self.assertTrue(any("excluded_components must be a list" in p for p in problems), problems)
         self.assertTrue(any("'bmm_rm_release': derived needs either map or match" in p for p in problems), problems)
 
 

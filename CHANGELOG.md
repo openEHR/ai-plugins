@@ -16,6 +16,13 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ### Changed
 
+- `scaffold` template set revision 4, README: a root `README.adoc` no longer stands in for `README.md`. The plan reports it as `convert` (a rewrite, or a merge when `README.md` exists too). The skill then runs `git mv README.adoc README.md` and rewrites the markup as GitHub Markdown, by the new reference `references/readme-markdown.md`; the script writes nothing for it. `README`, `README.rst` and `README.txt` are still accepted as they are, and a repo without a README still gets one.
+- `scaffold` revision 4, ITS repositories: ITS-XML, ITS-BMM, ITS-JSON and ITS-REST are excluded from BMM work, because they hold no model of their own.
+  - The scaffold never offers them a `computable/BMM` schema, even in a new repository, and does not ask Docker.
+  - A non-empty `bmm_schema_id` or `base_bmm_schema_id` is reported as invalid there.
+  - `bmm-authoring` creates and edits no schema there and sends the change to the component repo.
+  - `class-generation` and `regen-classes` run no `bmm-publisher` command there.
+  - `scripts/validate.py` checks that these four skills name every repo that the template set excludes (`files[bmm].excluded_components`).
 - `class-generation` and `authoring` send changes to the class model itself to `bmm-authoring`, and `scaffold` points to it for filling a new repository's empty schema.
 - `docs/prompting-guide.md`: the class-change prompts name `bmm-authoring` and the checker, and a prompt for a new component's schema is added.
 

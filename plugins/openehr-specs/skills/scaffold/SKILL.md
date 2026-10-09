@@ -8,6 +8,7 @@ allowed-tools:
   - "Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/scaffold.py render *)"
   - "Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/scaffold.py diff *)"
   - "Bash(git init *)"
+  - "Bash(git mv README.adoc README.md)"
   - Read
 disable-model-invocation: true
 ---
@@ -22,7 +23,12 @@ use the directory that holds this SKILL.md.
 
 The set covers AsciiDoc specification repos, with an optional BMM schema. In an OpenAPI repo such as
 `specifications-ITS-REST`, pin `agents`, `claude-md` and `asciidoctorconfig` (step 4): they are
-AsciiDoc-specific. Pin `bmm` too when a new repo has no model.
+AsciiDoc-specific. The script never offers a BMM schema to the ITS-XML, ITS-BMM, ITS-JSON and
+ITS-REST repos, which hold no model of their own, and rejects a `bmm_schema_id` there. Pin `bmm` in
+any other new repo that has no model.
+
+The root README is `README.md`. A `README.adoc` in its place is planned as `convert` and rewritten as
+Markdown by hand (step 5), because the script cannot translate AsciiDoc.
 
 A new repository (plan `mode` `init`) also gets `computable/BMM/<bmm_schema_id>.bmm.json` (file id
 `bmm`). The script asks the local `ghcr.io/openehr/bmm-publisher` image for the schemas it bundles
@@ -68,8 +74,12 @@ Existing repositories are not offered a schema.
      Docker, or to run `docker pull ghcr.io/openehr/bmm-publisher` (a large download; ask first), and
      plan again. Or create the empty schema the `detail` names with `--var bmm_schema_id=<id>`. Applying
      anyway writes the other files without a schema; `--overwrite bmm` adds one later.
-   - `exists`, `exists-alternative` (for example `README.adoc`), `unchanged`, `pinned`, `skipped` (no BMM
-     schema is offered to an existing repository; `--overwrite bmm` asks for one): nothing to do.
+   - `convert` (only `readme`): the `convert_from` file (`README.adoc`) stands where `README.md`
+     belongs. Say that step 5 rewrites it as Markdown, or merges it into the existing `README.md` when
+     `detail` says so, and ask.
+   - `exists`, `exists-alternative` (for example `README.rst`), `unchanged`, `pinned`, `skipped` (no BMM
+     schema for an existing repository, where `--overwrite bmm` asks for one, nor for an ITS
+     repository): nothing to do.
      A `conflict` whose `detail` says the file is a symbolic link cannot be resolved with `--overwrite`:
      the user has to replace the link first.
    - `conflict`: `detail` says whether the file was edited since it was scaffolded or simply differs.
@@ -100,7 +110,12 @@ Existing repositories are not offered a schema.
    `openehr-specs:authoring`). When an empty BMM schema was created, point out that classes go into it
    (skill `openehr-specs:bmm-authoring`, which also checks it) and the class tables are generated
    from it (skill `openehr-specs:class-generation`); until then
-   bmm-publisher warns about the empty package. Do not commit; if the user asks for a commit message, follow the
+   bmm-publisher warns about the empty package.
+   For a `convert` the user agreed to, run `git mv README.adoc README.md` (a plain rename outside git),
+   then rewrite the file as GitHub Markdown by `${CLAUDE_SKILL_DIR}/references/readme-markdown.md`,
+   keeping all of its content. When `README.md` already existed, merge the AsciiDoc file's content into
+   it instead, and delete the AsciiDoc file. Show `git diff -M`, then plan again: `README.md` is now
+   `exists`. Do not commit; if the user asks for a commit message, follow the
    Conventions section of the repo's `AGENTS.md`.
 
 ## Rules

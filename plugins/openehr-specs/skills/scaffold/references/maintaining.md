@@ -30,12 +30,12 @@ Each entry of `files` names a strategy, chosen by who owns the file after it is 
 
 | Strategy | Used for | Behaviour |
 |----------|----------|-----------|
-| `seed` | `manifest.json`, `LICENSE`, `README.md` | Written once when absent, then the repo's own. Never changed. An `alternatives` list (`README.adoc`) counts as present. |
+| `seed` | `manifest.json`, `LICENSE`, `README.md` | Written once when absent, then the repo's own. Never changed. An `alternatives` list (`README.rst`) counts as present. A `convert_from` file (`README.adoc`) does not: the plan reports `convert` (a rewrite, or a merge when the target exists too), and the skill rewrites it by hand, since the script cannot translate its markup. |
 | `whole` | `.claude/CLAUDE.md` | Re-rendered on upgrade only if its hash still equals the recorded one; otherwise a `conflict`. |
 | `json-merge` | `.claude/settings.json` | Adds keys and list items that are missing. Existing values always win, so a plugin set to `false` stays `false`. The descriptor remembers every template item it has offered, so an item the user removed afterwards is left out, and only items new in a later revision are added. Invalid JSON, or a top level that is not an object, is a `conflict`; `--overwrite` replaces the file with the template. |
 | `ensure-lines` | `.gitignore`, `.asciidoctorconfig` | Appends missing lines with their comment header, and, like `json-merge`, leaves out a line the user removed after an earlier run. With a `key` regex, a line counts as present whatever its value (`:component: X`, and an unset `:name!:`); a differing value only produces a warning. |
 | `regions` | `AGENTS.md` | Regions between `<!-- openehr-scaffold:begin ID -->` and `...:end ID -->` are managed, with a hash per region. Text outside them is the repo's. A file with no markers is `upgrade-manual`. Regions are applied independently: an `update` or `add` is written even when another region conflicts. |
-| `bmm-seed` | `computable/BMM/{{bmm_schema_id}}.bmm.json` | Like `seed`, but offered only in `init` mode (or with `--overwrite bmm`) and only while `present_glob` matches nothing; otherwise `exists` or `skipped`. The content is the schema that `image` bundles in `image_dir` for the component, copied verbatim, or else the rendered template (an empty schema). Without Docker or the image the file is `blocked`, unless the user gave `bmm_schema_id`. The decision is made before the other files are planned, so `AGENTS.md` names the schema that will be written. At most one file uses this strategy. |
+| `bmm-seed` | `computable/BMM/{{bmm_schema_id}}.bmm.json` | Like `seed`, but offered only in `init` mode (or with `--overwrite bmm`) and only while `present_glob` matches nothing; otherwise `exists` or `skipped`. The content is the schema that `image` bundles in `image_dir` for the component, copied verbatim, or else the rendered template (an empty schema). Without Docker or the image the file is `blocked`, unless the user gave `bmm_schema_id`. The decision is made before the other files are planned, so `AGENTS.md` names the schema that will be written. A component in `excluded_components` (ITS-XML, ITS-BMM, ITS-JSON, ITS-REST) is never offered one, Docker is not asked, and a non-empty `bmm_schema_id` or `base_bmm_schema_id` is reported as invalid. `scripts/validate.py` checks that the `bmm-authoring`, `class-generation`, `regen-classes` and `scaffold` skills name every excluded id. At most one file uses this strategy. |
 
 `pinned` (in the descriptor, set with `--pin`) opts a file or `file:region` out for good. Regions the
 user deleted are reported as `removed`, not added back; a region the descriptor never recorded is added.
@@ -116,8 +116,15 @@ Surveyed on 2026-10-07 across the `specifications-*` clones (18 with a git direc
   RM have identical `.claude/settings.json` and `.gitignore`. Five repos (AM, BASE, LANG, RM, TERM) have
   an identical `.asciidoctorconfig` apart from `:component:`; PROC adds `:diagrams_uri:`.
 - **README.** Every clone has one: `README.adoc` in 15, `README.md` in 3 (LANG, ITS, ITS-BMM). The seed
-  target is `README.md`, as requested; `alternatives` keeps it from duplicating an existing
-  `README.adoc`.
+  target is `README.md`, as requested. Since revision 4 a root `README.adoc` is converted to it
+  (`convert_from`) instead of standing in for it: on 2026-10-09 the 13 `README.adoc` files ran from 2 to
+  59 lines, used only titles, links, listings, admonitions, bold text, one table and bullets
+  (`references/readme-markdown.md` maps each), and no publishing tooling in `specifications-AA_GLOBAL`
+  read a component's `README.adoc`.
+- **ITS repositories.** ITS-XML, ITS-BMM, ITS-JSON and ITS-REST hold no model of their own. ITS-BMM
+  republishes the component repos' JSON and generates its ODIN and YAML with its own `Makefile`. The
+  others hold XSDs, JSON schemas and OpenAPI files, which bmm-publisher has no writer for. So none of
+  them gets a `computable/BMM` schema, and the BMM skills stop there.
 - **Licence.** Two families: CC BY-SA 3.0 (12 repos, byte-identical) and Apache 2.0 (the `ITS-*` repos).
   The texts in `assets/templates/` are copies of BASE's and ITS-REST's `LICENSE`.
 - **Default branch.** `master` in all 18 clones.
@@ -142,6 +149,8 @@ Surveyed on 2026-10-07 across the `specifications-*` clones (18 with a git direc
 
 ## Known limits
 
+- `README.adoc` conversion is done by hand, by the skill, following `references/readme-markdown.md`; the script
+  only plans it.
 - AsciiDoc specification repos only, with an optional BMM schema. An OpenAPI repo (`specifications-ITS-REST`,
   built with `make`) needs its own variant of `AGENTS.md`; until then, pin `agents`, `claude-md` and
   `asciidoctorconfig` there.

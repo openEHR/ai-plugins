@@ -47,7 +47,7 @@ Full details: [docs/skill-authoring.md](docs/skill-authoring.md)
 
 Pure-content repository (JSON manifests + markdown skills) — no build step or package manager. Two skills bundle a script, each with unit tests: `scaffold` (`scripts/scaffold.py`) and `bmm-authoring` (`scripts/check_bmm.py`). Run them with `python3 -m unittest discover -s scripts -p 'test_*.py'` (runs in CI).
 
-- **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent frontmatter fields, component paths, and the `scaffold` template set's integrity — runs in CI; it does not check description length, inventories, or the release tag)
+- **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent frontmatter fields, component paths, the `scaffold` template set's integrity, and that the BMM skills name every repo the template set excludes from BMM work — runs in CI; it does not check description length, inventories, or the release tag)
 - **Local testing**: [docs/testing.md](docs/testing.md); **versioning/releases**: [docs/versioning.md](docs/versioning.md)
 - **End-user installation**: [docs/install.md](docs/install.md)
 

@@ -96,7 +96,8 @@ image::ROOT:uml/classes/COMPOSITION.svg[]
 
 ## Typical Workflow
 
-1. **Locate the schema files.** Work from the component repo's root. The schema is
+1. **Locate the schema files.** Work from the component repo's root; in an ITS repo, stop (see
+   Guardrails). The schema is
    `computable/BMM/openehr_<component>_<version>.bmm.json`; each dependency comes from its sibling clone
    (RM, AM, LANG and TERM classes refer to BASE types:
    `../specifications-BASE/computable/BMM/openehr_base_<version>.bmm.json`). When a file is missing, say
@@ -129,6 +130,10 @@ the user can run `/openehr-specs:publish <component>`.
 
 ## Guardrails
 
+- **Not in the ITS repos.** The ITS-XML, ITS-BMM, ITS-JSON and ITS-REST repos (`manifest.json` `id`,
+  or the directory name `specifications-<id>`) hold no model of their own. Run no `bmm-publisher`
+  command there, neither class tables nor any other format. Say so, and stop. ITS-BMM regenerates its
+  ODIN and YAML with its own `make generate`, which its `AGENTS.md` describes.
 - **Generated output is never hand-edited.** Fix the BMM schema (see `bmm-authoring`) and regenerate.
   A clean run does not prove the schema is right: `bmm-publisher` renders many modelling mistakes as
   type `Any` or drops them without a message, so run the `bmm-authoring` checker first.

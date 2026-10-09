@@ -456,6 +456,16 @@ def rendered_for(ctx, spec):
 
 def plan_seed(ctx, spec, rendered):
     target = ctx.repo / spec["target"]
+    # a convert_from file (README.adoc) stands in for nothing: it is rewritten by hand, since the
+    # script cannot translate its markup, and merged into the target when both exist
+    for source in spec.get("convert_from", []):
+        if (ctx.repo / source).is_file() and not (ctx.repo / source).is_symlink():
+            if target.is_file():
+                return Act(spec, "convert", f"{source} is still there: merge what it says into {spec['target']} "
+                                            f"and delete it", convert_from=source)
+            return Act(spec, "convert", f"rewrite {source} as {spec['target']}: `git mv {source} {spec['target']}` "
+                                        "keeps its history, then convert the markup by hand (the script does not)",
+                       convert_from=source)
     if target.is_file():  # a seed file is never changed, so it never needs decoding
         detail = None
         if "templates" in spec:
@@ -702,6 +712,9 @@ def plan_bmm_seed(ctx, spec, rendered):
     present = sorted(p.name for p in ctx.repo.glob(spec["present_glob"]))
     if present:
         return Act(shown, "exists", ", ".join(present))
+    if ctx.values.get("component") in spec.get("excluded_components", []):
+        return Act(shown, "skipped", f"{ctx.values['component']} holds no BMM schema of its own: schemas are "
+                                     "written in the component repositories, and bmm-publisher is not run here")
     new = ctx.new_bmm
     if new is None:
         return Act(shown, "skipped", "offered only when a repository is initialised; "
@@ -861,13 +874,21 @@ def build_plan(repo, set_dir, explicit, overwrite=(), pin=()):
     # dependency are known before the other templates (AGENTS.md) are rendered
     plan.new_bmm = None
     bmm_spec = next((f for f in tset["files"] if f["strategy"] == "bmm-seed"), None)
+    excluded = bmm_spec.get("excluded_components", []) if bmm_spec else []
     if (bmm_spec and bmm_spec["id"] not in plan.pinned and (mode == "init" or bmm_spec["id"] in overwrite)
-            and not present(repo, bmm_spec) and not resolved[2] and not resolved[3]):
+            and not present(repo, bmm_spec) and not resolved[2] and not resolved[3]
+            and resolved[0].get("component") not in excluded):
         plan.new_bmm = new_bmm(repo, bmm_spec, resolved[0], resolved[1], plan.notes)
         if plan.new_bmm.get("inferred"):
             inferred.update(plan.new_bmm["inferred"])
             resolved = resolve_variables(tset, explicit, saved, inferred, defaulted)
     plan.values, plan.sources, plan.missing, plan.invalid = resolved
+    if plan.values.get("component") in excluded:  # the ITS repositories hold no model of their own
+        for name in ("bmm_schema_id", "base_bmm_schema_id"):
+            if plan.values.get(name):
+                plan.invalid.append({"name": name, "value": plan.values[name],
+                                     "problem": f"must be empty for {plan.values['component']}, which holds no "
+                                                "BMM schema of its own (pass --var " + name + "=)"})
     plan.acts, plan.warnings = [], list(plan.notes)
     if not plan.missing and not plan.invalid:
         for spec in tset["files"]:
@@ -1092,6 +1113,19 @@ def _check_template_set(set_dir):
                 problems.append(f"file '{label}': a bmm-seed file needs {', '.join(lacking)}")
             if "{{bmm_schema_id}}" not in spec.get("target", ""):
                 problems.append(f"file '{label}': a bmm-seed target must contain {{{{bmm_schema_id}}}}")
+            excluded = spec.get("excluded_components", [])
+            if not isinstance(excluded, list) or not all(isinstance(c, str) for c in excluded):
+                problems.append(f"file '{label}': excluded_components must be a list of component ids")
+        for key in ("alternatives", "convert_from"):
+            value = spec.get(key, [])
+            if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
+                problems.append(f"file '{label}': {key} must be a list of paths")
+            else:
+                for path in value:
+                    try:
+                        require_relative(path, f"file '{label}' {key}")
+                    except ScaffoldError as exc:
+                        problems.append(str(exc))
         names = list((spec.get("templates") or {}).values()) or [spec.get("template")]
         for name in names:
             if not name or not (set_dir / "assets" / "templates" / name).is_file():
