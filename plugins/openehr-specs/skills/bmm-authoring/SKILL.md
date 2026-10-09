@@ -50,8 +50,9 @@ render and read the tables.
 ### Changing a schema
 
 1. Read the header and the classes next to the one you are changing, and follow their idiom. Run the
-   checker once before editing (step 4) and keep its output: the published schemas carry findings
-   of their own, and that output separates them from yours.
+   checker once before editing (step 4) and save its output to a scratch file: the published schemas
+   carry findings of their own, and comparing that output with the one after your change separates
+   theirs from yours.
 2. Make the change, using the format reference. Ground every class, attribute and function name in
    the specification text being written or in the user's instruction; never invent one.
 3. Increase the build number in `schema_revision` (`1.3.0.2` → `1.3.0.3`). If the release is already
@@ -63,7 +64,9 @@ render and read the tables.
    python3 ${CLAUDE_SKILL_DIR}/scripts/check_bmm.py computable/BMM/openehr_rm_1.2.0.bmm.json \
      -d ../specifications-BASE/computable/BMM/openehr_base_1.3.0.bmm.json
    ```
-   Fix every ERROR and WARNING that was not in the step 1 output.
+   Save the output again and `diff` it with the step 1 output; fix every ERROR and WARNING your
+   change added. Exit status 3 ("name(s) not checked") means an included schema was not loaded, so
+   the check is incomplete. If its sibling clone is missing, say so; never report such a run as clean.
 5. Regenerate the class tables (`class-generation`) and read the table of every class you touched.
    Expect the gaps listed under "What the class tables show" in the reference, such as a container's
    member count or a generic parameter's constraint.
@@ -77,19 +80,21 @@ render and read the tables.
 
 ### Writing a schema from scratch
 
-1. If `computable/BMM/` already holds an empty schema for the component, fill that in. Otherwise
-   copy `${CLAUDE_SKILL_DIR}/assets/openehr_demo_0.1.0.bmm.json` to
-   `computable/BMM/<schema id>.bmm.json` and replace its content. Set the header from the
-   reference's header table: `schema_name` is the lower-case component, `rm_release` the release,
-   `schema_revision` `<rm_release>.1`. Ask the user for `schema_author` rather than guessing it.
+1. If `computable/BMM/` already holds an empty schema for the component (the `scaffold` skill writes
+   one), fill that in; replace its single root package `org.openehr.<schema_name>` as step 3 says,
+   and confirm its `schema_author` and `schema_lifecycle_state` with the user. Otherwise copy
+   `${CLAUDE_SKILL_DIR}/assets/openehr_demo_0.1.0.bmm.json` to `computable/BMM/<schema id>.bmm.json`
+   and replace its content. Set the header from the reference's header table: `schema_name` is the
+   lower-case component, `rm_release` the release, `schema_revision` `<rm_release>.1`. Ask the user
+   for `schema_author` rather than guessing it.
 2. Include BASE (`"includes": {"openehr_base_<version>": {"id": "openehr_base_<version>"}}`) and use
    its types (`Any`, `String`, `List`, `Hash`, `HIER_OBJECT_ID`, …). Do not redefine them;
    `primitive_types` belongs to BASE only.
-3. Give each specification document of the component one top-level package,
-   `org.openehr.<schema_name>.<package>`, matching the `:pkg:` that document's `master.adoc` sets
-   (`org.openehr.<schema_name>.<package>.`): RM has `org.openehr.rm.common`, `org.openehr.rm.ehr`
-   and others; TERM has the one package `org.openehr.term.terminology`. Group its classes in
-   sub-packages as the document's chapters do.
+3. Name top-level packages `org.openehr.<schema_name>.<package>`, one for each `:pkg:` the
+   component's `master.adoc` files set (`org.openehr.<schema_name>.<package>.`): RM has
+   `org.openehr.rm.common`, `org.openehr.rm.ehr` and others, and its `ehr` document sets two; TERM
+   has the one package `org.openehr.term.terminology`. Group the classes in sub-packages as the
+   chapters do, at most four package levels deep.
 4. Add the classes, then continue from step 4 of "Changing a schema".
 
 ## Quick Reference
@@ -116,14 +121,16 @@ render and read the tables.
   argument does not conform to its parameter's `conforms_to_type`. WARNING means a broken convention
   or content the publisher ignores. INFO lists what could not be checked, typically type names from
   an included schema that was not passed with `-d`.
-- Exit status 1 means errors were found (with `--strict`, warnings count too); 2 means the file is
-  unreadable or not JSON.
-- The published schemas carry some warnings and a few errors of their own, such as missing
-  documentation, or AM 2.4.0's `P_ARCHETYPE_SLOT.includes`, a `List` with no element type that renders
-  as `List<Any>`. Report findings outside your change to the user; do not fix them as a side effect.
-- If `python3` is missing, say so, check the change by hand against the reference's lists, and
-  render. In a tool that does not expand `${CLAUDE_SKILL_DIR}`, use the directory that holds this
-  SKILL.md.
+- Exit status: 0 complete and clean; 1 errors found (with `--strict`, warnings count too); 3 no
+  errors, but names from an included schema not loaded with `-d` went unchecked; 2 a file is
+  unreadable, not UTF-8 JSON, or (for `-d`) not a BMM schema.
+- The published schemas carry findings of their own. At the time of writing, AM 2.4.0 has ten errors
+  (lists without an element type in `P_ARCHETYPE_SLOT`, and `FUNCTION` arguments in reverse order in
+  `c_conforms_to`) and LANG's BMM3 overlay two. Report findings outside your change to the user; do
+  not fix them as a side effect.
+- If `python3` is missing, say so and report the schema as unchecked; review the change by hand
+  against the reference's lists before rendering. In a tool that does not expand
+  `${CLAUDE_SKILL_DIR}`, use the directory that holds this SKILL.md.
 
 ## Guardrails
 
@@ -132,6 +139,7 @@ render and read the tables.
   4-space indentation and key order, and check that `git diff` shows only your change.
 - **Edit only `computable/BMM/` in the component repo.** Never the ITS-BMM copies, the generated
   `docs/UML/classes` tables, or the schemas bundled in `bmm-publisher`.
-- **Keys equal names.** Every map entry is keyed by its own `name`.
+- **Keys equal names.** Every entry of a map of named things (packages, classes, properties,
+  functions, parameters, constants, generic parameters) is keyed by its own `name`.
 - **Use the forms bmm-publisher reads** (see the reference's table of unsupported specification
   features) and describe in `documentation` what they cannot express.
