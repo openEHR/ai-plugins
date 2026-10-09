@@ -7,6 +7,12 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 ### Added
 
 - `bmm-authoring` skill: write a component's BMM schema (the P_BMM JSON in `computable/BMM/`) from scratch, or change one. It covers the header and its conventions, `includes`, how packages set the class-table file names, every class, property, type and function kind, invariants and constants, documentation text, what the legacy class tables do not show, and the persistence-spec features `bmm-publisher` does not read (indexed containers, `ancestor_defs`, `type_ref` value sets), with the form to write instead. It ships a worked example (`assets/openehr_demo_0.1.0.bmm.json`) and a read-only checker, `scripts/check_bmm.py` (standard-library Python 3.8+), that reports what `bmm-publisher` accepts without a message: a misspelt or missing `_type`, a misspelt key such as `is_mandantory`, a key that differs from its `name`, a class in no package, an upper limit without `"upper_unbounded": false`, a container without an element type, wrong generic parameter counts, a generic argument that does not conform to its parameter's `conforms_to_type`, unresolved type names (with `-d` for the included schemas), and more. CI runs its unit tests (`scripts/test_check_bmm.py`).
+- `scaffold` template set revision 3: a new repository also gets `computable/BMM/<id>.bmm.json` (file id `bmm`, strategy `bmm-seed`).
+  - The script lists the schemas the local `ghcr.io/openehr/bmm-publisher` image bundles (`docker run --pull never`, so nothing is downloaded) and copies the highest version for the component.
+  - When the image bundles none, it writes an empty schema `openehr_<component>_<first_release>`. The schema has one root package `org.openehr.<name>`, no classes, and BASE in `includes` for other components. bmm-publisher refuses a schema without a package.
+  - Without Docker or the image the file is reported as `blocked` and the other files are still written; `--var bmm_schema_id=<id>` creates the empty schema anyway.
+  - Existing repositories are not offered a schema; `--overwrite bmm` asks for one.
+  - Derived variables can take a regex group (`match` + `group`), which gives the new `bmm_schema_name` and `bmm_rm_release`.
 
 ### Changed
 

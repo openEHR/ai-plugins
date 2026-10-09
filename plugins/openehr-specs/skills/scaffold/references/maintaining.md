@@ -35,6 +35,7 @@ Each entry of `files` names a strategy, chosen by who owns the file after it is 
 | `json-merge` | `.claude/settings.json` | Adds keys and list items that are missing. Existing values always win, so a plugin set to `false` stays `false`. The descriptor remembers every template item it has offered, so an item the user removed afterwards is left out, and only items new in a later revision are added. Invalid JSON, or a top level that is not an object, is a `conflict`; `--overwrite` replaces the file with the template. |
 | `ensure-lines` | `.gitignore`, `.asciidoctorconfig` | Appends missing lines with their comment header, and, like `json-merge`, leaves out a line the user removed after an earlier run. With a `key` regex, a line counts as present whatever its value (`:component: X`, and an unset `:name!:`); a differing value only produces a warning. |
 | `regions` | `AGENTS.md` | Regions between `<!-- openehr-scaffold:begin ID -->` and `...:end ID -->` are managed, with a hash per region. Text outside them is the repo's. A file with no markers is `upgrade-manual`. Regions are applied independently: an `update` or `add` is written even when another region conflicts. |
+| `bmm-seed` | `computable/BMM/{{bmm_schema_id}}.bmm.json` | Like `seed`, but offered only in `init` mode (or with `--overwrite bmm`) and only while `present_glob` matches nothing; otherwise `exists` or `skipped`. The content is the schema that `image` bundles in `image_dir` for the component, copied verbatim, or else the rendered template (an empty schema). Without Docker or the image the file is `blocked`, unless the user gave `bmm_schema_id`. The decision is made before the other files are planned, so `AGENTS.md` names the schema that will be written. At most one file uses this strategy. |
 
 `pinned` (in the descriptor, set with `--pin`) opts a file or `file:region` out for good. Regions the
 user deleted are reported as `removed`, not added back; a region the descriptor never recorded is added.
@@ -43,7 +44,7 @@ user deleted are reported as `removed`, not added back; a region the descriptor 
 or region is updated, an edited one is reported as a `conflict`. `json-merge` and `ensure-lines` only add,
 so a changed value in `claude-settings.json.tmpl`, `gitignore.tmpl` or `asciidoctorconfig.tmpl`
 never propagates by itself, and neither does removing an item (a new item does, once); add a `note` step
-to the migration for those. `seed` files
+to the migration for those. `seed` and `bmm-seed` files
 never change.
 
 For every strategy, line endings (CRLF or LF) and the file mode are kept when a file is rewritten, a write goes to a temporary file that then replaces the target, and nothing is written through a symbolic link or outside the repo.
@@ -52,13 +53,17 @@ For every strategy, line endings (CRLF or LF) and the file mode are kept when a 
 
 `variables` in `template-set.json`: `required`, `default` (itself a template, may use earlier
 variables), `default_if` (rules by regex on another variable), `pattern`, `choices`, `derived`
-(`from` + `map`). Resolution order is explicit `--var`, then a value recorded in the repo's
+(`from` + `map`, or `from` + `match` + `group`: a regex group of the other variable, empty when it does
+not match; `bmm_schema_name` and `bmm_rm_release` split `bmm_schema_id` this way). Resolution order is explicit `--var`, then a value recorded in the repo's
 descriptor as confirmed, then inference, then a recorded default, then the default. Unknown `--var`
 names and empty required values are rejected.
 
 - Inference reads `manifest.json`, `.asciidoctorconfig`, the git remote, the directory name,
   `computable/BMM`, `origin/HEAD` (for `default_branch`), the `LICENSE` text, and the sibling
   `specifications-BASE/computable/BMM` (for `base_bmm_schema_id`, the highest version; never for BASE itself).
+  When a new repository is offered a BMM schema, `bmm_schema_id` comes from the bmm-publisher image
+  (`docker run --rm --pull never --entrypoint ls|cat`): the highest `openehr_<component>_<x.y.z>`, with the
+  component lower-cased and `-` turned into `_`. Without one it is `openehr_<component>_<first_release>`.
 - The descriptor lists which recorded values were only defaults (`defaulted`). Inference replaces those, so a
   BMM schema added to the repo later is picked up as a new guess; a value the user confirmed is kept.
 - A value that fails its `pattern` is reported, not guessed: `SPEC{{component}}` is invalid for
@@ -125,6 +130,15 @@ Surveyed on 2026-10-07 across the `specifications-*` clones (18 with a git direc
   the trailing form is understood. About 2,000 commits carry no key at all.
 - **Not verified for every repo:** "do not stage regenerated `docs/*.html`" comes from BASE's practice (its
   commits are source-only) and the note in its `AGENTS.md` that the HTML is a build artefact.
+- **BMM schema** (checked on 2026-10-09). AM, BASE, LANG, RM and TERM keep theirs in `computable/BMM/`. The
+  bmm-publisher image (0.12.0) bundles 18 schemas for exactly those five components in `/app/resources`.
+  The empty template has the header items of `P_BMM_SCHEMA` and `BMM_SCHEMA_CORE` (LANG `bmm_persistence`),
+  with `bmm_version` 2.4 like every existing schema. Every existing schema has the revision
+  `<rm_release>.2` and the state `stable`. A new one starts at `.1` and `development`: not yet `stable`, and
+  one of the two lifecycle states that use 0.y.z releases (Planning and Development, skill `governance`). It names the Foundation as author rather than a person, and
+  includes BASE by id, as RM and LANG do. bmm-publisher refuses a schema without a package ("Schema must
+  contain at least one package"), so the template has one root package. With no classes it only warns
+  about an empty package, and `legacy-adoc` exits 0.
 
 ## Known limits
 
@@ -136,6 +150,11 @@ Surveyed on 2026-10-07 across the `specifications-*` clones (18 with a git direc
   example) needs further `-d` options, added by hand.
 - One BMM schema per repo. When several are found (AM has 1.4.0 and 2.4.0, LANG has three) the highest
   version is used and a warning lists the others; pass `--var bmm_schema_id=<id>` to choose.
+- A BMM schema is offered only in `init` mode, that is when none of the standard files exists yet. A new
+  repository that already has, say, a `README.md` is in `upgrade` mode and needs `--overwrite bmm`.
+- The bundled copy comes from whatever `ghcr.io/openehr/bmm-publisher` (`latest`) image is present
+  locally. Nothing is pulled, so a stale local image gives an older schema; `docker pull` it first.
+  Docker before 20.10 has no `--pull` option, and the file is reported as `blocked`.
 - `json-merge` rewrites the file with two-space indentation when it adds something, and any rewrite drops
   a byte-order mark. `.gitignore` is matched line by line: negations (`!x`) and anchoring are not
   understood, so a user who negates a pattern the template adds should pin the file.
