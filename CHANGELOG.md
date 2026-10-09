@@ -4,6 +4,8 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ## Unreleased
 
+## openehr-specs 0.6.0 (2026-10-09)
+
 ### Added
 
 - `bmm-authoring` skill: write a component's BMM schema (the P_BMM JSON in `computable/BMM/`) from scratch, or change one.
