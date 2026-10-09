@@ -14,7 +14,9 @@ drives this script and ../references/maintaining.md for how to change the set.
 
 plan and apply print JSON (render and diff print text); errors are {"error": ...}, exit 2.
 Nothing is written outside --repo, through a symbolic link, or without the file being complete
-first (each write goes to a temporary file that then replaces the target).
+first (each write goes to a temporary file that then replaces the target). When a new repository
+gets a BMM schema, plan and apply ask the local bmm-publisher image for a bundled one
+(docker run --pull never: nothing is downloaded).
 """
 import argparse
 import copy
@@ -30,7 +32,8 @@ from pathlib import Path
 
 SET_DIR = Path(__file__).resolve().parent.parent
 DESCRIPTOR = ".claude/scaffold.json"
-STRATEGIES = ("seed", "whole", "json-merge", "ensure-lines", "regions")
+STRATEGIES = ("seed", "whole", "json-merge", "ensure-lines", "regions", "bmm-seed")
+BMM_SEED_KEYS = ("present_glob", "image", "image_dir")
 MIGRATION_OPS = ("rename", "delete", "note")
 STEP_FIELDS = {"rename": ("from", "to"), "delete": ("path", "file_id"), "note": ("text",)}
 COMMENT_PREFIXES = ("#", "//")
@@ -133,6 +136,23 @@ def git_installed():
         return subprocess.run(["git", "--version"], capture_output=True, timeout=10).returncode == 0
     except (OSError, subprocess.SubprocessError):
         return False
+
+
+def docker(*args):
+    """(stdout, None) of a docker command, or (None, why it did not work)."""
+    try:
+        done = subprocess.run(["docker", *args], capture_output=True, timeout=60)
+    except FileNotFoundError:
+        return None, "docker is not installed"
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, f"docker did not run ({type(exc).__name__})"
+    if done.returncode != 0:
+        lines = [l.strip() for l in done.stderr.decode("utf-8", "replace").splitlines() if l.strip()]
+        return None, (lines[0] if lines else f"docker exited with {done.returncode}")[:200]
+    try:
+        return done.stdout.decode("utf-8"), None
+    except UnicodeDecodeError:
+        return None, "docker printed something that is not UTF-8 text"
 
 
 def require_relative(path, where):
@@ -245,6 +265,28 @@ def version_key(name):
     return (tuple(int(n) for n in re.findall(r"\d+", name)), name)
 
 
+def repo_bmm_ids(repo):
+    bmm_dir = repo / "computable" / "BMM"
+    return sorted((p.name[: -len(".bmm.json")] for p in bmm_dir.glob("*.bmm.json")),
+                  key=version_key) if bmm_dir.is_dir() else []
+
+
+def sibling_base(repo, notes):
+    """The highest BASE schema id in the sibling specifications-BASE clone, or None (with a note).
+
+    The classes of every component but BASE refer to BASE types, which bmm-publisher only links when
+    the BASE BMM is loaded as a dependency (-d)."""
+    base_dir = repo.resolve().parent / "specifications-BASE" / "computable" / "BMM"
+    base = sorted((p.name[: -len(".bmm.json")] for p in base_dir.glob("openehr_base_*.bmm.json")),
+                  key=version_key) if base_dir.is_dir() else []
+    if base:
+        return base[-1]
+    notes.append("no sibling specifications-BASE clone with a BMM schema: the class-table command in "
+                 "AGENTS.md will not load BASE with -d, so links to BASE types break; clone it, or "
+                 "pass --var base_bmm_schema_id=<id>")
+    return None
+
+
 def infer(repo, tset, set_dir, notes):
     """Variable values read from the repository itself: name -> (value, where from)."""
     found = {}
@@ -291,25 +333,14 @@ def infer(repo, tset, set_dir, notes):
         put("repo_name", repo.name, "directory name")
         put("component", match.group(1).upper(), "directory name")
 
-    bmm_dir = repo / "computable" / "BMM"
-    bmm = sorted((p.name[: -len(".bmm.json")] for p in bmm_dir.glob("*.bmm.json")), key=version_key) if bmm_dir.is_dir() else []
+    bmm = repo_bmm_ids(repo)
     if bmm:
         put("bmm_schema_id", bmm[-1], "computable/BMM")
         if len(bmm) > 1:
             notes.append(f"several BMM schemas in computable/BMM ({', '.join(bmm)}): using {bmm[-1]}; "
                          "pass --var bmm_schema_id=<id> to choose another")
-        # the classes of every component but BASE refer to BASE types, which bmm-publisher only
-        # links when the BASE BMM is loaded as a dependency (-d); read it from the sibling clone
         if not bmm[-1].startswith("openehr_base_"):
-            base_dir = repo.resolve().parent / "specifications-BASE" / "computable" / "BMM"
-            base = sorted((p.name[: -len(".bmm.json")] for p in base_dir.glob("openehr_base_*.bmm.json")),
-                          key=version_key) if base_dir.is_dir() else []
-            if base:
-                put("base_bmm_schema_id", base[-1], "sibling specifications-BASE")
-            else:
-                notes.append("no sibling specifications-BASE clone with a BMM schema: the class-table command in "
-                             "AGENTS.md will not load BASE with -d, so links to BASE types break; clone it, or "
-                             "pass --var base_bmm_schema_id=<id>")
+            put("base_bmm_schema_id", sibling_base(repo, notes), "sibling specifications-BASE")
 
     head = git(repo, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
     if head:
@@ -363,7 +394,12 @@ def resolve_variables(tset, explicit, saved, inferred, defaulted=()):
     for name, spec in schema.items():
         derived = spec.get("derived")
         if derived and derived["from"] in values:
-            values[name] = derived["map"].get(values[derived["from"]], values[derived["from"]])
+            source = values[derived["from"]]
+            if "match" in derived:  # a regex group of the source, empty when it does not match
+                match = re.search(derived["match"], source)
+                values[name] = match.group(derived.get("group", 1)) if match else ""
+            else:
+                values[name] = derived.get("map", {}).get(source, source)
             sources[name] = "derived"
 
     for name, value in values.items():
@@ -394,10 +430,11 @@ class Act:
 
 
 class Ctx:
-    def __init__(self, repo, set_dir, tset, values, desc, overwrite, pinned):
+    def __init__(self, repo, set_dir, tset, values, desc, overwrite, pinned, new_bmm=None):
         self.repo, self.set_dir, self.tset, self.values = repo, set_dir, tset, values
         self.desc_files = (desc or {}).get("files", {})
         self.overwrite, self.pinned = set(overwrite), set(pinned)
+        self.new_bmm = new_bmm  # what new_bmm() decided, when this run offers a BMM schema
         self.warnings = []
 
 
@@ -658,18 +695,46 @@ def plan_regions(ctx, spec, rendered):
                record={"regions": new_record}, regions=results)
 
 
+def plan_bmm_seed(ctx, spec, rendered):
+    """Like seed, but only for a new repository and only while computable/BMM holds no schema;
+    the content is the image's bundled schema when there is one, else the empty-schema template."""
+    shown = dict(spec, target=spec["present_glob"])
+    present = sorted(p.name for p in ctx.repo.glob(spec["present_glob"]))
+    if present:
+        return Act(shown, "exists", ", ".join(present))
+    new = ctx.new_bmm
+    if new is None:
+        return Act(shown, "skipped", "offered only when a repository is initialised; "
+                                     f"pass --overwrite {spec['id']} to create one here")
+    if "blocked" in new:
+        return Act(shown, "blocked", new["blocked"])
+    if "text" in new:
+        return Act(spec, "create", f"copied from {spec['image']} ({new['schema_id']})", content=new["text"])
+    return Act(spec, "create", f"new empty schema {new['schema_id']}: one root package, no classes yet"
+               + (f"; {new['note']}" if new.get("note") else ""), content=rendered)
+
+
 STRATEGY_FUNCS = {
     "seed": plan_seed,
     "whole": plan_whole,
     "json-merge": plan_json_merge,
     "ensure-lines": plan_ensure_lines,
     "regions": plan_regions,
+    "bmm-seed": plan_bmm_seed,
 }
+
+
+def target_of(spec, values):
+    """A target may use variables (computable/BMM/{{bmm_schema_id}}.bmm.json)."""
+    target = render(spec["target"], values) if "{{" in spec["target"] else spec["target"]
+    require_relative(target, f"file '{spec['id']}' target")
+    return target
 
 
 def plan_file(ctx, spec):
     if spec["id"] in ctx.pinned:
-        return Act(spec, "pinned")
+        return Act(dict(spec, target=spec.get("present_glob", spec["target"])), "pinned")
+    spec = dict(spec, target=target_of(spec, ctx.values))
     target = ctx.repo / spec["target"]
     if target.is_symlink():
         return Act(spec, "conflict", "is a symbolic link; scaffold never writes through links")
@@ -698,6 +763,68 @@ def validate_descriptor(desc):
             raise ScaffoldError(f"{DESCRIPTOR} is malformed: '{key}' must be a list")
 
 
+def present(repo, spec):
+    if "present_glob" in spec:
+        return any(repo.glob(spec["present_glob"]))
+    return (repo / spec["target"]).exists() or (repo / spec["target"]).is_symlink()
+
+
+def bundled_bmm(spec, name):
+    """Ids of the schemas the bmm-publisher image bundles for schema `name`, highest version last,
+    or (None, why) when the image could not be listed."""
+    out, problem = docker("run", "--rm", "--pull", "never", "--entrypoint", "ls", spec["image"], spec["image_dir"])
+    if problem:
+        return None, problem
+    pattern = re.compile(rf"openehr_{re.escape(name)}_[0-9]+\.[0-9]+\.[0-9]+")
+    ids = [line.strip()[: -len(".bmm.json")] for line in out.splitlines() if line.strip().endswith(".bmm.json")]
+    return sorted((i for i in ids if pattern.fullmatch(i)), key=version_key), None
+
+
+def new_bmm(repo, spec, values, sources, notes):
+    """Decide the BMM schema of a new repository: the image's bundled copy, or the empty template.
+
+    Returns {"schema_id", "inferred"} plus "text" (the bundled copy) or "note", or {"blocked": why}
+    when the image could not be checked and the user gave no schema id."""
+    component = values["component"]
+    name = component.lower().replace("-", "_")
+    given = values.get("bmm_schema_id", "") if sources.get("bmm_schema_id") in ("explicit", "descriptor") else ""
+    fresh = given or f"openehr_{name}_{values['first_release']}"
+    ids, problem = bundled_bmm(spec, name)
+    if problem:
+        if not given:
+            return {"blocked": f"could not check whether {spec['image']} bundles a {component} schema ({problem}); "
+                               f"start Docker (`docker pull {spec['image']}` if the image is missing) and plan "
+                               f"again, or create an empty schema with --var bmm_schema_id={fresh}"}
+        result = {"schema_id": given, "note": f"{spec['image']} was not checked for a bundled copy ({problem})"}
+    else:
+        chosen = given or (ids[-1] if ids else fresh)
+        result = {"schema_id": chosen}
+        if chosen in ids:
+            text, problem = docker("run", "--rm", "--pull", "never", "--entrypoint", "cat", spec["image"],
+                                   f"{spec['image_dir']}/{chosen}.bmm.json")
+            if problem is None:
+                try:
+                    json.loads(text)
+                except ValueError:
+                    problem = "it is not valid JSON"
+            if problem:
+                return {"blocked": f"could not copy {chosen} from {spec['image']} ({problem}); plan again, or "
+                                   "create an empty schema with --var bmm_schema_id=<another id>"}
+            result["text"] = normalise(text)
+        elif ids:
+            result["note"] = f"{spec['image']} bundles {', '.join(ids)}, not {chosen}"
+    inferred = {}
+    if not given:
+        inferred["bmm_schema_id"] = (result["schema_id"],
+                                     "bmm-publisher image" if "text" in result else "new empty schema")
+    if not result["schema_id"].startswith("openehr_base_"):
+        base = sibling_base(repo, notes)
+        if base:
+            inferred["base_bmm_schema_id"] = (base, "sibling specifications-BASE")
+    result["inferred"] = inferred
+    return result
+
+
 def build_plan(repo, set_dir, explicit, overwrite=(), pin=()):
     tset = load_set(set_dir)
     unknown = [k for k in explicit if k not in tset["variables"] or "derived" in tset["variables"][k]]
@@ -718,8 +845,7 @@ def build_plan(repo, set_dir, explicit, overwrite=(), pin=()):
         path = list(range(recorded + 1, latest + 1))
     else:
         recorded, path = None, []
-        mode = "upgrade" if any((repo / f["target"]).exists() or (repo / f["target"]).is_symlink()
-                              for f in tset["files"]) else "init"
+        mode = "upgrade" if any(present(repo, f) for f in tset["files"]) else "init"
 
     plan = Plan()
     plan.repo, plan.set_dir, plan.tset, plan.desc = repo, set_dir, tset, desc
@@ -728,14 +854,25 @@ def build_plan(repo, set_dir, explicit, overwrite=(), pin=()):
     plan.pinned = set((desc or {}).get("pinned", [])) | set(pin)
 
     plan.notes = []
-    plan.values, plan.sources, plan.missing, plan.invalid = resolve_variables(
-        tset, explicit, (desc or {}).get("variables", {}), infer(repo, tset, set_dir, plan.notes),
-        (desc or {}).get("defaulted", []))
+    saved, defaulted = (desc or {}).get("variables", {}), (desc or {}).get("defaulted", [])
+    inferred = infer(repo, tset, set_dir, plan.notes)
+    resolved = resolve_variables(tset, explicit, saved, inferred, defaulted)
+    # a BMM schema is offered to a new repository only (or on request), so its id and the BASE
+    # dependency are known before the other templates (AGENTS.md) are rendered
+    plan.new_bmm = None
+    bmm_spec = next((f for f in tset["files"] if f["strategy"] == "bmm-seed"), None)
+    if (bmm_spec and bmm_spec["id"] not in plan.pinned and (mode == "init" or bmm_spec["id"] in overwrite)
+            and not present(repo, bmm_spec) and not resolved[2] and not resolved[3]):
+        plan.new_bmm = new_bmm(repo, bmm_spec, resolved[0], resolved[1], plan.notes)
+        if plan.new_bmm.get("inferred"):
+            inferred.update(plan.new_bmm["inferred"])
+            resolved = resolve_variables(tset, explicit, saved, inferred, defaulted)
+    plan.values, plan.sources, plan.missing, plan.invalid = resolved
     plan.acts, plan.warnings = [], list(plan.notes)
     if not plan.missing and not plan.invalid:
         for spec in tset["files"]:
             require_relative(spec["target"], f"file '{spec['id']}' target")
-        ctx = Ctx(repo, set_dir, tset, plan.values, desc, overwrite, plan.pinned)
+        ctx = Ctx(repo, set_dir, tset, plan.values, desc, overwrite, plan.pinned, plan.new_bmm)
         valid = {spec["id"] for spec in tset["files"]}
         for spec in tset["files"]:
             if spec["strategy"] == "regions":
@@ -878,6 +1015,7 @@ def diff_file(repo, set_dir, explicit, file_id):
     spec = next((f for f in plan.tset["files"] if f["id"] == file_id), None)
     if spec is None:
         raise ScaffoldError(f"unknown file id '{file_id}'")
+    spec = dict(spec, target=target_of(spec, plan.values))
     rendered = rendered_for(Ctx(repo, set_dir, plan.tset, plan.values, plan.desc, (), ()), spec)
     current = read(repo / spec["target"])
     if current is None:
@@ -948,14 +1086,30 @@ def _check_template_set(set_dir):
             problems.append(str(exc))
         if spec.get("strategy") not in STRATEGIES:
             problems.append(f"file '{label}': unknown strategy '{spec.get('strategy')}'")
+        if spec.get("strategy") == "bmm-seed":
+            lacking = [k for k in BMM_SEED_KEYS if not spec.get(k)]
+            if lacking:
+                problems.append(f"file '{label}': a bmm-seed file needs {', '.join(lacking)}")
+            if "{{bmm_schema_id}}" not in spec.get("target", ""):
+                problems.append(f"file '{label}': a bmm-seed target must contain {{{{bmm_schema_id}}}}")
         names = list((spec.get("templates") or {}).values()) or [spec.get("template")]
         for name in names:
             if not name or not (set_dir / "assets" / "templates" / name).is_file():
                 problems.append(f"file '{label}': template '{name}' is missing")
+    if sum(1 for f in tset["files"] if f.get("strategy") == "bmm-seed") > 1:
+        problems.append("only one file may use the bmm-seed strategy")
     for name, spec in tset["variables"].items():
         derived = spec.get("derived")
         if derived and derived["from"] not in tset["variables"]:
             problems.append(f"variable '{name}' derives from unknown '{derived['from']}'")
+        if derived and ("map" in derived) == ("match" in derived):
+            problems.append(f"variable '{name}': derived needs either map or match")
+        elif derived and "match" in derived:
+            try:
+                if re.compile(derived["match"]).groups < derived.get("group", 1):
+                    problems.append(f"variable '{name}': match has no group {derived.get('group', 1)}")
+            except re.error as exc:
+                problems.append(f"variable '{name}': match is not a valid regex ({exc})")
         if not derived and "default" not in spec and not spec.get("required"):
             problems.append(f"variable '{name}' needs a default or required: true")
 
@@ -970,6 +1124,7 @@ def _check_template_set(set_dir):
             if not all(n and (set_dir / "assets" / "templates" / n).is_file() for n in names):
                 continue  # already reported as a missing template
             try:
+                target_of(spec, values)
                 text = rendered_for(ctx, spec)
                 if spec["target"].endswith(".json"):
                     json.loads(text)

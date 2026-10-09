@@ -1,6 +1,6 @@
 {
   "id": "openehr-specs/scaffold",
-  "revision": 2,
+  "revision": 3,
   "revisions": [
     {
       "revision": 1,
@@ -13,6 +13,12 @@
       "released": "2026-10-08",
       "summary": "AGENTS.md build region: no longer claims the repo has no build tooling, and the class-table command loads the sibling BASE BMM with -d (new variable base_bmm_schema_id); a TODO(scaffold) marker asks new repos to describe their own tooling. .claude/CLAUDE.md says where repo guidance goes.",
       "digest": "e973f4d599169188dcef2ae965e6f642ad58f3cea9d09ef930e923a4ca54e5b7"
+    },
+    {
+      "revision": 3,
+      "released": "2026-10-09",
+      "summary": "A new repository gets computable/BMM/<id>.bmm.json: a copy of the schema the bmm-publisher image bundles for the component, or an empty schema (one root package, BASE included) when it bundles none. Existing repositories are not offered one.",
+      "digest": "c78b965d50608d5937bd6dfcc0b0953cba4c91d51ad347bd46b647b7cdc7281f"
     }
   ],
   "variables": {
@@ -87,12 +93,28 @@
     "bmm_schema_id": {
       "default": "",
       "pattern": "^$|^openehr_[a-z0-9_]+_[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "BMM schema id (openehr_base_1.3.0) when the repo holds computable/BMM/<id>.bmm.json; empty otherwise. Switches on the class-generation sections."
+      "description": "BMM schema id (openehr_base_1.3.0) of computable/BMM/<id>.bmm.json, read from the repo. When a new repository is initialised without one: the highest schema the bmm-publisher image bundles for the component, else openehr_<component>_<first_release> for a new empty schema. Empty otherwise. Switches on the class-generation sections."
     },
     "base_bmm_schema_id": {
       "default": "",
       "pattern": "^$|^openehr_base_[0-9]+\\.[0-9]+\\.[0-9]+$",
       "description": "BASE BMM schema id (openehr_base_1.3.0) that the component's classes refer to, read from the sibling specifications-BASE clone; loaded with -d when the class tables are regenerated. Empty for BASE itself and for repos without a BMM."
+    },
+    "bmm_schema_name": {
+      "derived": {
+        "from": "bmm_schema_id",
+        "match": "^openehr_(.+)_[0-9]+\\.[0-9]+\\.[0-9]+$",
+        "group": 1
+      },
+      "description": "schema_name of the BMM schema (base in openehr_base_1.3.0); empty without one."
+    },
+    "bmm_rm_release": {
+      "derived": {
+        "from": "bmm_schema_id",
+        "match": "^openehr_.+_([0-9]+\\.[0-9]+\\.[0-9]+)$",
+        "group": 1
+      },
+      "description": "rm_release of the BMM schema (1.3.0 in openehr_base_1.3.0); empty without one."
     },
     "documents": {
       "default": "none yet (add them to `manifest.json`)",
@@ -123,6 +145,15 @@
       "target": "manifest.json",
       "template": "manifest-json.tmpl",
       "strategy": "seed"
+    },
+    {
+      "id": "bmm",
+      "target": "computable/BMM/{{bmm_schema_id}}.bmm.json",
+      "template": "bmm-json.tmpl",
+      "strategy": "bmm-seed",
+      "present_glob": "computable/BMM/*.bmm.json",
+      "image": "ghcr.io/openehr/bmm-publisher",
+      "image_dir": "/app/resources"
     },
     {
       "id": "gitignore",

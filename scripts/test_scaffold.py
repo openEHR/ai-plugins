@@ -27,6 +27,24 @@ _spec.loader.exec_module(scaffold)
 TITLE = {"component_title": "Demo Model"}
 
 
+class FakeDocker:
+    """Stands in for scaffold.docker: an image bundling `schemas` ({id: text}), or none at all (None)."""
+
+    def __init__(self, schemas, problem="docker is not installed"):
+        self.schemas, self.problem, self.calls = schemas, problem, []
+
+    def __call__(self, *args):
+        self.calls.append(args)
+        if self.schemas is None:
+            return None, self.problem
+        if args[-2:] == ("ghcr.io/openehr/bmm-publisher", "/app/resources"):
+            return "".join(f"{i}.bmm.json\n" for i in self.schemas), None
+        name = args[-1].rsplit("/", 1)[-1][: -len(".bmm.json")]
+        if name in self.schemas:
+            return self.schemas[name], None
+        return None, f"cat: can't open '{args[-1]}': No such file or directory"
+
+
 class Base(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -36,6 +54,11 @@ class Base(unittest.TestCase):
         env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
         env["GIT_CEILING_DIRECTORIES"] = str(self.root.parent)
         patcher = mock.patch.dict(os.environ, env, clear=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        # the host's Docker must not leak in either: by default the bmm-publisher image is unavailable
+        self.docker = FakeDocker(None)
+        patcher = mock.patch.object(scaffold, "docker", self.docker)
         patcher.start()
         self.addCleanup(patcher.stop)
         self.repo = self.root / "specifications-DEMO"
@@ -128,7 +151,7 @@ class InitTests(Base):
                      "manifest.json", ".gitignore", ".asciidoctorconfig", "LICENSE", "README.md"):
             self.assertTrue((self.repo / name).is_file(), name)
         self.assertEqual(self.plan().mode, "current")
-        self.assertTrue(all(a in ("unchanged", "exists") for a in self.actions(self.plan()).values()))
+        self.assertTrue(all(a in ("unchanged", "exists", "skipped") for a in self.actions(self.plan()).values()))
         self.assertEqual(json.loads(self.text("manifest.json"))["id"], "DEMO")
         self.assertIn(":component: DEMO", self.text(".asciidoctorconfig"))
         self.assertIn("Changes for SPECDEMO-", self.text("AGENTS.md"))
@@ -1065,6 +1088,147 @@ class CliTests(Base):
     def test_check_exit_code(self):
         code, out = self.run_cli("check")
         self.assertEqual((code, json.loads(out)["ok"]), (0, True))
+
+
+BUNDLED = '{\n  "bmm_version": "2.4",\n  "rm_publisher": "openehr",\n  "schema_name": "demo"\n}\n'
+BMM_GLOB = "computable/BMM/*.bmm.json"
+
+
+class BmmTests(Base):
+    """computable/BMM in a new repository: the schema the image bundles, else an empty one."""
+
+    def bmm_act(self, plan):
+        return next(a for a in plan.acts if a.id == "bmm")
+
+    def test_the_highest_bundled_schema_of_the_component_is_copied(self):
+        self.docker.schemas = {"openehr_demo_1.0.0": "{}", "openehr_demo_1.2.0": BUNDLED,
+                               "openehr_demo_1.10.0-bmm3": "{}", "openehr_demox_9.0.0": "{}", "openehr_rm_1.2.0": "{}"}
+        plan = self.plan()
+        self.assertEqual((plan.values["bmm_schema_id"], plan.sources["bmm_schema_id"]),
+                         ("openehr_demo_1.2.0", "inferred: bmm-publisher image"))
+        self.assertIn("copied from ghcr.io/openehr/bmm-publisher", self.bmm_act(plan).detail)
+        self.apply()
+        self.assertEqual(self.text("computable/BMM/openehr_demo_1.2.0.bmm.json"), BUNDLED)
+        self.assertIn("computable/BMM/openehr_demo_1.2.0.bmm.json", self.text("AGENTS.md"))
+        self.assertIn(("run", "--rm", "--pull", "never", "--entrypoint", "ls",
+                       "ghcr.io/openehr/bmm-publisher", "/app/resources"), self.docker.calls)
+
+    def test_without_a_bundled_schema_an_empty_one_is_rendered(self):
+        self.docker.schemas = {"openehr_rm_1.2.0": "{}"}
+        self.base_clone("openehr_base_1.3.0")
+        result = self.apply(first_release="1.0.0", component_title='Demo "Quoted" Model')
+        self.assertIn("computable/BMM/openehr_demo_1.0.0.bmm.json", result["written"])
+        schema = json.loads(self.text("computable/BMM/openehr_demo_1.0.0.bmm.json"))
+        self.assertEqual({k: schema[k] for k in ("bmm_version", "rm_publisher", "schema_name", "rm_release",
+                                                 "schema_revision", "schema_description")},
+                         {"bmm_version": "2.4", "rm_publisher": "openehr", "schema_name": "demo",
+                          "rm_release": "1.0.0", "schema_revision": "1.0.0.1",
+                          "schema_description": 'openEHR Demo "Quoted" Model Component'})
+        self.assertEqual(schema["includes"], {"openehr_base_1.3.0": {"id": "openehr_base_1.3.0"}})
+        # bmm-publisher refuses a schema without a package
+        self.assertEqual(schema["packages"], {"org.openehr.demo": {"name": "org.openehr.demo", "classes": []}})
+        self.assertEqual(schema["class_definitions"], {})
+        self.assertIn("  -d /in/openehr_base_1.3.0.bmm.json \\\n", self.text("AGENTS.md"))
+        self.assertEqual(self.bmm_act(self.plan()).action, "exists")
+
+    def test_without_a_base_clone_the_empty_schema_includes_nothing(self):
+        self.docker.schemas = {}
+        plan = self.plan()
+        self.assertTrue(any("no sibling specifications-BASE" in w for w in plan.warnings))
+        self.assertNotIn("includes", json.loads(self.bmm_act(plan).content))
+
+    def test_without_docker_the_schema_is_blocked_and_the_rest_is_written(self):
+        plan = self.plan()
+        act = self.bmm_act(plan)
+        self.assertEqual((act.action, act.target), ("blocked", BMM_GLOB))
+        self.assertIn("(docker is not installed)", act.detail)
+        self.assertIn("docker pull ghcr.io/openehr/bmm-publisher", act.detail)
+        self.assertIn("--var bmm_schema_id=openehr_demo_0.1.0", act.detail)
+        self.assertEqual(plan.values["bmm_schema_id"], "")
+        result = self.apply()
+        self.assertFalse((self.repo / "computable").exists())
+        self.assertIn("AGENTS.md", result["written"])
+        self.assertNotIn("class-generation", self.text("AGENTS.md"))
+
+    def test_a_given_schema_id_creates_an_empty_schema_without_docker(self):
+        act = self.bmm_act(self.plan(bmm_schema_id="openehr_demo_2.0.0"))
+        self.assertEqual((act.action, act.target), ("create", "computable/BMM/openehr_demo_2.0.0.bmm.json"))
+        self.assertIn("was not checked for a bundled copy (docker is not installed)", act.detail)
+        self.assertEqual(json.loads(act.content)["rm_release"], "2.0.0")
+
+    def test_a_given_schema_id_is_copied_when_the_image_bundles_it_and_rendered_when_not(self):
+        self.docker.schemas = {"openehr_demo_1.0.0": BUNDLED, "openehr_demo_1.2.0": "{}"}
+        act = self.bmm_act(self.plan(bmm_schema_id="openehr_demo_1.0.0"))
+        self.assertEqual((act.action, act.content), ("create", BUNDLED))
+        act = self.bmm_act(self.plan(bmm_schema_id="openehr_demo_3.0.0"))
+        self.assertEqual(json.loads(act.content)["schema_revision"], "3.0.0.1")
+        self.assertIn("bundles openehr_demo_1.0.0, openehr_demo_1.2.0, not openehr_demo_3.0.0", act.detail)
+
+    def test_an_unreadable_bundled_copy_blocks_instead_of_being_written(self):
+        self.docker.schemas = {"openehr_demo_1.0.0": "not json"}
+        act = self.bmm_act(self.plan())
+        self.assertEqual(act.action, "blocked")
+        self.assertIn("not valid JSON", act.detail)
+
+    def test_an_existing_repository_is_not_offered_one_and_docker_is_not_asked(self):
+        self.put("README.md", "# demo\n")
+        self.docker.schemas = {}
+        plan = self.plan()
+        self.assertEqual(plan.mode, "upgrade")
+        act = self.bmm_act(plan)
+        self.assertEqual((act.action, act.target), ("skipped", BMM_GLOB))
+        self.assertIn("--overwrite bmm", act.detail)
+        self.assertEqual((plan.values["bmm_schema_id"], self.docker.calls), ("", []))
+
+    def test_overwrite_offers_one_to_an_existing_repository(self):
+        self.put("README.md", "# demo\n")
+        self.docker.schemas = {}
+        self.apply(overwrite=("bmm",))
+        self.assertTrue((self.repo / "computable/BMM/openehr_demo_0.1.0.bmm.json").is_file())
+
+    def test_a_schema_already_in_computable_bmm_is_left_alone(self):
+        self.put("computable/BMM/openehr_demo_1.0.0.bmm.json", "{}")
+        self.docker.schemas = {"openehr_demo_1.2.0": BUNDLED}
+        act = self.bmm_act(self.plan())
+        self.assertEqual((act.action, act.detail), ("exists", "openehr_demo_1.0.0.bmm.json"))
+        self.assertEqual(self.docker.calls, [])
+
+    def test_a_pinned_schema_is_not_created_and_docker_is_not_asked(self):
+        self.docker.schemas = {}
+        plan = self.plan(pin=("bmm",))
+        self.assertEqual((self.bmm_act(plan).action, self.bmm_act(plan).target), ("pinned", BMM_GLOB))
+        self.assertEqual((plan.values["bmm_schema_id"], self.docker.calls), ("", []))
+
+    def test_a_hyphenated_component_gets_an_underscored_schema_name(self):
+        self.docker.schemas = {}
+        plan = self.plan(component="ITS-DEMO", jira_project="SPECITS")
+        self.assertEqual((plan.values["bmm_schema_id"], plan.values["bmm_schema_name"]),
+                         ("openehr_its_demo_0.1.0", "its_demo"))
+
+    def test_base_copies_its_own_schema_and_has_no_base_dependency(self):
+        repo = self.root / "specifications-BASE"
+        repo.mkdir()
+        self.docker.schemas = {"openehr_base_1.3.0": BUNDLED}
+        plan = self.plan(repo=repo, component_title="Base Model")
+        self.assertEqual((plan.values["bmm_schema_id"], plan.values["base_bmm_schema_id"]),
+                         ("openehr_base_1.3.0", ""))
+
+    def test_check_flags_a_bmm_seed_file_without_its_keys_and_a_derived_without_a_rule(self):
+        dst = self.copy_set()
+        path = dst / "assets" / "template-set.json"
+        tset = json.loads(path.read_text(encoding="utf-8"))
+        del next(f for f in tset["files"] if f["id"] == "bmm")["image"]
+        del tset["variables"]["bmm_rm_release"]["derived"]["match"]
+        path.write_text(json.dumps(tset), encoding="utf-8")
+        problems = scaffold.check_template_set(dst)
+        self.assertTrue(any("a bmm-seed file needs image" in p for p in problems), problems)
+        self.assertTrue(any("'bmm_rm_release': derived needs either map or match" in p for p in problems), problems)
+
+
+class DockerHelperTests(unittest.TestCase):
+    def test_a_missing_docker_binary_is_reported_not_raised(self):
+        with mock.patch.dict(os.environ, {"PATH": ""}):
+            self.assertEqual(scaffold.docker("--version"), (None, "docker is not installed"))
 
 
 if __name__ == "__main__":

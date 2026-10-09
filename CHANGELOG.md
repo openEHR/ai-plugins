@@ -4,6 +4,15 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ## Unreleased
 
+### Added
+
+- `scaffold` template set revision 3: a new repository also gets `computable/BMM/<id>.bmm.json` (file id `bmm`, strategy `bmm-seed`).
+  - The script lists the schemas the local `ghcr.io/openehr/bmm-publisher` image bundles (`docker run --pull never`, so nothing is downloaded) and copies the highest version for the component.
+  - When the image bundles none, it writes an empty schema `openehr_<component>_<first_release>`. The schema has one root package `org.openehr.<name>`, no classes, and BASE in `includes` for other components. bmm-publisher refuses a schema without a package.
+  - Without Docker or the image the file is reported as `blocked` and the other files are still written; `--var bmm_schema_id=<id>` creates the empty schema anyway.
+  - Existing repositories are not offered a schema; `--overwrite bmm` asks for one.
+  - Derived variables can take a regex group (`match` + `group`), which gives the new `bmm_schema_name` and `bmm_rm_release`.
+
 ## openehr-specs 0.5.0 (2026-10-08)
 
 ### Changed
