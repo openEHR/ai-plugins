@@ -1,6 +1,6 @@
 # openEHR Specifications
 
-Skills and subagents for authors working in `specifications-XX` and `specifications-ITS-REST` repositories — AsciiDoc structure, amendment records, governance, quality review, prose patterns, ITS-REST OpenAPI sources, and BMM-based class documentation generation.
+Skills and subagents for authors working in `specifications-XX` and `specifications-ITS-REST` repositories — AsciiDoc structure, amendment records, governance, quality review, prose patterns, ITS-REST OpenAPI sources, BMM schemas, and the class documentation generated from them.
 
 ## Installation
 
@@ -28,7 +28,7 @@ Add the marketplace from this repository (or a fork), then install `openehr-spec
 | `content-patterns` | Prose patterns for spec chapters and sections |
 | `its-rest` | ITS-REST OpenAPI YAML and operation descriptions |
 | `class-generation` | Generate class tables and UML diagrams from BMM via `bmm-publisher` |
-| `bmm-authoring` | Write or change a component's BMM schema (P_BMM JSON), and check it for the mistakes `bmm-publisher` accepts without a message (bundled `check_bmm.py`, needs `python3`) |
+| `bmm-authoring` | Write or change a component's BMM schema (P_BMM JSON) and check it before rendering (needs `python3`) |
 
 ### User-only action skills
 
