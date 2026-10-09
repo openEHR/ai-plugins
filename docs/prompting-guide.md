@@ -12,7 +12,7 @@ In the prompts, `<XX>` is a component id such as `RM`, `BASE` or `AM`, and `<spe
 | [Add or change a chapter, figure or link](#add-or-change-a-chapter-figure-or-link) | `authoring` |
 | [Draft or improve spec prose](#draft-or-improve-spec-prose) | `content-patterns` |
 | [Record a change in the amendment record](#record-a-change-in-the-amendment-record) | `amendment-record` |
-| [Change a class, attribute or invariant](#change-a-class-attribute-or-invariant) | `class-generation`, `/openehr-specs:regen-classes` |
+| [Change a class, attribute or invariant](#change-a-class-attribute-or-invariant) | `bmm-authoring`, `class-generation`, `/openehr-specs:regen-classes` |
 | [Review before you merge](#review-before-you-merge) | `review`, `spec-reviewer`, `xref-auditor`, `identifier-grounding` |
 | [Preview the HTML](#preview-the-html) | `/openehr-specs:publish` |
 | [Releases, status changes and the CR/PR process](#releases-status-changes-and-the-crpr-process) | `governance` |
@@ -80,10 +80,16 @@ To put two changes under one version, say so: "same version as the top entry".
 
 ## Change a class, attribute or invariant
 
-Class tables in `docs/UML/classes/` are generated from the BMM schema, so the change goes in the BMM and the tables are regenerated. Editing the BMM follows the repository's own `AGENTS.md`; the plugin's skills cover the generation.
+Class tables in `docs/UML/classes/` are generated from the BMM schema, so the change goes in the BMM and the tables are regenerated. The `bmm-authoring` skill covers the BMM edit and checks it with a bundled script (`python3`), because `bmm-publisher` renders many modelling mistakes without a message; `class-generation` covers the regeneration.
 
 ```text
-In the BMM for this repo, add an optional attribute <name> of type <Type> to class <CLASS>, with documentation, following this repo's AGENTS.md.
+In the BMM for this repo, add an optional attribute <name> of type <Type> to class <CLASS>, with documentation, and run the BMM checker.
+```
+
+For a new component, give the release, the BASE version it builds on, and the classes:
+
+```text
+Write the BMM schema for the new <XX> component, release <x.y.z>, building on BASE <x.y.z>, with these classes: <...>.
 ```
 
 ```text

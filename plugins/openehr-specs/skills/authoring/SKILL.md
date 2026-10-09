@@ -6,7 +6,8 @@ description: >
   to scaffold a new spec, add or edit a chapter, set up `master.adoc`, add a cross-reference or
   figure, or build a local HTML preview. Not for amendment records (amendment-record), prose
   style (content-patterns), releases or manifest release entries (governance), ITS-REST OpenAPI
-  (its-rest), class tables (class-generation), or archetype/AQL work (openehr-assistant plugin).
+  (its-rest), the class model or its tables (bmm-authoring, class-generation), or archetype/AQL
+  work (openehr-assistant plugin).
 ---
 
 # openEHR Specification Document Authoring
@@ -26,6 +27,7 @@ in `specifications-XX` repositories (RM, AM, BASE, LANG, PROC, SM, QUERY, CDS, C
 - **its-rest** — for OpenAPI YAML and Markdown in the ITS-REST repo
 - **governance** — release management, change requests, lifecycle governance
 - **class-generation** — regenerate the class-definition tables and UML diagrams in `docs/UML/` from BMM via `bmm-publisher`
+- **bmm-authoring** — add or change classes, attributes, functions and invariants in the component's BMM schema
 
 For attribute naming patterns, read `references/cross-references.md`. To verify that every
 `{openehr_*}` attribute and deep-link anchor resolves, dispatch the `xref-auditor` subagent.
@@ -248,7 +250,7 @@ that the log has no `ERROR` or `include file not found` lines. The build rewrite
 
 ### Conventions
 
-- **Chapter files**: Edit `masterNN-*.adoc` files directly. Never edit files under `docs/UML/` — those are generated from the component's BMM schema by `bmm-publisher` (see the **class-generation** skill); change the BMM and regenerate.
+- **Chapter files**: Edit `masterNN-*.adoc` files directly. Never edit files under `docs/UML/` — those are generated from the component's BMM schema by `bmm-publisher` (see the **class-generation** skill); change the BMM (see the **bmm-authoring** skill) and regenerate.
 - **Cross-references within spec**: Use `<<anchor_name>>` or `<<anchor_name, display text>>`.
 - **Cross-references to other specs**: Use the URL attributes from `reference_definitions.adoc`:
   ```asciidoc

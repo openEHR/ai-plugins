@@ -4,6 +4,15 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ## Unreleased
 
+### Added
+
+- `bmm-authoring` skill: write a component's BMM schema (the P_BMM JSON in `computable/BMM/`) from scratch, or change one. It covers the header and its conventions, `includes`, how packages set the class-table file names, every class, property, type and function kind, invariants and constants, documentation text, what the legacy class tables do not show, and the persistence-spec features `bmm-publisher` does not read (indexed containers, `ancestor_defs`, `type_ref` value sets), with the form to write instead. It ships a worked example (`assets/openehr_demo_0.1.0.bmm.json`) and a read-only checker, `scripts/check_bmm.py` (standard-library Python 3.8+), that reports what `bmm-publisher` accepts without a message: a misspelt or missing `_type`, a misspelt key such as `is_mandantory`, a key that differs from its `name`, a class in no package, an upper limit without `"upper_unbounded": false`, a container without an element type, wrong generic parameter counts, a generic argument that does not conform to its parameter's `conforms_to_type`, unresolved type names (with `-d` for the included schemas), and more. CI runs its unit tests (`scripts/test_check_bmm.py`).
+
+### Changed
+
+- `class-generation` and `authoring` send changes to the class model itself to `bmm-authoring`.
+- `docs/prompting-guide.md`: the class-change prompts name `bmm-authoring` and the checker, and a prompt for a new component's schema is added.
+
 ## openehr-specs 0.5.0 (2026-10-08)
 
 ### Changed

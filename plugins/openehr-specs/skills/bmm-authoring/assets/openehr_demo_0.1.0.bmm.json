@@ -1,0 +1,297 @@
+{
+    "bmm_version": "2.4",
+    "rm_publisher": "openehr",
+    "schema_name": "demo",
+    "rm_release": "0.1.0",
+    "schema_revision": "0.1.0.1",
+    "schema_lifecycle_state": "development",
+    "schema_description": "Worked example for the openehr-specs bmm-authoring skill: one of each P_BMM construct. Not an openEHR model.",
+    "schema_author": "openehr-specs plugin (example)",
+    "includes": {
+        "openehr_base_1.3.0": {
+            "id": "openehr_base_1.3.0"
+        }
+    },
+    "packages": {
+        "org.openehr.demo.inventory": {
+            "name": "org.openehr.demo.inventory",
+            "packages": {
+                "item": {
+                    "name": "item",
+                    "classes": [
+                        "DEMO_ITEM",
+                        "DEMO_GROUP",
+                        "DEMO_STATUS"
+                    ]
+                },
+                "box": {
+                    "name": "box",
+                    "classes": [
+                        "DEMO_BOX",
+                        "DEMO_BOX_REF"
+                    ]
+                }
+            }
+        }
+    },
+    "class_definitions": {
+        "DEMO_ITEM": {
+            "name": "DEMO_ITEM",
+            "documentation": "Abstract parent of every inventory item.",
+            "is_abstract": true,
+            "ancestors": [
+                "Any"
+            ],
+            "constants": {
+                "Max_tags": {
+                    "name": "Max_tags",
+                    "documentation": "Largest number of tags an item may carry.",
+                    "type": "Integer",
+                    "value": "32"
+                }
+            },
+            "properties": {
+                "uid": {
+                    "_type": "P_BMM_SINGLE_PROPERTY",
+                    "name": "uid",
+                    "documentation": "Globally unique identifier of this item.",
+                    "is_mandatory": true,
+                    "type": "HIER_OBJECT_ID"
+                },
+                "name": {
+                    "_type": "P_BMM_SINGLE_PROPERTY",
+                    "name": "name",
+                    "documentation": "Human-readable name of this item.",
+                    "is_mandatory": true,
+                    "type": "String"
+                },
+                "status": {
+                    "_type": "P_BMM_SINGLE_PROPERTY",
+                    "name": "status",
+                    "documentation": "Lifecycle status of this item, one of the `DEMO_STATUS` values.",
+                    "is_mandatory": true,
+                    "type": "DEMO_STATUS"
+                },
+                "tags": {
+                    "_type": "P_BMM_CONTAINER_PROPERTY",
+                    "name": "tags",
+                    "documentation": "Free-text tags, at most `Max_tags`.",
+                    "type_def": {
+                        "container_type": "List",
+                        "type": "String"
+                    },
+                    "cardinality": {
+                        "lower": 0,
+                        "upper_unbounded": true
+                    }
+                },
+                "created": {
+                    "_type": "P_BMM_SINGLE_PROPERTY",
+                    "name": "created",
+                    "documentation": "Date and time this item was created, if known.",
+                    "type": "Iso8601_date_time"
+                }
+            },
+            "functions": {
+                "is_tagged": {
+                    "name": "is_tagged",
+                    "documentation": "True if `_tags_` contains `_a_tag_`.",
+                    "parameters": {
+                        "a_tag": {
+                            "_type": "P_BMM_SINGLE_FUNCTION_PARAMETER",
+                            "name": "a_tag",
+                            "documentation": "Tag to look for.",
+                            "type": "String"
+                        }
+                    },
+                    "pre_conditions": {
+                        "Pre_tag_valid": "not a_tag.is_empty()"
+                    },
+                    "result": {
+                        "_type": "P_BMM_SIMPLE_TYPE",
+                        "type": "Boolean"
+                    }
+                }
+            },
+            "invariants": {
+                "Name_valid": "not name.is_empty()",
+                "Tags_valid": "tags /= Void implies tags.count <= Max_tags"
+            }
+        },
+        "DEMO_GROUP": {
+            "name": "DEMO_GROUP",
+            "documentation": "Item that groups other items.",
+            "ancestors": [
+                "DEMO_ITEM"
+            ],
+            "properties": {
+                "items": {
+                    "_type": "P_BMM_CONTAINER_PROPERTY",
+                    "name": "items",
+                    "documentation": "Grouped items; never empty.",
+                    "is_mandatory": true,
+                    "type_def": {
+                        "container_type": "List",
+                        "type": "DEMO_ITEM"
+                    },
+                    "cardinality": {
+                        "lower": 1,
+                        "upper_unbounded": true
+                    }
+                },
+                "ranks": {
+                    "_type": "P_BMM_CONTAINER_PROPERTY",
+                    "name": "ranks",
+                    "documentation": "Optional ranking, with 2 to 5 entries.",
+                    "type_def": {
+                        "container_type": "List",
+                        "type": "Integer"
+                    },
+                    "cardinality": {
+                        "lower": 2,
+                        "upper": 5,
+                        "upper_unbounded": false
+                    }
+                },
+                "index": {
+                    "_type": "P_BMM_GENERIC_PROPERTY",
+                    "name": "index",
+                    "documentation": "Grouped items keyed by name.",
+                    "type_def": {
+                        "root_type": "Hash",
+                        "generic_parameters": [
+                            "String",
+                            "DEMO_ITEM"
+                        ]
+                    }
+                }
+            },
+            "functions": {
+                "item_count": {
+                    "name": "item_count",
+                    "documentation": "Number of grouped items.",
+                    "post_conditions": {
+                        "Post_result": "Result = items.count"
+                    },
+                    "result": {
+                        "_type": "P_BMM_SIMPLE_TYPE",
+                        "type": "Integer"
+                    }
+                },
+                "first_tagged": {
+                    "name": "first_tagged",
+                    "documentation": "First grouped item carrying `_a_tag_`, or `Void` if there is none.",
+                    "is_nullable": true,
+                    "parameters": {
+                        "a_tag": {
+                            "_type": "P_BMM_SINGLE_FUNCTION_PARAMETER",
+                            "name": "a_tag",
+                            "documentation": "Tag to look for.",
+                            "type": "String"
+                        }
+                    },
+                    "result": {
+                        "_type": "P_BMM_SIMPLE_TYPE",
+                        "type": "DEMO_ITEM"
+                    }
+                }
+            },
+            "invariants": {
+                "Items_valid": "not items.is_empty()"
+            }
+        },
+        "DEMO_STATUS": {
+            "_type": "P_BMM_ENUMERATION_STRING",
+            "name": "DEMO_STATUS",
+            "documentation": "Lifecycle status of an item.",
+            "ancestors": [
+                "String"
+            ],
+            "item_names": [
+                "draft",
+                "active",
+                "retired"
+            ],
+            "item_documentations": [
+                "Being prepared; not yet in use.",
+                "In use.",
+                "No longer in use."
+            ]
+        },
+        "DEMO_BOX": {
+            "name": "DEMO_BOX",
+            "documentation": "Generic container holding one item of type `T` and its history.",
+            "ancestors": [
+                "Any"
+            ],
+            "generic_parameter_defs": {
+                "T": {
+                    "name": "T",
+                    "conforms_to_type": "DEMO_ITEM"
+                }
+            },
+            "properties": {
+                "content": {
+                    "_type": "P_BMM_SINGLE_PROPERTY_OPEN",
+                    "name": "content",
+                    "documentation": "Item currently in the box.",
+                    "is_mandatory": true,
+                    "type": "T"
+                },
+                "history": {
+                    "_type": "P_BMM_CONTAINER_PROPERTY",
+                    "name": "history",
+                    "documentation": "Items previously in the box, oldest first.",
+                    "type_def": {
+                        "container_type": "List",
+                        "type": "T"
+                    },
+                    "cardinality": {
+                        "lower": 0,
+                        "upper_unbounded": true
+                    }
+                }
+            }
+        },
+        "DEMO_BOX_REF": {
+            "name": "DEMO_BOX_REF",
+            "documentation": "Reference to a box of groups, with the boxes it replaced.",
+            "ancestors": [
+                "Any"
+            ],
+            "properties": {
+                "target": {
+                    "_type": "P_BMM_GENERIC_PROPERTY",
+                    "name": "target",
+                    "documentation": "Box referred to.",
+                    "is_mandatory": true,
+                    "type_def": {
+                        "root_type": "DEMO_BOX",
+                        "generic_parameters": [
+                            "DEMO_GROUP"
+                        ]
+                    }
+                },
+                "replaced": {
+                    "_type": "P_BMM_CONTAINER_PROPERTY",
+                    "name": "replaced",
+                    "documentation": "Boxes this reference replaced, oldest first.",
+                    "type_def": {
+                        "container_type": "List",
+                        "type_def": {
+                            "_type": "P_BMM_GENERIC_TYPE",
+                            "root_type": "DEMO_BOX",
+                            "generic_parameters": [
+                                "DEMO_GROUP"
+                            ]
+                        }
+                    },
+                    "cardinality": {
+                        "lower": 0,
+                        "upper_unbounded": true
+                    }
+                }
+            }
+        }
+    }
+}
