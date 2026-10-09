@@ -6,12 +6,24 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ### Added
 
+- `bmm-authoring` skill: write a component's BMM schema (the P_BMM JSON in `computable/BMM/`) from scratch, or change one.
+  - The reference covers every class, property, type and function kind, and the spec features `bmm-publisher` ignores.
+  - `assets/openehr_demo_0.1.0.bmm.json` is a worked example with one of each common construct.
+  - `scripts/check_bmm.py` (read-only, Python 3.8+) reports mistakes that `bmm-publisher` accepts without a warning, such as a misspelt `_type` or key.
+  - Names from an included schema not loaded with `-d` go unchecked, and a run with no errors then exits 3, not 0.
+  - CI runs its unit tests in the root `scripts/test_check_bmm.py`.
 - `scaffold` template set revision 3: a new repository also gets `computable/BMM/<id>.bmm.json` (file id `bmm`, strategy `bmm-seed`).
   - The script lists the schemas the local `ghcr.io/openehr/bmm-publisher` image bundles (`docker run --pull never`, so nothing is downloaded) and copies the highest version for the component.
   - When the image bundles none, it writes an empty schema `openehr_<component>_<first_release>`. The schema has one root package `org.openehr.<name>`, no classes, and BASE in `includes` for other components. bmm-publisher refuses a schema without a package.
   - Without Docker or the image the file is reported as `blocked` and the other files are still written; `--var bmm_schema_id=<id>` creates the empty schema anyway.
   - Existing repositories are not offered a schema; `--overwrite bmm` asks for one.
   - Derived variables can take a regex group (`match` + `group`), which gives the new `bmm_schema_name` and `bmm_rm_release`.
+  - The `AGENTS.md` task table and build region send BMM schema edits to `bmm-authoring`.
+
+### Changed
+
+- `class-generation`, `authoring` and `scaffold` send BMM schema edits to `bmm-authoring`.
+- `docs/prompting-guide.md` sends the class-change prompts to `bmm-authoring` and adds a section for a new component's schema.
 
 ## openehr-specs 0.5.0 (2026-10-08)
 

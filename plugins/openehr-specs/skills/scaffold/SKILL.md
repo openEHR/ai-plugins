@@ -98,7 +98,8 @@ Existing repositories are not offered a schema.
    `AGENTS.md`), offer to fill it from the repo's content and delete the comment once it is filled.
    When `manifest.json` was created, point out that its `specifications` list starts empty (skill
    `openehr-specs:authoring`). When an empty BMM schema was created, point out that classes go into it
-   and the class tables are generated from it (skill `openehr-specs:class-generation`); until then
+   (skill `openehr-specs:bmm-authoring`, which also checks it) and the class tables are generated
+   from it (skill `openehr-specs:class-generation`); until then
    bmm-publisher warns about the empty package. Do not commit; if the user asks for a commit message, follow the
    Conventions section of the repo's `AGENTS.md`.
 

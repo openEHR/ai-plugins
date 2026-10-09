@@ -17,8 +17,8 @@
     {
       "revision": 3,
       "released": "2026-10-09",
-      "summary": "A new repository gets computable/BMM/<id>.bmm.json: a copy of the schema the bmm-publisher image bundles for the component, or an empty schema (one root package, BASE included) when it bundles none. Existing repositories are not offered one.",
-      "digest": "c78b965d50608d5937bd6dfcc0b0953cba4c91d51ad347bd46b647b7cdc7281f"
+      "summary": "A new repository gets computable/BMM/<id>.bmm.json: a copy of the schema the bmm-publisher image bundles for the component, or an empty schema (one root package, BASE included) when it bundles none. Existing repositories are not offered one. AGENTS.md sends BMM edits to the bmm-authoring skill.",
+      "digest": "26ad62920185cc51eaab770d36105704846af19301e544bf94244220d9e3c9f1"
     }
   ],
   "variables": {

@@ -3,11 +3,11 @@ name: class-generation
 description: >
   Generate openEHR class documentation — class-definition tables, effective views, and UML
   class/package diagrams — from BMM schemas with `bmm-publisher`, for `specifications-XX`
-  repos and their `docs/UML/` content. This skill should be used when the user asks to regenerate or
+  repos. This skill should be used when the user asks to regenerate or
   refresh class tables or diagrams, run bmm-publisher, generate class docs from BMM/P_BMM, or replace
-  hand-written or MagicDraw-derived class docs. Not for spec prose (use content-patterns), document
-  scaffolding or hand-drawn diagrams (use authoring), or archetype/template work (openehr-assistant
-  plugin).
+  hand-written or MagicDraw-derived class docs. Not for editing the BMM itself (use bmm-authoring),
+  spec prose (use content-patterns), document scaffolding or hand-drawn diagrams (use authoring), or
+  archetype/template work (openehr-assistant plugin).
 ---
 
 # openEHR Class Documentation Generation (BMM)
@@ -23,6 +23,7 @@ component's **BMM** (Basic Meta-Model) schema, serialised as
 
 ## Related Skills
 
+- **bmm-authoring** — write or change the BMM schema itself, and check it before generating
 - **authoring** — document scaffolding and repo layout; explains where generated class docs are included
 - **review** — the ADOC-03 check enforces that class tables are generated, not hand-written
 - **content-patterns** — prose around classes (semantics, rationale) that the generated tables do *not* cover
@@ -99,7 +100,8 @@ image::ROOT:uml/classes/COMPOSITION.svg[]
    `computable/BMM/openehr_<component>_<version>.bmm.json`; each dependency comes from its sibling clone
    (RM, AM, LANG and TERM classes refer to BASE types:
    `../specifications-BASE/computable/BMM/openehr_base_<version>.bmm.json`). When a file is missing, say
-   which and stop rather than falling back to a bundled id.
+   which and stop rather than falling back to a bundled id. If the schema was edited by hand, run the
+   `bmm-authoring` checker on it first.
 2. **Choose the command by layout** (see above): `legacy-adoc` for the legacy layout, `asciidoc` for
    the current one.
 3. **Generate** into a temporary directory, mounting the files read-only and mapping ownership to the
@@ -128,7 +130,9 @@ the user can run `/openehr-specs:publish <component>`.
 
 ## Guardrails
 
-- **Generated output is never hand-edited.** Fix the BMM schema and regenerate.
+- **Generated output is never hand-edited.** Fix the BMM schema (see `bmm-authoring`) and regenerate.
+  A clean run does not prove the schema is right: `bmm-publisher` renders many modelling mistakes as
+  type `Any` or drops them without a message, so run the `bmm-authoring` checker first.
 - **Use the repo's BMM, not the bundled copy.** Mount the files under `/in/` and pass their paths. Do not
   mount a directory over `/app/resources`: it hides the bundled schemas, so a dependency named by id is
   then missing and the run exits 1.

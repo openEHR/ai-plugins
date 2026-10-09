@@ -12,7 +12,8 @@ In the prompts, `<XX>` is a component id such as `RM`, `BASE` or `AM`, and `<spe
 | [Add or change a chapter, figure or link](#add-or-change-a-chapter-figure-or-link) | `authoring` |
 | [Draft or improve spec prose](#draft-or-improve-spec-prose) | `content-patterns` |
 | [Record a change in the amendment record](#record-a-change-in-the-amendment-record) | `amendment-record` |
-| [Change a class, attribute or invariant](#change-a-class-attribute-or-invariant) | `class-generation`, `/openehr-specs:regen-classes` |
+| [Change a class, attribute or invariant](#change-a-class-attribute-or-invariant) | `bmm-authoring`, `class-generation`, `/openehr-specs:regen-classes` |
+| [Write the BMM schema for a new component](#write-the-bmm-schema-for-a-new-component) | `bmm-authoring` |
 | [Review before you merge](#review-before-you-merge) | `review`, `spec-reviewer`, `xref-auditor`, `identifier-grounding` |
 | [Preview the HTML](#preview-the-html) | `/openehr-specs:publish` |
 | [Releases, status changes and the CR/PR process](#releases-status-changes-and-the-crpr-process) | `governance` |
@@ -80,11 +81,15 @@ To put two changes under one version, say so: "same version as the top entry".
 
 ## Change a class, attribute or invariant
 
-Class tables in `docs/UML/classes/` are generated from the BMM schema, so the change goes in the BMM and the tables are regenerated. Editing the BMM follows the repository's own `AGENTS.md`; the plugin's skills cover the generation.
+Class tables in `docs/UML/classes/` are generated from the BMM schema, so the change goes in the BMM and the tables are regenerated. `bmm-authoring` edits the BMM and runs a bundled checker on it, which needs `python3`. The checker catches mistakes that `bmm-publisher` accepts without a warning, such as a misspelt key. `class-generation` regenerates the tables.
 
 ```text
-In the BMM for this repo, add an optional attribute <name> of type <Type> to class <CLASS>, with documentation, following this repo's AGENTS.md.
+In the BMM for this repo, add an optional attribute <name> of type <Type> to class <CLASS>, with documentation, and run the BMM checker.
 ```
+
+Claude edits the JSON in place and raises the build number in `schema_revision`. It runs the checker before and after the change, so findings that were already in the schema are not mixed up with yours. If a sibling clone such as `specifications-BASE` is missing, it tells you the check is incomplete.
+
+Then regenerate the tables:
 
 ```text
 Regenerate the class tables for <XX> from the BMM in this checkout, not the copy bundled in the publisher image. Compare with docs/UML/classes and copy over only the tables that changed.
@@ -99,6 +104,16 @@ To see what the image's bundled schemas produce, type:
 ```
 
 It writes to `out/` in the working directory and places nothing in a repository, so run it from a scratch directory. Its output reflects the bundled schemas; for tables to commit, use the previous prompt.
+
+## Write the BMM schema for a new component
+
+Give the release, the BASE version it builds on, and the classes:
+
+```text
+Write the BMM schema for the new <XX> component, release <x.y.z>, building on BASE <base-version>, with these classes: <...>.
+```
+
+If `/openehr-specs:scaffold` already created an empty schema, Claude fills that one; otherwise it starts from the skill's worked example. Either way, it asks you for the schema author. It checks the new schema as it would a change, so the sibling `specifications-BASE` clone is needed for a complete check.
 
 ## Review before you merge
 

@@ -1,6 +1,6 @@
 # Testing and Validation
 
-This is a pure-content repository: JSON manifests plus markdown skills (including user-only action skills) and subagents. There is no build step or package manager, and the only automated tests cover the `scaffold` skill's script. Testing means installing the marketplace locally and validating structure and skill quality.
+This is a pure-content repository: JSON manifests plus markdown skills (including user-only action skills) and subagents. There is no build step or package manager, and the only automated tests are for the scripts bundled with the `scaffold` and `bmm-authoring` skills. Testing means installing the marketplace locally and validating structure and skill quality.
 
 ## Local Testing
 
@@ -22,7 +22,7 @@ For Cursor, copy `plugins/openehr-specs` to `~/.cursor/plugins/local/openehr-spe
 ## Validation
 
 - **Manifest and frontmatter validation**: `python3 scripts/validate.py` (CI runs it on every PR) checks the Claude and Cursor JSON manifests, name and version sync, declared component paths, and the marketplace `owner.name`. For every skill and subagent it checks that `name` and `description` exist and that `name` matches the directory or file name. It also runs the `scaffold` template-set check (`scaffold.py check`: templates exist and render, revisions are contiguous, every revision has a migration file, and the template digest matches the latest revision). It does not check description length, `disable-model-invocation`, the README inventories, or the release tag.
-- **Script tests**: `python3 -m unittest discover -s scripts -p 'test_*.py'` (CI runs it on every PR) covers the `scaffold` script: the template engine, each file strategy, variable inference, and the upgrade path across revisions, all in temporary directories. Run it after changing the script or the template set.
+- **Script tests**: `python3 -m unittest discover -s scripts -p 'test_*.py'` (CI runs it on every PR) tests both bundled scripts in temporary directories. For `scaffold` it covers the template engine, each file strategy, variable inference, and upgrades across revisions. For the `bmm-authoring` checker it covers each finding and exit code, a clean run on the worked example, and a wrongly typed value at any node of the worked example, which must give a finding and not a traceback. Run it after changing either script, the template set, or the worked example.
 - **Built-in manifest check**: `claude plugin validate plugins/openehr-specs` validates the plugin manifest; add `--strict` to treat warnings as errors.
 - **Structural validation**: after creating or modifying plugin components, run the `plugin-dev:plugin-validator` agent. It checks `plugin.json`, the marketplace entry, directory layout, and frontmatter. The agent comes from the `plugin-dev` plugin, which this repo enables in `.claude/settings.json`.
 - **Skill quality review**: run the `plugin-dev:skill-reviewer` agent (also from `plugin-dev`). It checks description triggering quality, progressive disclosure, and content structure.

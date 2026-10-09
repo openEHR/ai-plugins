@@ -1,24 +1,24 @@
 {
-  "bmm_version": "2.4",
-  "rm_publisher": "openehr",
-  "schema_name": "{{bmm_schema_name}}",
-  "rm_release": "{{bmm_rm_release}}",
-  "schema_revision": "{{bmm_rm_release}}.1",
-  "schema_lifecycle_state": "development",
-  "schema_description": "{{component_description}}",
-  "schema_author": "openEHR Foundation",
-  {{#if base_bmm_schema_id}}
-  "includes": {
-    "{{base_bmm_schema_id}}": {
-      "id": "{{base_bmm_schema_id}}"
-    }
-  },
-  {{/if}}
-  "packages": {
-    "org.openehr.{{bmm_schema_name}}": {
-      "name": "org.openehr.{{bmm_schema_name}}",
-      "classes": []
-    }
-  },
-  "class_definitions": {}
+    "bmm_version": "2.4",
+    "rm_publisher": "openehr",
+    "schema_name": "{{bmm_schema_name}}",
+    "rm_release": "{{bmm_rm_release}}",
+    "schema_revision": "{{bmm_rm_release}}.1",
+    "schema_lifecycle_state": "development",
+    "schema_description": "{{component_description}}",
+    "schema_author": "openEHR Foundation",
+    {{#if base_bmm_schema_id}}
+    "includes": {
+        "{{base_bmm_schema_id}}": {
+            "id": "{{base_bmm_schema_id}}"
+        }
+    },
+    {{/if}}
+    "packages": {
+        "org.openehr.{{bmm_schema_name}}": {
+            "name": "org.openehr.{{bmm_schema_name}}",
+            "classes": []
+        }
+    },
+    "class_definitions": {}
 }

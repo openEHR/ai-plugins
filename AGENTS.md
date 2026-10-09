@@ -15,6 +15,7 @@ ai-plugins/
 ├── docs/                              # Contributor and user documentation
 ├── scripts/validate.py                # Manifest, frontmatter and template-set validation (CI)
 ├── scripts/test_scaffold.py           # Unit tests for the scaffold skill's script (CI)
+├── scripts/test_check_bmm.py          # Unit tests for the bmm-authoring skill's checker (CI)
 ├── CHANGELOG.md                       # Release notes per plugin
 └── plugins/<plugin-name>/             # One directory per plugin
     ├── .claude-plugin/plugin.json     # Claude Code plugin manifest
@@ -44,7 +45,7 @@ Full details: [docs/skill-authoring.md](docs/skill-authoring.md)
 
 ## Development
 
-Pure-content repository (JSON manifests + markdown skills) — no build step or package manager. The one script, the `scaffold` skill's `scripts/scaffold.py`, has unit tests: `python3 -m unittest discover -s scripts -p 'test_*.py'` (runs in CI).
+Pure-content repository (JSON manifests + markdown skills) — no build step or package manager. Two skills bundle a script, each with unit tests: `scaffold` (`scripts/scaffold.py`) and `bmm-authoring` (`scripts/check_bmm.py`). Run them with `python3 -m unittest discover -s scripts -p 'test_*.py'` (runs in CI).
 
 - **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent frontmatter fields, component paths, and the `scaffold` template set's integrity — runs in CI; it does not check description length, inventories, or the release tag)
 - **Local testing**: [docs/testing.md](docs/testing.md); **versioning/releases**: [docs/versioning.md](docs/versioning.md)
@@ -52,12 +53,13 @@ Pure-content repository (JSON manifests + markdown skills) — no build step or 
 
 ## Component Dependencies
 
-The skills are pure content; the subagents and the `publish`, `regen-classes` and `scaffold` action skills rely on external tools and degrade
-gracefully when one is absent (each says so in its prompt):
+The skills are pure content, except that `bmm-authoring` runs a bundled checker; the subagents and the `publish`, `regen-classes` and `scaffold` action skills rely on external tools. All of them degrade
+gracefully when a tool is absent (each says so in its prompt):
 
 - **`spec-reviewer`, `xref-auditor`** — need a `specifications-XX` checkout and (for attribute resolution) the sibling `specifications-AA_GLOBAL`.
 - **`xref-auditor`, `identifier-grounding`** — use **WebFetch** to read spec Markdown twins (`.html` → `.md`); `identifier-grounding` additionally prefers the **`openehr-assistant` MCP** (`type_specification_get`) when connected, falling back to the twin.
 - **`regen-classes`** — needs **Docker** (`ghcr.io/openehr/bmm-publisher`).
+- **`bmm-authoring`** — needs **`python3`** (standard library only) to run its read-only `scripts/check_bmm.py`; without it, it says so, reports the schema as unchecked and reviews the change by hand against its reference.
 - **`scaffold`** — needs **`python3`** (standard library only) to run its bundled `scripts/scaffold.py`, and says so and stops when it is missing. It writes into the repository it is run in, so it plans first and never overwrites a hand-edited file without being told to. For a new repository's BMM schema it asks **Docker** for the schemas the local `ghcr.io/openehr/bmm-publisher` image bundles, and never pulls the image. Without Docker or the image that one file is reported as blocked, and the rest are still written.
 - **`publish`** — needs **Docker** and sibling `specifications-AA_GLOBAL` and component checkouts. It runs the published `ghcr.io/openehr/asciidoctor` image, which bundles the toolchain and `spec_publish.sh`; the boilerplate and references are still read from the AA_GLOBAL checkout. It checks that each HTML output was rebuilt and that the log has no missing includes, because the script reports success even when it built nothing or dropped the class tables.
 

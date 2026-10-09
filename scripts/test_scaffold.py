@@ -172,6 +172,7 @@ class InitTests(Base):
         agents = self.text("AGENTS.md")
         self.assertIn("computable/BMM/openehr_demo_1.0.0.bmm.json", agents)
         self.assertIn("openehr-specs:class-generation", agents)
+        self.assertIn("openehr-specs:bmm-authoring", agents)
         self.assertIn("## Gotchas", agents)
         self.assertIn("and BMM sources", self.text(".claude/CLAUDE.md"))
 
@@ -1149,6 +1150,7 @@ class BmmTests(Base):
         self.assertFalse((self.repo / "computable").exists())
         self.assertIn("AGENTS.md", result["written"])
         self.assertNotIn("class-generation", self.text("AGENTS.md"))
+        self.assertNotIn("bmm-authoring", self.text("AGENTS.md"))
 
     def test_a_given_schema_id_creates_an_empty_schema_without_docker(self):
         act = self.bmm_act(self.plan(bmm_schema_id="openehr_demo_2.0.0"))
