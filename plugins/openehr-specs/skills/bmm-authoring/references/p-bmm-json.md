@@ -45,10 +45,11 @@ constructs. It passes `scripts/check_bmm.py` and renders with `bmm-publisher`.
   carries ITS-BMM's notify workflow (its `.github/sender-workflow-example.yml`) sends each change
   on a push to `master`; without it, the update is made in ITS-BMM.
 - Every map of named things (`packages`, `class_definitions`, `properties`, `functions`,
-  `parameters`, `constants`, `generic_parameter_defs`) is keyed by the item's own `name`, as the
-  specification requires. Keep the two equal: the parser keeps the key for function `parameters`
-  (the parameter documentation in the table prints it) and for a type's `generic_parameter_defs`, and
-  uses `name` everywhere else.
+  `parameters`, `constants`, a class's `generic_parameter_defs`) is keyed by the item's own `name`, as
+  the specification requires. Keep the two equal: the parser keeps the key for function `parameters`
+  (the parameter documentation in the table prints it) and uses `name` everywhere else. A type's
+  `generic_parameter_defs` holds type objects, which have no `name`: key them by the root class's
+  parameter names (see [Types](#types)).
 
 ## Header
 
@@ -57,7 +58,7 @@ lacks a field marked *yes*.
 
 | Field | Required | Value |
 |-------|----------|-------|
-| `bmm_version` | spec | the P_BMM version, `"2.4"`. bmm-publisher assumes `2.4` when it is missing and writes back what it read |
+| `bmm_version` | no (the specification requires it) | the P_BMM version, `"2.4"`. bmm-publisher assumes `2.4` when it is missing and writes back what it read |
 | `rm_publisher` | yes | `"openehr"` |
 | `schema_name` | yes | lower-case component name: `base`, `rm`, `am`, `lang`, `term` |
 | `rm_release` | yes | 3-part release, `"1.2.0"`; part of the schema id and the file name |
@@ -199,7 +200,7 @@ A type is a class name (`"type": "String"`) or a type object. The rules for type
 | `_type` | Keys |
 |---------|------|
 | `P_BMM_SIMPLE_TYPE` | `type` |
-| `P_BMM_CONTAINER_TYPE` | `container_type`, then either `type` (a name) or `type_def` (a nested container or generic type) |
+| `P_BMM_CONTAINER_TYPE` | `container_type`, then either `type` (a name) or `type_def` (a nested generic type; the parser also accepts a nested container type, which the P_BMM model does not) |
 | `P_BMM_GENERIC_TYPE` | `root_type`, then either `generic_parameters` or `generic_parameter_defs`, with one entry per parameter of the root class |
 
 Nesting, `replaced: List<DEMO_BOX<DEMO_GROUP>>`:
@@ -223,9 +224,10 @@ bmm-publisher renders some valid nestings wrongly, so keep to these forms:
   (`FUNCTION<TUPLE1<T>, Boolean>` in `Container.for_all`). A simple or container type object there
   stops bmm-publisher with a type error.
 - Give `generic_parameters` or `generic_parameter_defs`, not both: with both, the defs are ignored.
-- `generic_parameter_defs` entries are printed in order, keyed by the root class's parameter names
-  in their declared order. A `P_BMM_CONTAINER_TYPE` there prints nothing, although the
-  specification allows it; write the container as a generic type with `root_type: "List"`.
+- bmm-publisher prints `generic_parameter_defs` entries in the order written and ignores their keys,
+  so write them in the root class's declared order, each keyed by its parameter name. A
+  `P_BMM_CONTAINER_TYPE` there prints nothing, although the specification allows it; write the
+  container as a generic type with `root_type: "List"`.
 
 ## Functions
 
@@ -251,8 +253,8 @@ bmm-publisher renders some valid nestings wrongly, so keep to these forms:
 - Function keys: `name`, `documentation`, `parameters`, `result`, `pre_conditions`,
   `post_conditions`, `aliases`, `is_abstract`, `is_nullable`.
 - `result` is a type object with `_type`. The specification reads a function with no `result` as a
-  procedure, but the table then prints an empty result type, so the published schemas write
-  `{"_type": "P_BMM_SIMPLE_TYPE", "type": "void"}`.
+  procedure, but the table then prints an empty result type, so the published schemas almost always
+  write `{"_type": "P_BMM_SIMPLE_TYPE", "type": "void"}`.
 - `is_nullable: true` on a function means it may return `Void` (the table shows `0..1`); on a
   parameter it makes the parameter optional. Without it, every parameter shows as mandatory (`[1]`).
 - Parameter kinds mirror the property kinds: `P_BMM_SINGLE_FUNCTION_PARAMETER` (`type`),
@@ -273,11 +275,12 @@ bmm-publisher renders some valid nestings wrongly, so keep to these forms:
 
 - `invariants`, `pre_conditions` and `post_conditions` map a tag to an assertion string, which
   P_BMM treats as opaque text (usually openEHR BEL). The published schemas mostly tag invariants
-  `Xxx_valid` (some `Xxx_validity`), and conditions `Pre`/`Post`, or `Pre_xxx`/`Post_xxx` when a
-  function has several.
+  `Xxx_valid` (some `Xxx_validity`), and conditions `Pre`/`Post` or `Pre_xxx`/`Post_xxx`; a function
+  with several conditions gives each its own suffix.
 - A constant needs `type`, and bmm-publisher fails without one. `value` is the literal in serialised
-  form: `"32"`, `"\"..\""` for a string, `"'*'"` for a character, or the name of another constant;
-  BASE also writes numbers as JSON numbers (`60`, `30.42`).
+  form: `"32"`, `"\"..\""` for a string, `"'*'"` for a character, or the name of another constant.
+  P_BMM types `value` as a String; BASE also writes numbers as JSON numbers (`60`, `30.42`), which
+  bmm-publisher accepts.
 
 ## Documentation text
 

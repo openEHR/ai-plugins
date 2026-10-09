@@ -16,8 +16,9 @@ parameter's constraint. WARNING: a convention is broken, or the file holds somet
 does not read. INFO: what could not be checked.
 Exit status: 0 when the check is complete and found no ERROR (with --strict, no WARNING either);
 1 when it found an ERROR (with --strict, or a WARNING); 3 when it found none but could not check
-every name, because an included schema was not loaded with -d; 2 when a file cannot be read, is not
-UTF-8 JSON, or (for -d) is not a BMM schema.
+every name, because an included schema was not loaded with -d (with errors as well, the status is 1,
+and the summary and an "incomplete" notice still say how many names went unchecked); 2 when a file
+cannot be read, is not UTF-8 JSON, is nested too deeply, or (for -d) is not a BMM schema.
 """
 import argparse
 import difflib
@@ -113,6 +114,7 @@ class Checker:
         self.classes = {}  # class name -> summary (see summarise), for this schema
         self.class_paths = {}  # class name -> JSON path of its definition
         self.unchecked = set()  # type names an included but unloaded schema might define
+        self.suggestions = {}  # unchecked name -> a close name of a loaded class
         self.missing_includes = set()
         self.dependencies = {}  # schema id -> {class name: summary}
         own_id = schema_id(self.data) if isinstance(self.data, dict) else None
@@ -162,8 +164,10 @@ class Checker:
                 self.error(path, "class is not listed in any package, so no class table is generated for it")
         self.check_ancestor_cycles(d)
         if self.unchecked:
+            names = ["%s (or %s?)" % (n, self.suggestions[n]) if n in self.suggestions else n
+                     for n in sorted(self.unchecked)]
             self.info("/includes", "not checked, as no loaded schema defines them; pass each included "
-                                   "schema with -d: " + ", ".join(sorted(self.unchecked)))
+                                   "schema with -d: " + ", ".join(names))
         return self
 
     def class_blocks(self, d):
@@ -309,8 +313,9 @@ class Checker:
             self.check_package(sub, sub_key, path + "/packages/" + sub_key, listed, depth + 1)
 
     def check_class(self, cls, path):
-        kind = self.kind_of(cls, path, CLASS_TYPES, "P_BMM_CLASS", "a plain class")
-        self.check_keys(cls, kind, path)
+        kind, recognised = self.kind_of(cls, path, CLASS_TYPES, "P_BMM_CLASS", "a plain class")
+        # with an unknown _type bmm-publisher reads a plain class, so that is what decides which keys it drops
+        self.check_keys(cls, kind if recognised else "P_BMM_CLASS", path)
         self.check_documentation(cls, path, required=True)
         scope = {}  # generic parameter name -> its conforms_to_type, or None
         params = cls.get("generic_parameter_defs")
@@ -378,12 +383,12 @@ class Checker:
             elif isinstance(key, str):
                 roots.append(key.split("<")[0].strip())
         lost = [r for r in roots if r not in ancestors]
-        if not ancestors or lost:
-            self.error(path + "/ancestor_defs", "bmm-publisher reads only \"ancestors\", so %s lost; list "
-                                                "the root class name there (for an open binding such as "
-                                                "A<T>, also redeclare T in generic_parameter_defs; state a "
-                                                "closed binding in documentation)"
-                       % ("the parent %s is" % ", ".join(lost) if lost else "every parent is"))
+        if lost:
+            self.error(path + "/ancestor_defs", "bmm-publisher reads only \"ancestors\", so the parent %s "
+                                                "lost; list the root class name there (for an open binding "
+                                                "such as A<T>, also redeclare T in generic_parameter_defs; "
+                                                "state a closed binding in documentation)"
+                       % ("%s is" % lost[0] if len(lost) == 1 else "%s are" % ", ".join(lost)))
 
     def check_enumeration(self, cls, kind, ancestors, path):
         names = cls.get("item_names")
@@ -448,7 +453,7 @@ class Checker:
             self.check_documentation(prop, path, required=True)
             return
         else:
-            kind = self.kind_of(prop, path, PROPERTY_TYPES, "P_BMM_SINGLE_PROPERTY", "P_BMM_SINGLE_PROPERTY")
+            kind, _ = self.kind_of(prop, path, PROPERTY_TYPES, "P_BMM_SINGLE_PROPERTY", "P_BMM_SINGLE_PROPERTY")
         self.check_name(prop, path)
         self.check_keys(prop, kind, path)
         self.check_documentation(prop, path, required=True)
@@ -515,7 +520,7 @@ class Checker:
             self.warning(path, "read as P_BMM_SIMPLE_TYPE; published schemas write P_BMM_SIMPLE_TYPE")
             kind = SIMPLE
         else:
-            kind = self.kind_of(t, path, TYPE_TYPES, SIMPLE, SIMPLE)
+            kind, _ = self.kind_of(t, path, TYPE_TYPES, SIMPLE, SIMPLE)
         self.check_type_body(t, kind, path, scope)
         return kind
 
@@ -679,8 +684,8 @@ class Checker:
             else:
                 kind = "P_BMM_SINGLE_FUNCTION_PARAMETER"
         else:
-            kind = self.kind_of(param, path, PARAMETER_TYPES, "P_BMM_SINGLE_FUNCTION_PARAMETER",
-                                "P_BMM_SINGLE_FUNCTION_PARAMETER")
+            kind, _ = self.kind_of(param, path, PARAMETER_TYPES, "P_BMM_SINGLE_FUNCTION_PARAMETER",
+                                   "P_BMM_SINGLE_FUNCTION_PARAMETER")
         self.check_name(param, path)
         self.check_keys(param, kind, path)
         self.check_documentation(param, path)
@@ -725,19 +730,20 @@ class Checker:
 
     # --- shared helpers ------------------------------------------------------------------------
     def kind_of(self, item, path, kinds, read_as, read_as_label):
-        """The _type an item is checked as. An unknown _type is reported with what bmm-publisher reads
-        it as, and the item is then checked as the closest known _type, so its content is still checked."""
+        """(kind, recognised): the _type an item is checked as, and whether bmm-publisher knows it. An
+        unknown _type is reported with what bmm-publisher reads it as, and the item is then checked as
+        the closest known _type, so that its content is still checked."""
         kind = item.get("_type", kinds[0])
         if isinstance(kind, str) and kind in kinds:
-            return kind
+            return kind, True
         if not isinstance(kind, str):
             self.error(path + "/_type", "must be a string; read as %s" % read_as_label)
-            return read_as
+            return read_as, False
         close = difflib.get_close_matches(kind, kinds, n=1, cutoff=0.6)
         checked = close[0] if close else read_as
         self.error(path, "unknown _type %s: read as %s%s" % (kind, read_as_label,
                                                             "; checked below as " + checked if close else ""))
-        return checked
+        return checked, False
 
     def keyed(self, owner, key, path):
         block = owner.get(key)
@@ -858,10 +864,13 @@ class Checker:
         for dep_classes in self.dependencies.values():
             known.update(dep_classes)
         near = difflib.get_close_matches(name, sorted(known), n=1, cutoff=0.85)
-        if near:
-            self.warning(path, "type %s is not defined; did you mean %s?" % (name, near[0]))
-        elif self.missing_includes:
+        if self.missing_includes:
+            # it may be defined in the include that was not loaded, so it is unchecked, not wrong
             self.unchecked.add(name)
+            if near:
+                self.suggestions[name] = near[0]
+        elif near:
+            self.warning(path, "type %s is not defined; did you mean %s?" % (name, near[0]))
         else:
             self.warning(path, "type %s is not defined in this schema or any loaded schema" % name)
 
@@ -877,6 +886,8 @@ def load(path):
                               % (path, exc.msg, exc.lineno, exc.colno)))
     except UnicodeDecodeError:
         raise SystemExit(fail("%s is not UTF-8 text" % path))
+    except RecursionError:
+        raise SystemExit(fail("%s is nested too deeply to read" % path))
 
 
 def fail(message):
@@ -923,19 +934,21 @@ def main(argv=None):
                         help="a schema whose classes the checked one uses (repeatable)")
     parser.add_argument("--strict", action="store_true", help="exit 1 on warnings too")
     args = parser.parse_args(argv)
-    checker = Checker(args.schema, args.dependency).run()
+    try:
+        checker = Checker(args.schema, args.dependency).run()
+    except RecursionError:
+        return fail("%s is nested too deeply to check" % args.schema)
     for level, path, message in checker.findings:
         print("%-7s %s: %s" % (level, path, message))
     errors, warnings, unchecked = checker.count("ERROR"), checker.count("WARNING"), len(checker.unchecked)
     print("check_bmm: %s: %d class(es), %d error(s), %d warning(s), %d name(s) not checked"
           % (args.schema, len(checker.classes), errors, warnings, unchecked))
+    if unchecked:
+        print("check_bmm: incomplete: %d name(s) not checked; pass each included schema with -d before "
+              "relying on this result" % unchecked, file=sys.stderr)
     if errors or (args.strict and warnings):
         return 1
-    if unchecked:
-        print("check_bmm: incomplete: pass each included schema with -d before relying on this result",
-              file=sys.stderr)
-        return 3
-    return 0
+    return 3 if unchecked else 0
 
 
 if __name__ == "__main__":

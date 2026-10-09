@@ -293,6 +293,13 @@ class ClassTest(Base):
         self.assertFinding(checker, "ERROR", "/class_definitions/DEMO_STATUS", "unknown _type P_BMM_ENUMERATON_STRING")
         self.assertFinding(checker, "ERROR", "/class_definitions/DEMO_STATUS/item_documentations", "one text per item")
 
+    def test_misspelt_class_type_is_read_as_a_plain_class(self):
+        # bmm-publisher reads an unknown _type as a plain class, so the class keys are not lost
+        d = self.demo()
+        self.cls(d, "DEMO_ITEM")["_type"] = "P_BMM_INTERFACES"
+        self.assertOnly(self.check(d), "ERROR", "/class_definitions/DEMO_ITEM",
+                        "unknown _type P_BMM_INTERFACES: read as a plain class")
+
     def test_class_type_must_be_a_string(self):
         d = self.demo()
         self.cls(d, "DEMO_ITEM")["_type"] = ["P_BMM_CLASS"]
@@ -313,6 +320,12 @@ class ClassTest(Base):
             "DEMO_BOX<DEMO_GROUP>": {"_type": "P_BMM_GENERIC_TYPE", "root_type": "DEMO_BOX", "generic_parameters": ["DEMO_GROUP"]}}
         self.assertFinding(self.check(d), "ERROR", "/class_definitions/DEMO_BOX_REF/ancestor_defs",
                            "the parent DEMO_BOX is lost")
+
+    def test_empty_ancestor_defs_loses_no_parent(self):
+        d = self.demo()
+        del self.cls(d, "DEMO_BOX")["ancestors"]
+        self.cls(d, "DEMO_BOX")["ancestor_defs"] = {}
+        self.assertOnly(self.check(d), "WARNING", "/class_definitions/DEMO_BOX/ancestor_defs", "not read")
 
     def test_ancestor_defs_repeating_the_ancestors_only_warns(self):
         d = self.demo()
@@ -584,12 +597,20 @@ class PropertyTest(Base):
         self.props(d, "DEMO_ITEM")["uid"]["type"] = "NO_SUCH_CLASS"
         self.assertOnly(self.check(d), "WARNING", "/class_definitions/DEMO_ITEM/properties/uid/type", "NO_SUCH_CLASS is not defined")
 
-    def test_misspelt_class_name_is_caught_even_without_dependencies(self):
+    def test_close_name_is_suggested_once_dependencies_are_loaded(self):
+        d = self.demo()
+        self.props(d, "DEMO_ITEM")["status"]["type"] = "DEMO_STATS"
+        self.assertOnly(self.check(d), "WARNING", "/class_definitions/DEMO_ITEM/properties/status/type",
+                        "did you mean DEMO_STATUS")
+
+    def test_close_name_without_dependencies_is_unchecked_with_a_suggestion(self):
+        # without -d, the name may come from the include (ARCHETYPE_ID next to a local ARCHETYPED)
         d = self.demo()
         self.props(d, "DEMO_ITEM")["status"]["type"] = "DEMO_STATS"
         checker = self.check(d, deps=False)
-        self.assertFinding(checker, "WARNING", "/class_definitions/DEMO_ITEM/properties/status/type", "did you mean DEMO_STATUS")
-        self.assertNotIn("DEMO_STATS", checker.unchecked)
+        self.assertEqual([lvl for lvl, _, _ in checker.findings], ["INFO"])
+        self.assertIn("DEMO_STATS (or DEMO_STATUS?)", checker.findings[0][2])
+        self.assertIn("DEMO_STATS", checker.unchecked)
 
     def test_attribute_reference_in_documentation(self):
         d = self.demo()
@@ -899,6 +920,28 @@ class CommandLineTest(Base):
         d = self.demo()
         del d["class_definitions"]["DEMO_ITEM"]["properties"]["uid"]["type"]
         self.assertEqual(self.run_main(self.write("openehr_demo_0.1.0.bmm.json", d))[0], 1)
+
+    def test_incomplete_check_is_announced_with_errors_too(self):
+        d = self.demo()
+        del d["class_definitions"]["DEMO_ITEM"]["properties"]["uid"]["type"]
+        code, out, err = self.run_main(self.write("openehr_demo_0.1.0.bmm.json", d))
+        self.assertEqual(code, 1)
+        self.assertIn("incomplete", err)
+        self.assertNotIn(" 0 name(s) not checked", out)
+
+    def test_deep_nesting_exits_two(self):
+        def nested(depth):
+            return ('{"_type": "P_BMM_CONTAINER_TYPE", "container_type": "List", "type_def": ' * depth
+                    + '{"_type": "P_BMM_SIMPLE_TYPE", "type": "String"}' + "}" * depth)
+        for depth, text in ((600, "too deeply to check"), (20000, "too deeply to read")):
+            with self.subTest(depth=depth):
+                d = self.demo()
+                d["class_definitions"]["DEMO_ITEM"]["functions"]["is_tagged"]["result"] = "@@RESULT@@"
+                path = self.root / "openehr_demo_0.1.0.bmm.json"
+                path.write_text(json.dumps(d).replace('"@@RESULT@@"', nested(depth)), encoding="utf-8")
+                code, _, err = self.run_main(path, "-d", self.base)
+                self.assertEqual(code, 2)
+                self.assertIn(text, err)
 
     def test_unreadable_input_exits_two(self):
         broken = self.root / "broken.bmm.json"

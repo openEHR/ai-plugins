@@ -65,8 +65,10 @@ render and read the tables.
      -d ../specifications-BASE/computable/BMM/openehr_base_1.3.0.bmm.json
    ```
    Save the output again and `diff` it with the step 1 output; fix every ERROR and WARNING your
-   change added. Exit status 3 ("name(s) not checked") means an included schema was not loaded, so
-   the check is incomplete. If its sibling clone is missing, say so; never report such a run as clean.
+   change added. A non-zero "N name(s) not checked" in the summary (with an "incomplete" notice)
+   means an included schema was not loaded: the exit status is 3 when there are no errors, 1 when
+   there are. If the sibling clone is missing, say the check is incomplete; never report such a run
+   as clean.
 5. Regenerate the class tables (`class-generation`) and read the table of every class you touched.
    Expect the gaps listed under "What the class tables show" in the reference, such as a container's
    member count or a generic parameter's constraint.
@@ -123,7 +125,8 @@ render and read the tables.
   an included schema that was not passed with `-d`.
 - Exit status: 0 complete and clean; 1 errors found (with `--strict`, warnings count too); 3 no
   errors, but names from an included schema not loaded with `-d` went unchecked; 2 a file is
-  unreadable, not UTF-8 JSON, or (for `-d`) not a BMM schema.
+  unreadable, not UTF-8 JSON, nested too deeply, or (for `-d`) not a BMM schema. The summary line
+  always gives the unchecked count.
 - The published schemas carry findings of their own. At the time of writing, AM 2.4.0 has ten errors
   (lists without an element type in `P_ARCHETYPE_SLOT`, and `FUNCTION` arguments in reverse order in
   `c_conforms_to`) and LANG's BMM3 overlay two. Report findings outside your change to the user; do
