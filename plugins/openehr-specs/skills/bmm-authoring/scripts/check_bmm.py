@@ -8,14 +8,16 @@ it and ../references/p-bmm-json.md for the format.
 
 -d loads another schema (for example the BASE schema that RM includes) so that type names it
 defines resolve; it is not checked itself. Without it, names that only an included schema could
-define are listed once as unchecked.
+define cannot be checked, and neither can the generic parameters and constraints of those types.
 
 Each finding is printed as `LEVEL  /json/path: message`, then a summary line. ERROR: bmm-publisher
 fails, or silently reads something other than what the file says, or a generic argument breaks its
 parameter's constraint. WARNING: a convention is broken, or the file holds something the publisher
 does not read. INFO: what could not be checked.
-Exit status: 0 when there is no ERROR (and, with --strict, no WARNING); 1 otherwise; 2 when a file
-cannot be read or is not JSON.
+Exit status: 0 when the check is complete and found no ERROR (with --strict, no WARNING either);
+1 when it found an ERROR (with --strict, or a WARNING); 3 when it found none but could not check
+every name, because an included schema was not loaded with -d; 2 when a file cannot be read, is not
+UTF-8 JSON, or (for -d) is not a BMM schema.
 """
 import argparse
 import difflib
@@ -58,8 +60,8 @@ READ_KEYS = {
     "cardinality": {"lower", "upper", "lower_unbounded", "upper_unbounded"},
 }
 
-# Keys the P_BMM model defines (LANG, BMM persistence) that bmm-publisher does not read: they stay
-# in the JSON but are missing from every generated output, including the ODIN and YAML forms.
+# Keys the persistence specification knows that bmm-publisher does not read: they stay in the JSON
+# but are missing from every generated output, including the ODIN and YAML forms.
 _SPEC_PROPERTY = {"is_computed", "is_im_infrastructure", "is_im_runtime", "type_ref"}
 SPEC_ONLY_KEYS = {
     "schema": {"model_name", "schema_contributors", "archetype_parent_class",
@@ -76,23 +78,29 @@ SPEC_ONLY_KEYS = {
     "P_BMM_CONTAINER_TYPE": {"index_type"},
     "P_BMM_GENERIC_TYPE": {"value_constraint"},
 }
-
-HEADER_REQUIRED = ["bmm_version", "rm_publisher", "schema_name", "rm_release", "schema_revision",
-                   "schema_lifecycle_state", "schema_description", "schema_author"]
-CLASS_TYPES = {"P_BMM_CLASS", "P_BMM_INTERFACE", "P_BMM_ENUMERATION_STRING", "P_BMM_ENUMERATION_INTEGER"}
-PROPERTY_TYPES = {"P_BMM_SINGLE_PROPERTY", "P_BMM_SINGLE_PROPERTY_OPEN", "P_BMM_CONTAINER_PROPERTY",
-                  "P_BMM_GENERIC_PROPERTY"}
-TYPE_TYPES = {"P_BMM_SIMPLE_TYPE", "P_BMM_CONTAINER_TYPE", "P_BMM_GENERIC_TYPE"}
-PARAMETER_TYPES = {"P_BMM_SINGLE_FUNCTION_PARAMETER", "P_BMM_SINGLE_FUNCTION_PARAMETER_OPEN",
-                   "P_BMM_CONTAINER_FUNCTION_PARAMETER", "P_BMM_GENERIC_FUNCTION_PARAMETER"}
 HASH_HINT = "write Hash<K,V> as P_BMM_GENERIC_PROPERTY with root_type Hash and two generic_parameters"
+# Spec-only keys whose loss changes what the tables show: ERROR rather than WARNING.
+LOSSY_KEYS = {("P_BMM_CONTAINER_TYPE", "index_type"): "the index is dropped, so a Hash renders as its "
+                                                      "container_type; " + HASH_HINT}
+
+HEADER_REQUIRED = ["rm_publisher", "schema_name", "rm_release", "schema_revision",
+                   "schema_lifecycle_state", "schema_description", "schema_author"]
+CLASS_TYPES = ["P_BMM_CLASS", "P_BMM_INTERFACE", "P_BMM_ENUMERATION_STRING", "P_BMM_ENUMERATION_INTEGER"]
+PROPERTY_TYPES = ["P_BMM_SINGLE_PROPERTY", "P_BMM_SINGLE_PROPERTY_OPEN", "P_BMM_CONTAINER_PROPERTY",
+                  "P_BMM_GENERIC_PROPERTY"]
+TYPE_TYPES = ["P_BMM_SIMPLE_TYPE", "P_BMM_CONTAINER_TYPE", "P_BMM_GENERIC_TYPE"]
+PARAMETER_TYPES = ["P_BMM_SINGLE_FUNCTION_PARAMETER", "P_BMM_SINGLE_FUNCTION_PARAMETER_OPEN",
+                   "P_BMM_CONTAINER_FUNCTION_PARAMETER", "P_BMM_GENERIC_FUNCTION_PARAMETER"]
 UNSUPPORTED_TYPES = {
     "P_BMM_INDEXED_CONTAINER_PROPERTY": HASH_HINT,
     "P_BMM_INDEXED_CONTAINER_TYPE": HASH_HINT,
 }
+SIMPLE, CONTAINER, GENERIC = TYPE_TYPES
+# bmm-publisher writes class tables for packages down to this depth (top-level package = 1)
+MAX_PACKAGE_DEPTH = 4
 # an AsciiDoc attribute reference such as {base_release}; bmm-publisher escapes it, so it never resolves
-ATTRIBUTE_REF = re.compile(r"\{[a-z][a-z0-9_-]*\}")
-# result type of a procedure; bmm-publisher prints it without a link
+ATTRIBUTE_REF = re.compile(r"\{[a-z][a-z0-9_]*\}")
+# result type of a procedure in the published schemas; bmm-publisher prints it without a link
 PROCEDURE_RESULT = "void"
 GENERIC_NAME = re.compile(r"[<>,]")
 
@@ -102,18 +110,27 @@ class Checker:
         self.path = Path(schema_path)
         self.findings = []  # (level, path, message)
         self.data = load(self.path)
-        self.dependencies = {}  # schema id -> {class name: summary}, see summarise()
+        self.classes = {}  # class name -> summary (see summarise), for this schema
+        self.class_paths = {}  # class name -> JSON path of its definition
+        self.unchecked = set()  # type names an included but unloaded schema might define
+        self.missing_includes = set()
+        self.dependencies = {}  # schema id -> {class name: summary}
         own_id = schema_id(self.data) if isinstance(self.data, dict) else None
         for dep in dependency_paths:
             dep_data = load(Path(dep))
-            if not isinstance(dep_data, dict):
-                continue
-            if schema_id(dep_data) == own_id:
+            if not isinstance(dep_data, dict) or not all(
+                    isinstance(dep_data.get(k), str) for k in ("rm_publisher", "schema_name", "rm_release")):
+                raise SystemExit(fail("%s is not a BMM schema (it needs rm_publisher, schema_name and "
+                                      "rm_release)" % dep))
+            dep_id = schema_id(dep_data)
+            if dep_id == own_id:
                 self.warning("/", "-d %s is the schema being checked; it is ignored" % dep)
-                continue
-            self.dependencies[schema_id(dep_data)] = class_index(dep_data)
-        self.classes = {}  # class name -> summary, for this schema
-        self.unchecked = set()  # type names an included but unloaded schema might define
+            elif dep_id in self.dependencies:
+                self.warning("/", "-d %s has the same schema id as another -d file (%s); their classes "
+                                  "are merged" % (dep, dep_id))
+                self.dependencies[dep_id].update(class_index(dep_data))
+            else:
+                self.dependencies[dep_id] = class_index(dep_data)
 
     # --- reporting -------------------------------------------------------------------------
     def error(self, path, message):
@@ -137,31 +154,39 @@ class Checker:
         self.check_header(d)
         self.collect_classes(d)
         listed = self.check_packages(d)
-        for section in ("primitive_types", "class_definitions"):
-            for name, cls in (d.get(section) or {}).items():
-                path = "/%s/%s" % (section, name)
-                if isinstance(cls, dict):
-                    self.check_class(cls, path)
-                    if cls.get("name") not in listed and cls.get("name") is not None:
-                        self.error(path, "class is not listed in any package, so no class table is "
-                                         "generated for it")
+        for section, name, cls in self.class_blocks(d):
+            path = "/%s/%s" % (section, name)
+            self.check_class(cls, path)
+            cls_name = cls.get("name")
+            if isinstance(cls_name, str) and cls_name not in listed:
+                self.error(path, "class is not listed in any package, so no class table is generated for it")
         self.check_ancestor_cycles(d)
         if self.unchecked:
-            self.info("/includes", "not checked, as no loaded schema defines them (pass the included "
-                                   "schema with -d): " + ", ".join(sorted(self.unchecked)))
+            self.info("/includes", "not checked, as no loaded schema defines them; pass each included "
+                                   "schema with -d: " + ", ".join(sorted(self.unchecked)))
         return self
+
+    def class_blocks(self, d):
+        """(section, key, class) for every class definition that is an object."""
+        for section in ("primitive_types", "class_definitions"):
+            block = d.get(section)
+            if isinstance(block, dict):
+                for key, cls in block.items():
+                    if isinstance(cls, dict):
+                        yield section, key, cls
 
     # --- header ----------------------------------------------------------------------------
     def check_header(self, d):
+        if "bmm_version" not in d:
+            self.warning("/bmm_version", "missing; bmm-publisher assumes \"2.4\"")
+        elif d["bmm_version"] != "2.4":
+            self.warning("/bmm_version", "the published openEHR schemas use \"2.4\"")
         for key in HEADER_REQUIRED:
             if key not in d:
-                self.error("/" + key, "required header field is missing")
+                self.error("/" + key, "required header field is missing; bmm-publisher refuses the file")
             elif not isinstance(d[key], str):
                 self.error("/" + key, "must be a string")
         self.check_keys(d, "schema", "")
-        if d.get("bmm_version") not in (None, "2.4"):
-            self.warning("/bmm_version", "published openEHR schemas use \"2.4\", the version "
-                                         "bmm-publisher reads and writes")
         release = d.get("rm_release")
         if isinstance(release, str):
             if not re.fullmatch(r"\d+\.\d+\.\d+", release):
@@ -175,31 +200,27 @@ class Checker:
             if self.path.name != expected:
                 self.warning("/", "file name %s does not match the schema id; expected %s"
                              % (self.path.name, expected))
+        included = set()
         includes = d.get("includes")
-        if includes is not None:
-            if not isinstance(includes, dict):
-                self.error("/includes", "must be an object keyed by schema id")
-            else:
-                for key, inc in includes.items():
-                    path = "/includes/" + key
-                    if not isinstance(inc, dict) or not isinstance(inc.get("id"), str):
-                        self.error(path, "each include needs an \"id\" naming the included schema")
-                        continue
-                    self.check_keys(inc, "include", path)
-                    if inc["id"] != key:
-                        self.warning(path, "published schemas key each include by its id (%s)" % inc["id"])
-        included = set(i.get("id") for i in (includes or {}).values() if isinstance(i, dict)) \
-            if isinstance(includes, dict) else set()
+        if includes is not None and not isinstance(includes, dict):
+            self.error("/includes", "must be an object keyed by schema id")
+        elif includes:
+            for key, inc in includes.items():
+                path = "/includes/" + key
+                if not isinstance(inc, dict) or not isinstance(inc.get("id"), str):
+                    self.error(path, "each include needs an \"id\" naming the included schema")
+                    continue
+                self.check_keys(inc, "include", path)
+                included.add(inc["id"])
+                if inc["id"] != key:
+                    self.warning(path, "published schemas key each include by its id (%s)" % inc["id"])
         for dep_id in self.dependencies:
             if dep_id not in included:
                 self.warning("/includes", "schema %s was loaded with -d but is not included" % dep_id)
         self.missing_includes = included - set(self.dependencies)
-        if "class_definitions" not in d:
-            self.warning("/class_definitions", "the persistence model makes class_definitions mandatory")
 
     # --- classes and packages ----------------------------------------------------------------
     def collect_classes(self, d):
-        seen = {}
         for section in ("primitive_types", "class_definitions"):
             block = d.get(section)
             if block is None:
@@ -218,27 +239,29 @@ class Checker:
                     continue
                 if name != key:
                     self.error(path, "key and \"name\" (%s) differ; bmm-publisher uses the name" % name)
-                if name in seen:
-                    self.error(path, "class %s is also defined at %s" % (name, seen[name]))
-                seen[name] = path
+                if name in self.class_paths:
+                    self.error(path, "class %s is also defined at %s" % (name, self.class_paths[name]))
+                self.class_paths[name] = path
                 self.classes[name] = summarise(cls)
         for dep_id, dep_classes in self.dependencies.items():
-            for name in set(self.classes) & set(dep_classes):
-                self.warning("/", "class %s is also defined in %s" % (name, dep_id))
+            for name in sorted(set(self.classes) & set(dep_classes)):
+                self.warning(self.class_paths[name], "class %s is also defined in %s" % (name, dep_id))
 
     def check_packages(self, d):
         listed = {}
         packages = d.get("packages")
         if not isinstance(packages, dict) or not packages:
-            self.error("/packages", "the schema needs at least one package")
+            self.error("/packages", "must be an object keyed by package name, with at least one package")
             return listed
         publisher, schema_name = d.get("rm_publisher"), d.get("schema_name")
         for key, pkg in packages.items():
             path = "/packages/" + key
             if publisher == "openehr" and isinstance(schema_name, str) and isinstance(pkg, dict):
                 root = "org.openehr." + schema_name.lower()
-                name = str(pkg.get("name", ""))
-                if name != root and not name.startswith(root + "."):
+                name = pkg.get("name")
+                if not isinstance(name, str):
+                    pass  # reported by check_package
+                elif name != root and not name.startswith(root + "."):
                     self.warning(path, "class table file names are built from %s.<package>; name the "
                                        "top-level package %s.<package>, or %s with sub-packages"
                                  % (root, root, root))
@@ -246,10 +269,10 @@ class Checker:
                     self.warning(path + "/classes", "classes listed directly in %s get table files named "
                                                     "%s.org.<class>.adoc; list them in a sub-package"
                                  % (root, root))
-            self.check_package(pkg, key, path, listed, top=True)
+            self.check_package(pkg, key, path, listed, depth=1)
         return listed
 
-    def check_package(self, pkg, key, path, listed, top):
+    def check_package(self, pkg, key, path, listed, depth):
         if not isinstance(pkg, dict):
             self.error(path, "a package must be an object")
             return
@@ -259,7 +282,7 @@ class Checker:
             self.error(path, "package has no \"name\"")
         elif name != key:
             self.error(path, "key and \"name\" (%s) differ" % name)
-        elif not top and "." in name:
+        elif depth > 1 and "." in name:
             self.error(path, "only top-level package names may contain '.'")
         classes = pkg.get("classes", [])
         subpackages = pkg.get("packages", {})
@@ -271,6 +294,9 @@ class Checker:
             subpackages = {}
         if not classes and not subpackages:
             self.warning(path, "empty package")
+        if classes and depth > MAX_PACKAGE_DEPTH:
+            self.error(path, "bmm-publisher visits packages only %d levels deep, so these classes get no "
+                             "class table" % MAX_PACKAGE_DEPTH)
         for cls in classes:
             if cls not in self.classes:
                 self.error(path + "/classes", "%s is not defined in this schema; bmm-publisher stops "
@@ -280,42 +306,39 @@ class Checker:
             else:
                 listed[cls] = path
         for sub_key, sub in subpackages.items():
-            self.check_package(sub, sub_key, path + "/packages/" + sub_key, listed, top=False)
+            self.check_package(sub, sub_key, path + "/packages/" + sub_key, listed, depth + 1)
 
     def check_class(self, cls, path):
-        kind = cls.get("_type", "P_BMM_CLASS")
-        if kind not in CLASS_TYPES:
-            self.error(path, "unknown _type %s, read as a plain class" % kind)
-            kind = "P_BMM_CLASS"
+        kind = self.kind_of(cls, path, CLASS_TYPES, "P_BMM_CLASS", "a plain class")
         self.check_keys(cls, kind, path)
         self.check_documentation(cls, path, required=True)
-        scope = set()
+        scope = {}  # generic parameter name -> its conforms_to_type, or None
         params = cls.get("generic_parameter_defs")
-        if params is not None:
-            if not isinstance(params, dict):
-                self.error(path + "/generic_parameter_defs", "must be an object keyed by parameter name")
-            else:
-                for key, param in params.items():
-                    p_path = path + "/generic_parameter_defs/" + key
-                    if not isinstance(param, dict) or param.get("name") != key:
-                        self.error(p_path, "needs a \"name\" equal to its key")
-                        continue
-                    self.check_keys(param, "generic_parameter", p_path)
-                    scope.add(key)
-                for key, param in params.items():
-                    if isinstance(param, dict) and "conforms_to_type" in param:
-                        self.check_type_name(param["conforms_to_type"], path + "/generic_parameter_defs/"
-                                             + key + "/conforms_to_type", scope)
+        if params is not None and not isinstance(params, dict):
+            self.error(path + "/generic_parameter_defs", "must be an object keyed by parameter name")
+        elif params:
+            for key, param in params.items():
+                p_path = path + "/generic_parameter_defs/" + key
+                if not isinstance(param, dict) or param.get("name") != key:
+                    self.error(p_path, "needs a \"name\" equal to its key")
+                    continue
+                self.check_keys(param, "generic_parameter", p_path)
+                constraint = param.get("conforms_to_type")
+                if constraint is not None and not isinstance(constraint, str):
+                    self.error(p_path + "/conforms_to_type", "must be a class name")
+                    constraint = None
+                scope[key] = constraint
+            for key, constraint in scope.items():
+                if constraint is not None:
+                    self.check_type_name(constraint, path + "/generic_parameter_defs/" + key
+                                         + "/conforms_to_type", scope)
         if "is_abstract" in cls and not isinstance(cls["is_abstract"], bool):
             self.error(path + "/is_abstract", "must be true or false")
         ancestors = cls.get("ancestors", [])
-        if "ancestor_defs" in cls and not ancestors:
-            self.error(path, "bmm-publisher reads only \"ancestors\", so this class has no parent; list the "
-                             "root class name there (for an open binding such as A<T>, also redeclare T in "
-                             "generic_parameter_defs; state a closed binding in documentation)")
         if not isinstance(ancestors, list) or not all(isinstance(a, str) for a in ancestors):
             self.error(path + "/ancestors", "must be a list of class names")
             ancestors = []
+        self.check_ancestor_defs(cls, ancestors, path)
         for i, ancestor in enumerate(ancestors):
             a_path = "%s/ancestors/%d" % (path, i)
             if GENERIC_NAME.search(ancestor):
@@ -323,14 +346,15 @@ class Checker:
                                    "root class (%s) and declare the parameters in generic_parameter_defs"
                            % ancestor.split("<")[0].strip())
             else:
-                self.check_type_name(ancestor, a_path, set())
+                self.check_type_name(ancestor, a_path, {})
         if kind.startswith("P_BMM_ENUMERATION"):
-            self.check_enumeration(cls, kind, path)
+            self.check_enumeration(cls, kind, ancestors if "ancestors" in cls else None, path)
         for key, constant in self.keyed(cls, "constants", path):
             c_path = path + "/constants/" + key
+            self.check_name(constant, c_path)
             self.check_keys(constant, "constant", c_path)
             if not isinstance(constant.get("type"), str):
-                self.error(c_path, "a constant needs a \"type\"")
+                self.error(c_path, "a constant needs a \"type\"; bmm-publisher fails without one")
             else:
                 self.check_type_name(constant["type"], c_path + "/type", scope)
             self.check_documentation(constant, c_path)
@@ -340,39 +364,63 @@ class Checker:
             self.check_function(function, path + "/functions/" + key, scope)
         self.check_assertions(cls, "invariants", path)
 
-    def check_enumeration(self, cls, kind, path):
+    def check_ancestor_defs(self, cls, ancestors, path):
+        """bmm-publisher reads only ancestors: a parent named only in ancestor_defs is lost."""
+        defs = cls.get("ancestor_defs")
+        if defs is None:
+            return
+        entries = list(defs.items()) if isinstance(defs, dict) else list(enumerate(defs)) \
+            if isinstance(defs, list) else []
+        roots = []
+        for key, entry in entries:
+            if isinstance(entry, dict) and isinstance(entry.get("root_type") or entry.get("type"), str):
+                roots.append(entry.get("root_type") or entry.get("type"))
+            elif isinstance(key, str):
+                roots.append(key.split("<")[0].strip())
+        lost = [r for r in roots if r not in ancestors]
+        if not ancestors or lost:
+            self.error(path + "/ancestor_defs", "bmm-publisher reads only \"ancestors\", so %s lost; list "
+                                                "the root class name there (for an open binding such as "
+                                                "A<T>, also redeclare T in generic_parameter_defs; state a "
+                                                "closed binding in documentation)"
+                       % ("the parent %s is" % ", ".join(lost) if lost else "every parent is"))
+
+    def check_enumeration(self, cls, kind, ancestors, path):
         names = cls.get("item_names")
         if not isinstance(names, list) or not names or not all(isinstance(n, str) for n in names):
             self.error(path + "/item_names", "an enumeration needs a non-empty list of item names")
             return
-        base = "String" if kind == "P_BMM_ENUMERATION_STRING" else "Integer"
-        if base not in (cls.get("ancestors") or []):
-            self.warning(path + "/ancestors", "the persistence model requires %s among the ancestors" % base)
+        integer = kind == "P_BMM_ENUMERATION_INTEGER"
+        if integer and ancestors is not None and "Integer" not in ancestors:
+            self.warning(path + "/ancestors", "the table prints item values only when Integer is among "
+                                              "the ancestors")
         values = cls.get("item_values")
         if values is not None:
-            value_type = str if base == "String" else int
+            value_type = int if integer else str
             if not isinstance(values, list) or len(values) != len(names):
                 self.error(path + "/item_values", "needs one value per item name (%d)" % len(names))
             elif not all(isinstance(v, value_type) and not isinstance(v, bool) for v in values):
-                self.error(path + "/item_values", "values must be %ss" % base)
+                self.error(path + "/item_values", "values must be %s" % ("integers" if integer else "strings"))
         docs = cls.get("item_documentations")
-        if docs is not None and (not isinstance(docs, list) or len(docs) != len(names)):
+        if docs is not None and (not isinstance(docs, list) or len(docs) != len(names)
+                                 or not all(isinstance(t, str) for t in docs)):
             self.error(path + "/item_documentations", "needs one text per item name (%d); the "
                                                       "table pairs them by position" % len(names))
 
     def check_ancestor_cycles(self, d):
         graph = {}
-        for section in ("primitive_types", "class_definitions"):
-            for cls in (d.get(section) or {}).values():
-                if isinstance(cls, dict) and isinstance(cls.get("name"), str):
-                    graph[cls["name"]] = [a for a in cls.get("ancestors") or [] if isinstance(a, str)]
+        for _, _, cls in self.class_blocks(d):
+            ancestors = cls.get("ancestors")
+            if isinstance(cls.get("name"), str):
+                graph[cls["name"]] = [a for a in ancestors if isinstance(a, str)] \
+                    if isinstance(ancestors, list) else []
         state = {}
 
         def visit(name, trail):
             state[name] = 1
             for ancestor in graph.get(name, []):
                 if state.get(ancestor) == 1:
-                    self.error("/class_definitions/" + name, "inheritance cycle: "
+                    self.error(self.class_paths.get(name, "/"), "inheritance cycle: "
                                + " -> ".join(trail + [ancestor]))
                 elif ancestor in graph and not state.get(ancestor):
                     visit(ancestor, trail + [ancestor])
@@ -384,24 +432,23 @@ class Checker:
 
     # --- properties, functions and types -----------------------------------------------------
     def check_property(self, prop, path, scope):
-        if not isinstance(prop, dict):
-            self.error(path, "a property must be an object")
-            return
         kind = prop.get("_type")
         if kind is None:
             if "type_def" in prop:
                 self.error(path, "no _type: read as P_BMM_SINGLE_PROPERTY, whose type then defaults "
                                  "to Any; set the property _type")
-                return
-            self.warning(path, "no _type: read as P_BMM_SINGLE_PROPERTY; published schemas always set it")
-            kind = "P_BMM_SINGLE_PROPERTY"
-        elif kind in UNSUPPORTED_TYPES:
+                kind = self.closest_kind_from_shape(prop)
+            else:
+                self.warning(path, "no _type: read as P_BMM_SINGLE_PROPERTY; published schemas always set it")
+                kind = "P_BMM_SINGLE_PROPERTY"
+        elif isinstance(kind, str) and kind in UNSUPPORTED_TYPES:
             self.error(path, "bmm-publisher does not read %s (it becomes a property of type Any); %s"
                        % (kind, UNSUPPORTED_TYPES[kind]))
+            self.check_name(prop, path)
+            self.check_documentation(prop, path, required=True)
             return
-        elif kind not in PROPERTY_TYPES:
-            self.error(path, "unknown _type %s: read as P_BMM_SINGLE_PROPERTY" % kind)
-            return
+        else:
+            kind = self.kind_of(prop, path, PROPERTY_TYPES, "P_BMM_SINGLE_PROPERTY", "P_BMM_SINGLE_PROPERTY")
         self.check_name(prop, path)
         self.check_keys(prop, kind, path)
         self.check_documentation(prop, path, required=True)
@@ -423,134 +470,183 @@ class Checker:
             else:
                 self.check_type_name(target, path + "/type", scope)
         elif kind == "P_BMM_CONTAINER_PROPERTY":
-            self.check_inline_type(prop, "P_BMM_CONTAINER_TYPE", path, scope)
+            self.check_inline_type(prop, CONTAINER, path, scope)
             if "cardinality" in prop:
                 self.check_cardinality(prop["cardinality"], path + "/cardinality")
         else:
-            self.check_inline_type(prop, "P_BMM_GENERIC_TYPE", path, scope)
+            self.check_inline_type(prop, GENERIC, path, scope)
+
+    def closest_kind_from_shape(self, prop):
+        type_def = prop.get("type_def")
+        if isinstance(type_def, dict) and "root_type" in type_def:
+            return "P_BMM_GENERIC_PROPERTY"
+        return "P_BMM_CONTAINER_PROPERTY"
 
     def check_inline_type(self, owner, kind, path, scope):
         type_def = owner.get("type_def")
         if not isinstance(type_def, dict):
             self.error(path, "needs a \"type_def\" object")
             return
-        if type_def.get("_type", kind) != kind:
+        marker = type_def.get("_type", kind)
+        if marker != kind:
             self.error(path + "/type_def", "_type %s is ignored here: this type_def is always read as %s"
-                       % (type_def["_type"], kind))
+                       % (marker if isinstance(marker, str) else "(not a string)", kind))
         self.check_type_body(type_def, kind, path + "/type_def", scope)
 
     def check_type(self, t, path, scope):
-        """A nested type object (result, generic_parameter_defs entry, element type_def)."""
+        """A nested type object (result, generic parameter, element type_def). Returns the kind
+        it is checked as, or None when it is not an object or bmm-publisher cannot read it."""
         if not isinstance(t, dict):
             self.error(path, "a type must be an object")
-            return
+            return None
         kind = t.get("_type")
         if kind is None:
             if "container_type" in t or "root_type" in t:
                 self.error(path, "no _type: a nested type is read as P_BMM_SIMPLE_TYPE; set _type")
-                return
-            self.warning(path, "no _type: read as P_BMM_SIMPLE_TYPE; published schemas always set it")
-            kind = "P_BMM_SIMPLE_TYPE"
-        elif kind in UNSUPPORTED_TYPES:
-            self.error(path, "bmm-publisher does not read %s; %s" % (kind, UNSUPPORTED_TYPES[kind]))
-            return
+                kind = GENERIC if "root_type" in t else CONTAINER
+            else:
+                self.warning(path, "no _type: read as P_BMM_SIMPLE_TYPE; published schemas always set it")
+                kind = SIMPLE
+        elif isinstance(kind, str) and kind in UNSUPPORTED_TYPES:
+            self.error(path, "bmm-publisher does not read %s (it becomes a simple type); %s"
+                       % (kind, UNSUPPORTED_TYPES[kind]))
+            return None
         elif kind == "P_BMM_OPEN_TYPE":
             self.warning(path, "read as P_BMM_SIMPLE_TYPE; published schemas write P_BMM_SIMPLE_TYPE")
-            kind = "P_BMM_SIMPLE_TYPE"
-        elif kind not in TYPE_TYPES:
-            self.error(path, "unknown _type %s: read as P_BMM_SIMPLE_TYPE" % kind)
-            return
+            kind = SIMPLE
+        else:
+            kind = self.kind_of(t, path, TYPE_TYPES, SIMPLE, SIMPLE)
         self.check_type_body(t, kind, path, scope)
+        return kind
 
     def check_type_body(self, t, kind, path, scope):
         self.check_keys(t, kind, path)
-        if kind == "P_BMM_SIMPLE_TYPE":
-            if not isinstance(t.get("type"), str):
+        if kind == SIMPLE:
+            target = t.get("type")
+            if not isinstance(target, str):
                 self.error(path, "needs a \"type\"")
-            elif GENERIC_NAME.search(t["type"]):
+            elif GENERIC_NAME.search(target):
                 self.error(path + "/type", "%s is not a class name; use P_BMM_CONTAINER_TYPE or "
-                                           "P_BMM_GENERIC_TYPE" % t["type"])
+                                           "P_BMM_GENERIC_TYPE" % target)
+            else:
+                self.check_type_name(target, path + "/type", scope)
+        elif kind == CONTAINER:
+            self.check_container_type(t, path, scope)
+        else:
+            self.check_generic_type(t, path, scope)
+
+    def check_container_type(self, t, path, scope):
+        container = t.get("container_type")
+        if not isinstance(container, str):
+            self.error(path, "needs a \"container_type\" (List, Set, Array)")
+        else:
+            self.check_type_name(container, path + "/container_type", scope)
+            arity = self.arity(container)
+            if arity is not None and arity != 1:
+                self.error(path + "/container_type", "%s takes %d generic parameters; %s"
+                           % (container, arity, HASH_HINT))
+        has_type, has_def = "type" in t, "type_def" in t
+        if has_type == has_def:
+            self.error(path, "give the element type as either \"type\" (a name) or \"type_def\" "
+                             "(a nested type), not %s" % ("both" if has_type else "neither: it is read as Any"))
+        elif has_type:
+            if not isinstance(t["type"], str) or GENERIC_NAME.search(t["type"]):
+                self.error(path + "/type", "must be a class or parameter name; nest other types "
+                                           "in \"type_def\"")
             else:
                 self.check_type_name(t["type"], path + "/type", scope)
-        elif kind == "P_BMM_CONTAINER_TYPE":
-            container = t.get("container_type")
-            if not isinstance(container, str):
-                self.error(path, "needs a \"container_type\" (List, Set, Array)")
-            else:
-                self.check_type_name(container, path + "/container_type", scope)
-                arity = self.arity(container)
-                if arity is not None and arity != 1:
-                    self.error(path + "/container_type", "%s takes %d generic parameters; %s"
-                               % (container, arity, HASH_HINT))
-            has_type, has_def = "type" in t, "type_def" in t
-            if has_type == has_def:
-                self.error(path, "give the element type as either \"type\" (a name) or \"type_def\" "
-                                 "(a nested type), not %s" % ("both" if has_type else "neither: it is read as Any"))
-            elif has_type:
-                if not isinstance(t["type"], str) or GENERIC_NAME.search(t["type"]):
-                    self.error(path + "/type", "must be a class or parameter name; nest other types "
-                                               "in \"type_def\"")
-                else:
-                    self.check_type_name(t["type"], path + "/type", scope)
-            else:
-                self.check_type(t["type_def"], path + "/type_def", scope)
+        elif self.check_type(t["type_def"], path + "/type_def", scope) == SIMPLE:
+            self.error(path + "/type_def", "a simple element type goes in \"type\": bmm-publisher renders "
+                                           "a simple type in \"type_def\" as Any")
+
+    def check_generic_type(self, t, path, scope):
+        root = t.get("root_type")
+        if not isinstance(root, str):
+            self.error(path, "needs a \"root_type\"")
         else:
-            root = t.get("root_type")
-            if not isinstance(root, str):
-                self.error(path, "needs a \"root_type\"")
-                return
             self.check_type_name(root, path + "/root_type", scope)
-            simple = t.get("generic_parameters", [])
-            nested = t.get("generic_parameter_defs", {})
-            if not isinstance(simple, list) or not isinstance(nested, dict):
-                self.error(path, "generic_parameters is a list of names and generic_parameter_defs an "
-                                 "object of nested types")
-                return
-            for i, param in enumerate(simple):
-                if isinstance(param, dict):
-                    self.check_type(param, "%s/generic_parameters/%d" % (path, i), scope)
-                elif not isinstance(param, str) or GENERIC_NAME.search(param):
-                    self.error("%s/generic_parameters/%d" % (path, i), "must be a class or parameter "
-                                                                       "name; nest other types in "
-                                                                       "generic_parameter_defs")
-                else:
-                    self.check_type_name(param, "%s/generic_parameters/%d" % (path, i), scope)
+        simple = t.get("generic_parameters")
+        nested = t.get("generic_parameter_defs")
+        if simple is not None and not isinstance(simple, list):
+            self.error(path + "/generic_parameters", "must be a list of class or parameter names")
+            simple = None
+        if nested is not None and not isinstance(nested, dict):
+            self.error(path + "/generic_parameter_defs", "must be an object of nested types keyed by "
+                                                         "parameter name")
+            nested = None
+        params = self.lookup(root)["params"] if isinstance(root, str) and self.lookup(root) else None
+        args = []  # (argument class or parameter name, or None; JSON path), in binding order
+        if simple and nested:
+            self.error(path, "bmm-publisher uses generic_parameters and ignores generic_parameter_defs "
+                             "when both are given; use one of them")
             for key, param in nested.items():
                 self.check_type(param, path + "/generic_parameter_defs/" + key, scope)
-            given = len(simple) + len(nested)
-            arity = self.arity(root)
-            if given == 0:
-                self.error(path, "a generic type needs generic_parameters or generic_parameter_defs")
-            elif arity is not None and arity != given:
-                self.error(path, "%s takes %d generic parameters, %d given" % (root, arity, given))
-            elif arity:
-                self.check_generic_arguments(root, simple, nested, path, scope)
+        if simple:
+            for i, param in enumerate(simple):
+                args.append(self.check_simple_argument(param, "%s/generic_parameters/%d" % (path, i), scope))
+        elif nested:
+            for i, (key, param) in enumerate(nested.items()):
+                p_path = path + "/generic_parameter_defs/" + key
+                args.append(self.check_nested_argument(param, p_path, scope))
+                if params is not None and i < len(params) and key != params[i][0]:
+                    self.warning(p_path, "generic_parameter_defs bind by position: entry %d is parameter %s "
+                                         "of %s" % (i + 1, params[i][0], root))
+        if not args:
+            self.error(path, "a generic type needs generic_parameters or generic_parameter_defs")
+        elif params is not None and len(params) != len(args):
+            self.error(path, "%s takes %d generic parameters, %d given" % (root, len(params), len(args)))
+        elif params:
+            self.check_generic_arguments(root, params, args, scope)
 
-    def check_generic_arguments(self, root, simple, nested, path, scope):
-        """Each argument must conform to the conforms_to_type of the parameter it binds."""
-        params = self.lookup(root)["params"]
-        bound = []  # (parameter, constraint, argument class name, path)
-        if not nested:
-            for i, ((param, constraint), arg) in enumerate(zip(params, simple)):
-                if isinstance(arg, str):
-                    bound.append((param, constraint, arg, "%s/generic_parameters/%d" % (path, i)))
-        else:
-            constraints = dict(params)
-            for key, arg in nested.items():
-                if key in constraints and isinstance(arg, dict):
-                    name = arg.get("type") or arg.get("root_type")
-                    if isinstance(name, str):
-                        bound.append((key, constraints[key], name, path + "/generic_parameter_defs/" + key))
-        for param, constraint, arg, arg_path in bound:
-            if constraint and arg not in scope and self.conforms(arg, constraint) is False:
+    def check_simple_argument(self, param, path, scope):
+        """An entry of generic_parameters: returns (argument name or None, path)."""
+        if isinstance(param, str):
+            if GENERIC_NAME.search(param):
+                self.error(path, "must be a class or parameter name; nest other types in "
+                                 "generic_parameter_defs")
+                return None, path
+            self.check_type_name(param, path, scope)
+            return param, path
+        if isinstance(param, dict):
+            # BASE writes nested generic types here (FUNCTION<TUPLE1<T>, Boolean>), and bmm-publisher reads them
+            kind = self.check_type(param, path, scope)
+            if kind == GENERIC:
+                return param.get("root_type"), path
+            if kind is not None:
+                self.error(path, "bmm-publisher accepts only names and generic types here and stops with "
+                                 "a type error on a %s" % kind)
+            return None, path
+        self.error(path, "must be a class or parameter name")
+        return None, path
+
+    def check_nested_argument(self, param, path, scope):
+        """An entry of generic_parameter_defs: returns (argument name or None, path)."""
+        kind = self.check_type(param, path, scope)
+        if kind == CONTAINER:
+            self.error(path, "bmm-publisher prints nothing for a container type in generic_parameter_defs; "
+                             "use a generic type with root_type List instead")
+            return param.get("container_type"), path
+        if kind == GENERIC:
+            return param.get("root_type"), path
+        if kind == SIMPLE:
+            return param.get("type"), path
+        return None, path
+
+    def check_generic_arguments(self, root, params, args, scope):
+        """Each argument, bound by position, must conform to its parameter's conforms_to_type."""
+        names = ", ".join(p for p, _ in params)
+        for (param, constraint), (arg, arg_path) in zip(params, args):
+            if not constraint or constraint == "Any" or not isinstance(arg, str):
+                continue
+            # an argument that is a parameter of the enclosing class conforms through its own constraint
+            effective = (scope[arg] or "Any") if arg in scope else arg
+            if self.conforms(effective, constraint) is False:
+                what = arg if effective == arg else "%s (constrained to %s)" % (arg, effective)
                 self.error(arg_path, "%s does not conform to %s, the constraint on parameter %s of %s "
-                                     "(generic_parameters bind in the order %s declares them: %s)"
-                           % (arg, constraint, param, root, root, ", ".join(p for p, _ in params)))
+                                     "(arguments bind in the order %s declares its parameters: %s)"
+                           % (what, constraint, param, root, root, names))
 
     def check_function(self, function, path, scope):
-        if not isinstance(function, dict):
-            self.error(path, "a function must be an object")
-            return
         self.check_name(function, path)
         self.check_keys(function, "function", path)
         self.check_documentation(function, path, required=True)
@@ -559,11 +655,14 @@ class Checker:
                 self.error(path + "/" + flag, "must be true or false")
         aliases = function.get("aliases", [])
         if not isinstance(aliases, list) or not all(isinstance(a, str) for a in aliases):
-            self.error(path + "/aliases", "must be a list of strings")
-        if "result" in function:
-            self.check_type(function["result"], path + "/result", scope)
-        else:
-            self.warning(path, "no result: the table shows an empty result type")
+            self.error(path + "/aliases", "must be a list of names, as the published schemas write it")
+        result = function.get("result")
+        if result is None:
+            self.warning(path, "no result: the specification reads that as a procedure, but the table "
+                               "prints an empty result type; published schemas write the result type void")
+        elif not (isinstance(result, dict) and result.get("type") == PROCEDURE_RESULT
+                  and result.get("_type", SIMPLE) == SIMPLE):
+            self.check_type(result, path + "/result", scope)
         for key, param in self.keyed(function, "parameters", path):
             self.check_parameter(param, path + "/parameters/" + key, scope)
         self.check_assertions(function, "pre_conditions", path)
@@ -574,11 +673,14 @@ class Checker:
         if kind is None:
             if "type_def" in param:
                 self.error(path, "no _type: read as P_BMM_SINGLE_FUNCTION_PARAMETER of type Any")
-                return
-            kind = "P_BMM_SINGLE_FUNCTION_PARAMETER"
-        elif kind not in PARAMETER_TYPES:
-            self.error(path, "unknown _type %s: read as P_BMM_SINGLE_FUNCTION_PARAMETER" % kind)
-            return
+                type_def = param.get("type_def")
+                kind = "P_BMM_GENERIC_FUNCTION_PARAMETER" if isinstance(type_def, dict) and "root_type" in type_def \
+                    else "P_BMM_CONTAINER_FUNCTION_PARAMETER"
+            else:
+                kind = "P_BMM_SINGLE_FUNCTION_PARAMETER"
+        else:
+            kind = self.kind_of(param, path, PARAMETER_TYPES, "P_BMM_SINGLE_FUNCTION_PARAMETER",
+                                "P_BMM_SINGLE_FUNCTION_PARAMETER")
         self.check_name(param, path)
         self.check_keys(param, kind, path)
         self.check_documentation(param, path)
@@ -593,14 +695,11 @@ class Checker:
             else:
                 self.check_type_name(target, path + "/type", scope)
         elif kind == "P_BMM_CONTAINER_FUNCTION_PARAMETER":
-            self.check_inline_type(param, "P_BMM_CONTAINER_TYPE", path, scope)
-            if "cardinality" not in param:
-                self.error(path, "a container parameter needs a \"cardinality\"; bmm-publisher fails "
-                                 "without one")
-            else:
+            self.check_inline_type(param, CONTAINER, path, scope)
+            if "cardinality" in param:
                 self.check_cardinality(param["cardinality"], path + "/cardinality")
         else:
-            self.check_inline_type(param, "P_BMM_GENERIC_TYPE", path, scope)
+            self.check_inline_type(param, GENERIC, path, scope)
 
     def check_cardinality(self, card, path):
         if not isinstance(card, dict):
@@ -618,12 +717,28 @@ class Checker:
                              "missing upper_unbounded as true and ignores the limit")
         if card.get("upper_unbounded") is False and "upper" not in card:
             self.error(path, "\"upper_unbounded\": false needs an \"upper\" limit")
-        if isinstance(card.get("upper"), int) and isinstance(card.get("lower"), int) and card["upper"] < card["lower"]:
+        lower, upper = card.get("lower"), card.get("upper")
+        if is_count(lower) and is_count(upper) and upper < lower:
             self.error(path, "upper is below lower")
-        if card.get("lower_unbounded"):
+        if card.get("lower_unbounded") is True:
             self.warning(path + "/lower_unbounded", "a cardinality has a lower limit (0 or more)")
 
     # --- shared helpers ------------------------------------------------------------------------
+    def kind_of(self, item, path, kinds, read_as, read_as_label):
+        """The _type an item is checked as. An unknown _type is reported with what bmm-publisher reads
+        it as, and the item is then checked as the closest known _type, so its content is still checked."""
+        kind = item.get("_type", kinds[0])
+        if isinstance(kind, str) and kind in kinds:
+            return kind
+        if not isinstance(kind, str):
+            self.error(path + "/_type", "must be a string; read as %s" % read_as_label)
+            return read_as
+        close = difflib.get_close_matches(kind, kinds, n=1, cutoff=0.6)
+        checked = close[0] if close else read_as
+        self.error(path, "unknown _type %s: read as %s%s" % (kind, read_as_label,
+                                                            "; checked below as " + checked if close else ""))
+        return checked
+
     def keyed(self, owner, key, path):
         block = owner.get(key)
         if block is None:
@@ -645,22 +760,33 @@ class Checker:
         if not isinstance(name, str):
             self.error(path, "has no \"name\"")
         elif name != key:
-            self.error(path, "key and \"name\" (%s) differ; bmm-publisher uses the name" % name)
+            self.error(path, "key and \"name\" (%s) differ; keep them equal (depending on the map, the "
+                             "tables show one or both)" % name)
 
     def check_keys(self, item, kind, path):
         for key in item:
             if key in READ_KEYS[kind]:
                 continue
-            near = difflib.get_close_matches(key, sorted(READ_KEYS[kind]), n=1, cutoff=0.8)
+            k_path = "%s/%s" % (path, key)
             if key in SPEC_ONLY_KEYS.get(kind, ()):
-                self.warning("%s/%s" % (path, key), "defined by the persistence model but not read by "
-                                                   "bmm-publisher, so it is missing from every output")
-            elif near and near[0] not in item:
-                self.error("%s/%s" % (path, key), "unknown key, probably a misspelling of %s; bmm-publisher "
-                                                 "ignores it, so %s keeps its default" % (near[0], near[0]))
+                if (kind, key) in LOSSY_KEYS:
+                    self.error(k_path, "not read by bmm-publisher: " + LOSSY_KEYS[(kind, key)])
+                else:
+                    self.warning(k_path, "known to the persistence specification but not read by "
+                                         "bmm-publisher, so it is missing from every output")
+            elif kind in CLASS_TYPES[1:] and key in READ_KEYS["P_BMM_CLASS"]:
+                self.error(k_path, "bmm-publisher does not read %s on a %s, so it is lost" % (key, kind))
+            elif self.misspelling(key, kind, item):
+                near = self.misspelling(key, kind, item)
+                self.error(k_path, "unknown key, probably a misspelling of %s; bmm-publisher ignores it, "
+                                   "so %s keeps its default" % (near, near))
             else:
-                self.warning("%s/%s" % (path, key), "unknown key, ignored by bmm-publisher (expected "
-                                                   "one of: %s)" % ", ".join(sorted(READ_KEYS[kind])))
+                self.warning(k_path, "unknown key, ignored by bmm-publisher (expected one of: %s)"
+                             % ", ".join(sorted(READ_KEYS[kind])))
+
+    def misspelling(self, key, kind, item):
+        near = difflib.get_close_matches(key, sorted(READ_KEYS[kind]), n=1, cutoff=0.8)
+        return near[0] if near and near[0] not in item else None
 
     def check_documentation(self, item, path, required=False):
         doc = item.get("documentation")
@@ -709,6 +835,8 @@ class Checker:
             info = self.lookup(current)
             if info is None:
                 undecided = True
+                if self.missing_includes:
+                    self.unchecked.add(current)
             else:
                 todo.extend(info["ancestors"])
         return None if undecided else False
@@ -717,11 +845,21 @@ class Checker:
         if not isinstance(name, str) or not name:
             self.error(path, "must be a non-empty class name")
             return
-        if name in scope or name == PROCEDURE_RESULT or self.arity(name) is not None:
+        if name in scope or self.lookup(name) is not None:
+            return
+        if name == PROCEDURE_RESULT:
+            self.warning(path, "void is only the result type of a procedure")
             return
         if len(name) == 1:
             self.warning(path, "%s is not a generic parameter of this class; declare it in "
                                "generic_parameter_defs" % name)
+            return
+        known = set(self.classes)
+        for dep_classes in self.dependencies.values():
+            known.update(dep_classes)
+        near = difflib.get_close_matches(name, sorted(known), n=1, cutoff=0.85)
+        if near:
+            self.warning(path, "type %s is not defined; did you mean %s?" % (name, near[0]))
         elif self.missing_includes:
             self.unchecked.add(name)
         else:
@@ -737,11 +875,17 @@ def load(path):
     except json.JSONDecodeError as exc:
         raise SystemExit(fail("%s is not valid JSON: %s (line %d, column %d)"
                               % (path, exc.msg, exc.lineno, exc.colno)))
+    except UnicodeDecodeError:
+        raise SystemExit(fail("%s is not UTF-8 text" % path))
 
 
 def fail(message):
     print("check_bmm: " + message, file=sys.stderr)
     return 2
+
+
+def is_count(value):
+    return isinstance(value, int) and not isinstance(value, bool)
 
 
 def schema_id(d):
@@ -754,18 +898,21 @@ def summarise(cls):
     params = params if isinstance(params, dict) else {}
     ancestors = cls.get("ancestors")
     ancestors = ancestors if isinstance(ancestors, list) else []
-    return {
-        "params": [(key, p.get("conforms_to_type") if isinstance(p, dict) else None) for key, p in params.items()],
-        "ancestors": [a for a in ancestors if isinstance(a, str)],
-    }
+    constraints = []
+    for key, p in params.items():
+        constraint = p.get("conforms_to_type") if isinstance(p, dict) else None
+        constraints.append((key, constraint if isinstance(constraint, str) else None))
+    return {"params": constraints, "ancestors": [a for a in ancestors if isinstance(a, str)]}
 
 
 def class_index(d):
     classes = {}
     for section in ("primitive_types", "class_definitions"):
-        for cls in (d.get(section) or {}).values():
-            if isinstance(cls, dict) and isinstance(cls.get("name"), str):
-                classes[cls["name"]] = summarise(cls)
+        block = d.get(section)
+        if isinstance(block, dict):
+            for cls in block.values():
+                if isinstance(cls, dict) and isinstance(cls.get("name"), str):
+                    classes[cls["name"]] = summarise(cls)
     return classes
 
 
@@ -779,9 +926,16 @@ def main(argv=None):
     checker = Checker(args.schema, args.dependency).run()
     for level, path, message in checker.findings:
         print("%-7s %s: %s" % (level, path, message))
-    errors, warnings = checker.count("ERROR"), checker.count("WARNING")
-    print("check_bmm: %s: %d error(s), %d warning(s)" % (args.schema, errors, warnings))
-    return 1 if errors or (args.strict and warnings) else 0
+    errors, warnings, unchecked = checker.count("ERROR"), checker.count("WARNING"), len(checker.unchecked)
+    print("check_bmm: %s: %d class(es), %d error(s), %d warning(s), %d name(s) not checked"
+          % (args.schema, len(checker.classes), errors, warnings, unchecked))
+    if errors or (args.strict and warnings):
+        return 1
+    if unchecked:
+        print("check_bmm: incomplete: pass each included schema with -d before relying on this result",
+              file=sys.stderr)
+        return 3
+    return 0
 
 
 if __name__ == "__main__":
