@@ -27,7 +27,7 @@ in `specifications-XX` repositories (RM, AM, BASE, LANG, PROC, SM, QUERY, CDS, C
 - **its-rest** — for OpenAPI YAML and Markdown in the ITS-REST repo
 - **governance** — release management, change requests, lifecycle governance
 - **class-generation** — regenerate the class-definition tables and UML diagrams in `docs/UML/` from BMM via `bmm-publisher`
-- **bmm-authoring** — add or change classes, attributes, functions and invariants in the component's BMM schema
+- **bmm-authoring** — write or change the component's BMM schema (classes, attributes, functions, invariants) and check it
 
 For attribute naming patterns, read `references/cross-references.md`. To verify that every
 `{openehr_*}` attribute and deep-link anchor resolves, dispatch the `xref-auditor` subagent.

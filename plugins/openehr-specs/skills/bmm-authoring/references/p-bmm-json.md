@@ -16,7 +16,8 @@ the specification and the toolchain differ, both are stated. It was checked agai
 time of writing.
 
 `assets/openehr_demo_0.1.0.bmm.json` is a complete worked example with one each of the common
-constructs. It passes `scripts/check_bmm.py` and renders with `bmm-publisher`.
+constructs. With BASE loaded through `-d`, `scripts/check_bmm.py` reports nothing on it, and it renders
+with `bmm-publisher`.
 
 ## Contents
 

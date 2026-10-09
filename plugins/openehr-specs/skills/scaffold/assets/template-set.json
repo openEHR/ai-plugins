@@ -17,14 +17,14 @@
     {
       "revision": 3,
       "released": "2026-10-09",
-      "summary": "A new repository gets computable/BMM/<id>.bmm.json: a copy of the schema the bmm-publisher image bundles for the component, or an empty schema (one root package, BASE included) when it bundles none. Existing repositories are not offered one.",
-      "digest": "c78b965d50608d5937bd6dfcc0b0953cba4c91d51ad347bd46b647b7cdc7281f"
+      "summary": "A new repository gets computable/BMM/<id>.bmm.json: a copy of the schema the bmm-publisher image bundles for the component, or an empty schema (one root package, BASE included) when it bundles none. Existing repositories are not offered one. AGENTS.md sends BMM edits to the bmm-authoring skill.",
+      "digest": "26ad62920185cc51eaab770d36105704846af19301e544bf94244220d9e3c9f1"
     },
     {
       "revision": 4,
       "released": "2026-10-09",
       "summary": "README.md: a root README.adoc is no longer accepted in its place; the plan reports it as convert (rewrite it as Markdown, or merge it into an existing README.md). The bmm file is never offered to the ITS-XML, ITS-BMM, ITS-JSON and ITS-REST repositories, and bmm_schema_id must be empty there.",
-      "digest": "1d37e98bd339a50792dcb5a9bad9a7090bc6269f1e3c5943db1f9679712be414"
+      "digest": "35c1f9ba27c7a23ad8994f184dd04e4b702419af575a393ced8120a107b15521"
     }
   ],
   "variables": {

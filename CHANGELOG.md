@@ -6,13 +6,19 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ### Added
 
-- `bmm-authoring` skill: write a component's BMM schema (the P_BMM JSON in `computable/BMM/`) from scratch, or change one. It covers the header and its conventions, `includes`, how packages set the class-table file names, every class, property, type and function kind, invariants and constants, documentation text, what the legacy class tables do not show, and the persistence-spec features `bmm-publisher` does not read (indexed containers, `ancestor_defs`, `type_ref` value sets), with the form to write instead. It ships a worked example (`assets/openehr_demo_0.1.0.bmm.json`) and a read-only checker, `scripts/check_bmm.py` (standard-library Python 3.8+), that reports what `bmm-publisher` accepts without a message or renders wrongly: a misspelt or missing `_type`, a misspelt key such as `is_mandantory`, a key that differs from its `name`, a class in no package, an upper limit without `"upper_unbounded": false`, a container without an element type, wrong generic parameter counts, a generic argument that does not conform to its parameter's `conforms_to_type`, type shapes the publisher mis-renders (a simple type in a container's `type_def`, a type object in `generic_parameters`, both generic-parameter forms at once, a container in `generic_parameter_defs`), classes more than four package levels deep, and unresolved type names. A run that could not load an included schema with `-d` reports how many names went unchecked and exits 3 when it found no errors, so an incomplete check is never mistaken for a clean one. CI runs its unit tests (`scripts/test_check_bmm.py`).
+- `bmm-authoring` skill: write a component's BMM schema (the P_BMM JSON in `computable/BMM/`) from scratch, or change one.
+  - The reference covers every class, property, type and function kind, and the spec features `bmm-publisher` ignores.
+  - `assets/openehr_demo_0.1.0.bmm.json` is a worked example with one of each common construct.
+  - `scripts/check_bmm.py` (read-only, Python 3.8+) reports mistakes that `bmm-publisher` accepts without a warning, such as a misspelt `_type` or key.
+  - Names from an included schema not loaded with `-d` go unchecked, and a run with no errors then exits 3, not 0.
+  - CI runs its unit tests in the root `scripts/test_check_bmm.py`.
 - `scaffold` template set revision 3: a new repository also gets `computable/BMM/<id>.bmm.json` (file id `bmm`, strategy `bmm-seed`).
   - The script lists the schemas the local `ghcr.io/openehr/bmm-publisher` image bundles (`docker run --pull never`, so nothing is downloaded) and copies the highest version for the component.
   - When the image bundles none, it writes an empty schema `openehr_<component>_<first_release>`. The schema has one root package `org.openehr.<name>`, no classes, and BASE in `includes` for other components. bmm-publisher refuses a schema without a package.
   - Without Docker or the image the file is reported as `blocked` and the other files are still written; `--var bmm_schema_id=<id>` creates the empty schema anyway.
   - Existing repositories are not offered a schema; `--overwrite bmm` asks for one.
   - Derived variables can take a regex group (`match` + `group`), which gives the new `bmm_schema_name` and `bmm_rm_release`.
+  - The `AGENTS.md` task table and build region send BMM schema edits to `bmm-authoring`.
 
 ### Changed
 
@@ -23,8 +29,8 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
   - `bmm-authoring` creates and edits no schema there and sends the change to the component repo.
   - `class-generation` and `regen-classes` run no `bmm-publisher` command there.
   - `scripts/validate.py` checks that these four skills name every repo that the template set excludes (`files[bmm].excluded_components`).
-- `class-generation` and `authoring` send changes to the class model itself to `bmm-authoring`, and `scaffold` points to it for filling a new repository's empty schema.
-- `docs/prompting-guide.md`: the class-change prompts name `bmm-authoring` and the checker, and a prompt for a new component's schema is added.
+- `class-generation`, `authoring` and `scaffold` send BMM schema edits to `bmm-authoring`.
+- `docs/prompting-guide.md` sends the class-change prompts to `bmm-authoring` and adds a section for a new component's schema.
 
 ## openehr-specs 0.5.0 (2026-10-08)
 
