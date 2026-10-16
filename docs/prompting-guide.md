@@ -20,6 +20,7 @@ In the prompts, `<XX>` is a component id such as `RM`, `BASE` or `AM`, and `<spe
 | [Edit the ITS-REST API](#edit-the-its-rest-api) | `its-rest` |
 | [Set up or upgrade a repository](#set-up-or-upgrade-a-repository) | `/openehr-specs:scaffold` |
 | [Write a commit message](#write-a-commit-message) | the repository's `AGENTS.md` |
+| [Write a Jira issue, comment or pull request](#write-a-jira-issue-comment-or-pull-request) | `tracker-writing` |
 
 ## What makes a prompt work
 
@@ -192,3 +193,12 @@ Write the commit message for my staged changes.
 ```
 
 This follows the Conventions section of the repository's `AGENTS.md`, which `/openehr-specs:scaffold` installs: `Changes for SPECXX-NN - <what changed>`. Claude takes the key from you, then from the branch name (`feat/SPECXX-42-<slug>`), and writes no key when it has none, rather than guessing.
+
+## Write a Jira issue, comment or pull request
+
+```text
+Raise a SPECPR for the missing EXPR_VALUE_REF table in BEL.
+Open the PR for this branch.
+```
+
+The `tracker-writing` skill gives each text a fixed structure and a hard cap: 120 words for an issue, 80 for a PR body, 40 for a comment. When the content does not fit, Claude shows you the draft with its word count and asks whether to post it long or drop parts. It does not cut on its own.
