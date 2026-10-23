@@ -7,6 +7,7 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 ### Added
 
 - `tracker-writing` skill: Jira issues, Jira comments and GitHub pull request bodies in a fixed structure with hard word caps (issue 120, PR 80, comment 40). When content does not fit, the agent shows the draft and asks before posting; it never cuts silently. Before/after examples in `references/examples.md`.
+- `tracker-writing`: a new Jira issue gets Component/s, Affects Version/s and, when known, Fix Version/s, chosen only from the values that already exist in the target project. The agent never creates a component or version, and leaves the field empty when nothing fits.
 
 ## openehr-specs 0.6.0 (2026-10-09)
 
