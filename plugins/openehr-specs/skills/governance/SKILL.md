@@ -120,18 +120,29 @@ least one formal software, schema, or technical expression before adoption.
 
 A CR or PR ticket is closed in two steps, never straight from Open or Analysis:
 
-1. **Resolve** when the change is merged: transition the ticket to Resolved with resolution
-   Fixed and the Fix Version set to the release that will carry the change. Comment with the
-   merged PR (tracker-writing skill).
+1. **Resolve** when the change is merged: walk the ticket to Resolved (Approve transition,
+   resolution Done or Fixed) with the Fix Version set to the release that will carry the
+   change. Comment with the merged PR (tracker-writing skill).
 2. **Release**: the ticket stays Resolved until that component release is published (see
    Release Process). The release's Jira saved searches list these Resolved tickets.
 3. **Close** after the release is deployed. Closing earlier drops the ticket from the release
    lists and hides that the change is still unreleased.
 
-The SPEC trackers' workflow is Open → Analysis → In Progress → In Review → Resolved → Closed.
-The Commence and Start Review transitions require Fix Version, Due date, Priority, Impact
-Analysis and Change Description. A direct "Closed" transition exists from every state; do not
-use it before the release.
+The SPEC CR trackers' workflow, with the transition names and the fields each one requires:
+
+| Transition | From → To | Set on the way |
+|---|---|---|
+| Assign | Open → Analysis | Affects Version/s, Fix Version/s, Analyst |
+| Commence | Analysis → In Progress | Due date, Priority, Impact Analysis (and Fix Version/s if still empty) |
+| Start Review | In Progress → In Review | Change Description (what changed, with the PR link) |
+| Approve | In Review → Resolved | resolution Done or Fixed; SEC members record their vote in the Acceptance field first |
+| Closed | any → Closed | nothing; use only after the release |
+
+Impact Analysis and Change Description are rich-text fields: via the API they take an ADF
+document, not a plain string. Set every field in the table even when a transition does not
+force it, so the ticket reads the same as the others in the tracker. A direct "Closed"
+transition exists from every state; do not use it before the release, and never from Open or
+Analysis, which leaves the ticket without Fix Version, resolution and change description.
 
 ## Release Process
 

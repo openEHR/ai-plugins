@@ -10,7 +10,7 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ### Changed
 
-- `governance` skill: documents the Jira ticket flow Resolve → release → Close. A CR or PR is Resolved (Fixed, Fix Version set) when its change is merged, stays Resolved until the component release is published, and is Closed only then. The release checklist and release steps say the same.
+- `governance` skill: documents the Jira ticket flow Resolve → release → Close. A CR or PR is Resolved (Fixed, Fix Version set) when its change is merged, stays Resolved until the component release is published, and is Closed only then. The transition table lists the fields each step requires (Affects and Fix Version, Analyst, Due date, Priority, Impact Analysis, Change Description, Acceptance). The release checklist and release steps say the same.
 
 ## openehr-specs 0.6.0 (2026-10-09)
 
