@@ -116,6 +116,23 @@ From Release 1.0 onward, specification changes (excluding documentation-only tex
 must be announced on the Discourse specifications forum, and require implementation in at
 least one formal software, schema, or technical expression before adoption.
 
+### 6. Jira Ticket Flow: Resolve → Release → Close
+
+A CR or PR ticket is closed in two steps, never straight from Open or Analysis:
+
+1. **Resolve** when the change is merged: transition the ticket to Resolved with resolution
+   Fixed and the Fix Version set to the release that will carry the change. Comment with the
+   merged PR (tracker-writing skill).
+2. **Release**: the ticket stays Resolved until that component release is published (see
+   Release Process). The release's Jira saved searches list these Resolved tickets.
+3. **Close** after the release is deployed. Closing earlier drops the ticket from the release
+   lists and hides that the change is still unreleased.
+
+The SPEC trackers' workflow is Open → Analysis → In Progress → In Review → Resolved → Closed.
+The Commence and Start Review transitions require Fix Version, Due date, Priority, Impact
+Analysis and Change Description. A direct "Closed" transition exists from every state; do not
+use it before the release.
+
 ## Release Process
 
 Releases organize changes by component. The SEC defines release identifiers and delivery
@@ -132,10 +149,11 @@ Read `references/release-checklist.md` for the full step-by-step checklist.
 
 The high-level process:
 
-1. **Jira** (a user task, not doable from the repo): ask the user to confirm that all CRs and PRs for the release are closed and the saved searches exist, then continue.
+1. **Jira** (a user task, not doable from the repo): ask the user to confirm that all CRs and PRs for the release are Resolved (not yet Closed, see "Jira Ticket Flow") and the saved searches exist, then continue.
 2. **manifest.json**: Set the release date, verify `spec_status` for each spec, ensure Jira links are correct, and prepend the next-cycle `releases` entry with an empty `date`.
 3. **Git**: Create a release branch (`Release-N.N.N`), publish in release mode with the exact command in the checklist (do not use `/openehr-specs:publish`; it builds previews only), commit, and create the annotated tag. Ask the user before pushing.
 4. **Webhook**: The push triggers the specifications.openehr.org server to pull and deploy.
+5. **Jira** (a user task): once deployed, close the Resolved CRs and PRs that carry this Fix Version.
 
 ### Steps to Fix a Release
 

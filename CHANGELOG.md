@@ -8,6 +8,10 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 - `tracker-writing` skill: Jira issues, Jira comments and GitHub pull request bodies in a fixed structure with hard word caps (issue 120, PR 80, comment 40). When content does not fit, the agent shows the draft and asks before posting; it never cuts silently. Before/after examples in `references/examples.md`.
 
+### Changed
+
+- `governance` skill: documents the Jira ticket flow Resolve → release → Close. A CR or PR is Resolved (Fixed, Fix Version set) when its change is merged, stays Resolved until the component release is published, and is Closed only then. The release checklist and release steps say the same.
+
 ## openehr-specs 0.6.0 (2026-10-09)
 
 ### Added

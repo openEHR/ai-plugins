@@ -4,8 +4,8 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
 
 ## Pre-Release
 
-- [ ] All CRs allocated to this release are completed and resolved in Jira
-- [ ] All PRs addressed by this release are resolved and closed in Jira
+- [ ] All CRs allocated to this release are Resolved in Jira (resolution Fixed, Fix Version set); they are Closed only after the release
+- [ ] All PRs addressed by this release are Resolved in Jira; they are Closed only after the release
 - [ ] Create Jira saved searches (filters) for:
   - PRs fixed: `<jira-home>/projects/SPECPR/versions/NNNNN`
   - CRs done: `<jira-home>/projects/SPEC<COMPONENT>/versions/NNNNN`
@@ -53,6 +53,7 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
 ## Post-Release
 
 - [ ] Verify deployment at `https://specifications.openehr.org/releases/XX/Release-N.N.N/`
+- [ ] Close the Resolved CRs and PRs with this Fix Version in Jira (Resolve → release → Close, see the governance skill)
 - [ ] Switch back to `master`: `git checkout master`
 - [ ] Announce on Discourse specifications forum if appropriate
 
