@@ -30,6 +30,7 @@ Add the marketplace from this repository (or a fork), then install `openehr-spec
 | `class-generation` | Generate class tables and UML diagrams from BMM via `bmm-publisher` |
 | `bmm-authoring` | Write or change a component's BMM schema (P_BMM JSON) and check it before rendering (needs `python3`) |
 | `tracker-writing` | Jira issues, Jira comments and GitHub pull requests: hard caps (120/80/40 words), fixed structure, ask before going over |
+| `ticket-brief` | Read-only brief of a Jira ticket: ask, state checked against the spec repos, two-line fix proposal, level (Fix, Minor change, Change Request) and clearly related items |
 
 ### User-only action skills
 

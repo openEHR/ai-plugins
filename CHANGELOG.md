@@ -8,6 +8,7 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 - `tracker-writing` skill: Jira issues, Jira comments and GitHub pull request bodies in a fixed structure with hard word caps (issue 120, PR 80, comment 40). When content does not fit, the agent shows the draft and asks before posting; it never cuts silently. Before/after examples in `references/examples.md`.
 - `tracker-writing`: a new Jira issue gets Component/s, Affects Version/s and, when known, Fix Version/s, chosen only from the values that already exist in the target project. The agent never creates a component or version, and leaves the field empty when nothing fits.
+- `ticket-brief` skill: a read-only brief of a Jira ticket. It gives the ask, the state checked against `master` of the spec repos, a two-line fix proposal, the level under the SEC change workflow (Fix, Minor change or Change Request) with the impact, and the clearly related pull requests, tickets and Discourse threads. Several keys give a table.
 
 ### Changed
 
