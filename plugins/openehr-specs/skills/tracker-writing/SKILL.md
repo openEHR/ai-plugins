@@ -123,6 +123,10 @@ When one change needs pull requests in several repositories (see the governance 
 Use full URLs: a bare `repo#N` without the owner does not link across repositories, and GitHub's
 `closes`/`fixes` keywords close issues, not pull requests. These lines do not count toward the cap.
 
+Opening a pull request also sets the Fix Version on its ticket, one per component the pull
+request touches (governance skill, Release allocation). Do it in Jira; it is not a line in the
+description.
+
 Do not list the changed files, the diff shows them. Do not add a checklist unless the reviewer
 has to tick something.
 

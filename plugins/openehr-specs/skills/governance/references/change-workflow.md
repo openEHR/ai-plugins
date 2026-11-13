@@ -138,8 +138,17 @@ of notice. Neither triggers a release on its own.
 
 - Problem Reports are the public way in. Any SEC member can pick one up at any time; there is
   no fixed review round.
-- Pull requests carry a `fix` or `minor` label, so the SEC can list them. Any member can ask
-  for one to be reverted and raised as a Change Request.
+- Pull requests carry a `fix`, `minor` or `change-request` label, so the SEC can list them. Any
+  member can ask for one to be reverted and raised as a Change Request.
+- **Release allocation.** When a pull request is opened, set the Fix Version of the ticket it
+  implements (Problem Report or Change Request) to the next planned release of every component
+  the pull request touches, one Fix Version per component. On `SPECPR` the versions are named per
+  component (`AM version 2.4.0`, `RM Release 1.2.0`, `ITS-XML Release 2.1.0`); on a component
+  tracker they are that component's own (`Release 1.2.0`, `ADL 2.4.0`). A change spread over
+  several pull requests gets one Fix Version per component. This is the default, done on creation
+  of the pull request; anyone may change it later to move the change out of a release. The Fix
+  Versions are the running list of what the next release carries, and the first source of its
+  release notes.
 - A Fix without a Problem Report has no ticket; the pull request is the record.
 - The proposal reduces the ticket states to Open, In Progress, Closed (Problem Report) and
   Open, In Progress, Review, Closed (Change Request). Jira still runs the old workflow, so
@@ -149,4 +158,5 @@ of notice. Neither triggers a release on its own.
 ## Open
 
 - Traceability of Minor changes: a Change Request for the record, or GitHub release notes?
-  Under evaluation in [SPECPR-518](https://openehr.atlassian.net/browse/SPECPR-518).
+  Under evaluation in [SPECPR-518](https://openehr.atlassian.net/browse/SPECPR-518); to be tried
+  at the next release. Until then the Fix Versions on the tickets are the record.
