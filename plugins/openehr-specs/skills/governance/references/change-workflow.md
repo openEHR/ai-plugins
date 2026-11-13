@@ -96,6 +96,10 @@ tightening a constraint, changing a wire format, anything that needs data migrat
 No impact-analysis document is required by the workflow; the effect on implementations is
 part of the discussion. The Jira fields the tracker still asks for are in the governance skill.
 
+## One change, several pull requests
+
+A change often needs pull requests in several repositories: the specification text, the BMM, the XML and JSON schemas, the OpenAPI files. Then one of them is the **collection pull request**, normally the one with the specification text. Its description lists the other pull requests, and each of them links back to it. Approvals are given on the collection and count for all of them; the others need no approvals of their own, only a check that they match. The SEC votes once, on the Change Request, never per pull request. The pull requests are merged together, the collection last. The ticket links the collection.
+
 ## The SEC vote
 
 Only Change Requests are voted on, in one of two ways:

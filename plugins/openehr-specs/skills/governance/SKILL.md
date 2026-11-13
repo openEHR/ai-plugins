@@ -105,8 +105,13 @@ in favour, or two-thirds of the members on the ticket), then a pull request with
 approvals confirming the text matches the vote.
 
 Releases are not voted on. A minor or major release goes to a 30-day community ballot on
-Discourse before it is published; a patch release does not. Label pull requests `fix` or
-`minor` so the SEC can list them.
+Discourse before it is published; a patch release does not. Label pull requests `fix`,
+`minor` or `change-request` so the SEC can list them.
+
+When one change needs pull requests in several repositories (text, BMM, schemas, OpenAPI), the
+one with the specification text is the **collection pull request**: it lists the others, they
+link back, approvals are given on it once and count for all, and the SEC votes once on the
+Change Request, never per pull request. Merge them together, the collection last.
 
 ### Jira Ticket Flow: Resolve → Release → Close
 
