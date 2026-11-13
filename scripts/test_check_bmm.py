@@ -933,7 +933,9 @@ class CommandLineTest(Base):
         def nested(depth):
             return ('{"_type": "P_BMM_CONTAINER_TYPE", "container_type": "List", "type_def": ' * depth
                     + '{"_type": "P_BMM_SIMPLE_TYPE", "type": "String"}' + "}" * depth)
-        for depth, text in ((600, "too deeply to check"), (20000, "too deeply to read")):
+        # At depth 20000 the JSON parser gives up on older Pythons ("to read"); newer ones
+        # parse it and the checker gives up instead ("to check"). Both exit 2.
+        for depth, text in ((600, "too deeply to check"), (20000, "nested too deeply to ")):
             with self.subTest(depth=depth):
                 d = self.demo()
                 d["class_definitions"]["DEMO_ITEM"]["functions"]["is_tagged"]["result"] = "@@RESULT@@"
