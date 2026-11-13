@@ -31,7 +31,7 @@ Add the marketplace from this repository (or a fork), then install `openehr-spec
 | `bmm-authoring` | Write or change a component's BMM schema (P_BMM JSON) and check it before rendering (needs `python3`) |
 | `tracker-writing` | Jira issues and GitHub pull requests: a capped summary (120/80 words), then Details of at most 5 to 7 minutes' reading; comments stay summary only (40 words); fixed structure, ask before going over |
 | `screener` | Read-only personal screen: what you can close first (pull requests with the approvals their level needs and, for a Minor change, the week of notice; tickets to resolve or close), then who is waiting on you (needs `python3` and a logged-in `gh`) |
-| `ticket-brief` | Read-only brief of a Jira ticket: ask, state checked against the spec repos, two-line fix proposal, level (Fix, Minor change, Change Request) and clearly related items |
+| `ticket-brief` | Read-only brief of a Jira ticket: ask, state checked against the spec repos, two-line fix proposal, level (Fix, Minor change, Change Request) and clearly related items; for one ticket it then has `fix-drafter` and `fix-challenger` work out the challenged proposal in the background |
 
 ### User-only action skills
 
@@ -52,6 +52,8 @@ Context-isolated subagents for heavy, multi-file, or verification work, dispatch
 | `spec-reviewer` | Runs the full `review` check catalog across an entire spec document, returns a findings report | `specifications-XX` (+ `AA_GLOBAL` for attribute checks) |
 | `xref-auditor` | Verifies every `{openehr_*}` attribute and `<<anchor>>` resolves; checks cross-spec deep-link anchors against the target's Markdown twin | `specifications-XX` (+ `AA_GLOBAL` to resolve attributes); WebFetch (optional, for cross-spec anchors) |
 | `identifier-grounding` | Fact-checks every RM/AM/BASE class/attribute a draft names against the published spec; flags invented identifiers | `openehr-assistant` MCP or WebFetch (optional) |
+| `fix-drafter` | Works the fix proposal of a `ticket-brief` out into concrete pull requests (current and proposed text, level per pull request); dispatched by `ticket-brief` | `specifications-XX` clones, `gh`, Atlassian MCP (optional) |
+| `fix-challenger` | Challenges the drafted fix as a critical SEC member would and writes the short final proposal: effort and level labels, pull requests, draft Jira comment | `specifications-XX` clones, `gh`, Atlassian MCP (optional) |
 
 `AA_GLOBAL` is the `specifications-AA_GLOBAL` repository, which holds the boilerplate, publishing scripts, and styles shared by all spec repos. A Markdown twin is the Markdown version of a published spec page: swap `.html` for `.md` in its URL.
 
