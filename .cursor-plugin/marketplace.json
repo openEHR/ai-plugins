@@ -15,6 +15,16 @@
       },
       "source": "./plugins/openehr-specs",
       "category": "development"
+    },
+    {
+      "name": "openehr-specs-maintenance",
+      "description": "Skills for the people who maintain the openEHR specifications as a body of work: Specifications Editorial Committee (SEC) housekeeping such as the agenda of the next call and the list of pending pull request reviews and unanswered Jira questions.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Severin Kohler"
+      },
+      "source": "./plugins/openehr-specs-maintenance",
+      "category": "development"
     }
   ]
 }
