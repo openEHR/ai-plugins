@@ -116,12 +116,11 @@ Change Request, never per pull request. Merge them together, the collection last
 **Release allocation.** When you open a pull request, set the Fix Version of its ticket (Problem
 Report or Change Request) to the next planned release of every component the pull request
 touches, one per component: on `SPECPR` the per-component versions (`AM version 2.4.0`,
-`RM Release 1.2.0`), on a component tracker its own (`Release 1.2.0`, `ADL 2.4.0`). The ticket is
-the record, not the pull request: it must end up with one Fix Version for every component the
-change touches, however many pull requests implement it, so check the set is complete and add
-what is missing. It is the default; anyone may move the ticket out of a release later by
-changing it. Pick the lowest unreleased version of the component; ask when more than one is
-open and the choice is not obvious.
+`RM Release 1.2.0`), on a component tracker its own (`Release 1.2.0`, `ADL 2.4.0`). Three pull
+requests for one Problem Report, in three components, give it three Fix Versions: add the one
+for your component, keep the others. It is the default; anyone may move the ticket out of a
+release later by changing it. Pick the lowest unreleased version of the component; ask when
+more than one is open and the choice is not obvious.
 
 ### Jira Ticket Flow: Resolve → Release → Close
 
