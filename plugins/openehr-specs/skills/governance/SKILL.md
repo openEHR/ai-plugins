@@ -113,10 +113,20 @@ one with the specification text is the **collection pull request**: it lists the
 link back, approvals are given on it once and count for all, and the SEC votes once on the
 Change Request, never per pull request. Merge them together, the collection last.
 
+**Release allocation.** When you open a pull request, set the Fix Version of its ticket (Problem
+Report or Change Request) to the next planned release of every component the pull request
+touches, one per component: on `SPECPR` the per-component versions (`AM version 2.4.0`,
+`RM Release 1.2.0`), on a component tracker its own (`Release 1.2.0`, `ADL 2.4.0`). Several pull
+requests for one change give several Fix Versions. It is the default; anyone may move the
+ticket out of a release later by changing it. Pick the lowest unreleased version of the
+component; ask when more than one is open and the choice is not obvious.
+
 ### Jira Ticket Flow: Resolve → Release → Close
 
 A CR or PR ticket is closed in two steps, never straight from Open or Analysis:
 
+0. **Allocate** when the pull request is opened: set the Fix Version to the next release of each
+   component the pull request touches (Release allocation above). Resolve only confirms it.
 1. **Resolve** when the change is merged: walk the ticket to Resolved (Approve transition,
    resolution Done or Fixed) with the Fix Version set to the release that will carry the
    change. Comment with the merged PR (tracker-writing skill).
