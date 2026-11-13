@@ -79,36 +79,45 @@ removed or want the user to decide on:
 
 ## SEC update: sections
 
-In this order; each one or two slides.
+In this order; each one or two slides, except Proposals.
 
 | # | Section | What goes in | Component |
 |---|---|---|---|
 | 1 | Title | meeting and date, the topics in one line, presenter | title slide |
 | 2 | Backlog | Problem Reports resolved in the period with the split by resolution, open before and after, still to screen; one or two lines on the approach | three stat tiles + list |
-| 3 | Still open | what needs a pull request, a board decision, or an SEC decision, with ticket links | check list |
-| 4 | Problems seen | process problems the work showed, each with a proposal or a question to the SEC | two columns |
-| 5 | Activity | merged pull requests and Jira comments per month, people commenting; the current month against the year | two bar charts + comparison line |
-| 6 | Workstreams | one slide per running workstream (for example conformance, publishing, tooling): status tag, what moved, what is open | list with tag |
-| 7 | Goals | the goals until the next milestone, as a check list | big check list |
-| 8 | Releases | what the next release needs, with the collection ticket, and the help asked for | list |
-| 9 | Agenda | "any pressing topics?", then the points the SEC is asked to decide today | numbered list |
-| 10 | Proposals | only when a proposal is up for decision: why, the options or levels, and what is asked by when | flow rows, table |
+| 3 | Context | optional: the frame the work is ranked against (a plan, a regulation, a deadline), named in a line each, never its content | list |
+| 4 | Still open | what needs a pull request, a board decision, or an SEC decision, with ticket links | check list |
+| 5 | Problems seen | process problems the work showed, each with a proposal or a question to the SEC | two columns |
+| 6 | Activity | merged pull requests and Jira comments per month, people commenting; the current month against the year | two bar charts + comparison line |
+| 7 | Workstreams | one slide per running workstream (for example conformance, publishing, tooling): status tag, what moved, what is open | list with tag |
+| 8 | Goals | the goals until the next milestone, as a check list | big check list |
+| 9 | Releases | what the next release needs, with the collection ticket, and the help asked for | list |
+| 10 | Agenda | "any pressing topics?", then the points the SEC is asked to decide today, in the order of the slides that follow | numbered list |
+| 11 | Proposals | one block per point on the agenda, in that order | see below |
 
-Section 10 is for a decision on the table, such as a change to the workflow. Present the
-proposal from its own source pages and link them; the deck is not where the proposal is kept.
+Proposals are the decisions on the table, such as a change to the workflow or to the meeting
+cadence. A small one is one slide: the problem and what is asked. A large one gets as many
+slides as it needs, numbered "1 of n": why (today vs. proposed), the options or levels, the
+rules that change, and a last slide with where to read it and what is asked by when. Present
+it from its own source pages and link them; the deck is not where the proposal is kept.
 
 ## Board update: sections
 
-Cut from the latest SEC deck; five to seven slides, about six minutes.
+Cut from the latest SEC deck; five to seven slides, about six minutes. Number the sections
+in the kicker ("1 · Problem Reports").
 
 | # | Section | Taken from the SEC deck |
 |---|---|---|
-| 1 | Title | the topics in one line |
-| 2 | Backlog | the stat tiles; the approach in one line |
-| 3 | Activity | the charts and the comparison line |
+| 1 | Title | the topics in one line; the notes point to the SEC deck for detail |
+| 2 | Backlog | the stat tiles; the approach and the frame (Context) in one line |
+| 3 | Activity | the charts and the comparison line; the notes say it is the group's work, not one person's |
 | 4 | Deliverables | one tile per workstream: status tag and one or two lines of outcome |
-| 5 | Process | only when the SEC is changing how it works: today vs. proposed in two rows, and what is decided when |
-| 6 | Goals | the same check list |
+| 5 | Workstream in focus | optional, one slide: the workstream the board has to know more about or decide on |
+| 6 | Process | only when the SEC is changing how it works: today vs. proposed in two rows, the main rules in three bullets, and what is decided when |
+| 7 | Goals | the same check list |
+
+A workstream in focus often touches money, partners or vendors. Present it in the meeting if
+the user wants, but run Rule 2 on it with particular care before the deck goes anywhere.
 
 Leave out for the Board: ticket keys and links beyond one collection ticket, the "still open"
 and "problems seen" detail, the agenda, and anything the SEC has not seen yet. A topic for the
