@@ -14,6 +14,12 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
 - [ ] All diagrams are up to date (generated ones via the class-generation skill; the user can run `/openehr-specs:regen-classes`)
 - [ ] Run the `spec-reviewer` and `xref-auditor` subagents on each specification in the component; resolve all ERRORs, undefined attributes, and broken anchors
 
+## Ballot (minor and major releases only)
+
+- [ ] Post the ballot on the Discourse specifications forum from `ballot-post.md`: every ticket of the release linked, the development build, what changed, the closing date 30 days out
+- [ ] Answer every comment in the thread; changes from the ballot take their normal path and keep the Fix Version
+- [ ] Continue only after the closing date
+
 ## manifest.json Updates
 
 - [ ] For each specification in the component:
@@ -55,7 +61,7 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
 - [ ] Verify deployment at `https://specifications.openehr.org/releases/XX/Release-N.N.N/`
 - [ ] Close the Resolved CRs and PRs with this Fix Version in Jira (Resolve → release → Close, see the governance skill)
 - [ ] Switch back to `master`: `git checkout master`
-- [ ] Announce on Discourse specifications forum if appropriate
+- [ ] Post the release notes as the last reply in the ballot thread (patch release: a short post on the Discourse specifications forum)
 
 ## Fix Release (Post-Release Corrections)
 

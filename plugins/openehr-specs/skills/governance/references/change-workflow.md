@@ -134,6 +134,13 @@ Comments can lead to new changes; each takes its normal path and can still go in
 release. Fixes are not announced one by one; a Minor change is announced once, for its week
 of notice. Neither triggers a release on its own.
 
+The ballot is one Discourse post from the template in `ballot-post.md`: what the release
+carries with every ticket linked, where to read it (the development build at
+`https://specifications.openehr.org/releases/<COMPONENT>/development/` and what changed since
+the previous release), how to comment, and the closing date. The SEC answers every comment in
+the thread. A release view that marks the changes on the Antora site is still to build:
+[antora-openehr #57](https://github.com/openEHR/antora-openehr/issues/57); until then point to the amendment records.
+
 ## Tickets and pull requests
 
 - Problem Reports are the public way in. Any SEC member can pick one up at any time; there is

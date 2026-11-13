@@ -169,6 +169,7 @@ Read `references/release-checklist.md` for the full step-by-step checklist.
 The high-level process:
 
 1. **Jira** (a user task, not doable from the repo): ask the user to confirm that all CRs and PRs for the release are Resolved (not yet Closed, see "Jira Ticket Flow") and the saved searches exist, then continue.
+1. **Ballot** (minor and major releases): draft the Discourse post from `references/ballot-post.md` for the user to publish; wait for the 30 days to pass and the comments to be answered before tagging.
 2. **manifest.json**: Set the release date, verify `spec_status` for each spec, ensure Jira links are correct, and prepend the next-cycle `releases` entry with an empty `date`.
 3. **Git**: Create a release branch (`Release-N.N.N`), publish in release mode with the exact command in the checklist (do not use `/openehr-specs:publish`; it builds previews only), commit, and create the annotated tag. Ask the user before pushing.
 4. **Webhook**: The push triggers the specifications.openehr.org server to pull and deploy.
