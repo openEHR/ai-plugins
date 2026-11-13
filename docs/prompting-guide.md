@@ -21,7 +21,7 @@ In the prompts, `<XX>` is a component id such as `RM`, `BASE` or `AM`, and `<spe
 | [Set up or upgrade a repository](#set-up-or-upgrade-a-repository) | `/openehr-specs:scaffold` |
 | [Write a commit message](#write-a-commit-message) | the repository's `AGENTS.md` |
 | [Write a Jira issue, comment or pull request](#write-a-jira-issue-comment-or-pull-request) | `tracker-writing` |
-| [Understand a Jira ticket](#understand-a-jira-ticket) | `ticket-brief` |
+| [Understand a Jira ticket](#understand-a-jira-ticket) | `ticket-brief`, `fix-drafter`, `fix-challenger` |
 | [See what you can close and who waits on you](#see-what-you-can-close-and-who-waits-on-you) | `screener` |
 
 ## What makes a prompt work
@@ -212,7 +212,7 @@ Brief SPECPR-483.
 Brief SPECRM-131 SPECRM-133 SPECPR-180.
 ```
 
-The `ticket-brief` skill only reads. For one ticket it returns the ask, the state checked against `master` of the spec repos, a two-line fix proposal, the level under the SEC change workflow (Fix, Minor change or Change Request) and the clearly related pull requests, tickets and Discourse threads. Several keys give a table. It works best from a directory that has the `specifications-*` clones next to each other, with `gh` logged in and the Atlassian MCP connected; it says which source it could not check.
+The `ticket-brief` skill only reads. For one ticket it returns the ask, the state checked against `master` of the spec repos, a two-line fix proposal, the level under the SEC change workflow (Fix, Minor change or Change Request) and the clearly related pull requests, tickets and Discourse threads. While you read the brief, two subagents work in the background: `fix-drafter` turns the fix proposal into concrete pull requests with the exact text, and `fix-challenger` checks that draft as a critical SEC member would and returns a short final proposal, labelled with the effort (Quick win, Medium, High) and the level of each pull request, with a draft Jira comment. Say "brief only" to skip them. Several keys give a table. It works best from a directory that has the `specifications-*` clones next to each other, with `gh` logged in and the Atlassian MCP connected; it says which source it could not check.
 
 ## See what you can close and who waits on you
 

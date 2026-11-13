@@ -22,7 +22,7 @@ the user then asks to post something, use the `tracker-writing` skill for the te
 
 ## Input
 
-- One ticket (key or URL): full brief.
+- One ticket (key or URL): full brief, then fix and challenge in the background.
 - Several tickets: batch table (see below).
 
 ## Sources
@@ -75,6 +75,24 @@ State as checked against the published release, not `master`.
   affected: data, implementations, schemas or mirrors, other documents. For a non-fix outcome
   (Won't Do, Duplicate) write `n/a`.
 - Add a **Discussion:** line between State and Fix only when there are comments with an open question, naming who asked what and whether it was answered.
+
+### After the brief: fix and challenge
+
+For a single ticket, unless the user asked for the brief only:
+
+1. Print the brief, then one line: `Working out the fix and its challenge in the background.`
+2. Dispatch the `fix-drafter` subagent in the background with the key and the brief.
+3. When it returns, dispatch the `fix-challenger` subagent in the background with the key, the
+   brief and the drafted fix (not your own view of it, so the challenge stays independent).
+4. When it returns, print the ticket title as a link and one `**Recap:**` line (the ask and
+   the gap on master, from the brief), then the challenger's block unchanged. The brief is
+   usually scrolled away by then. Do not print the draft separately; the challenger's
+   proposal replaces it.
+
+Everything stays read-only. Acting on the proposal (comment, pull request, resolve) needs a
+separate instruction; use `tracker-writing` for the text. Where subagents are not available,
+do both passes inline after the brief, following the two agent files, and say that the
+challenge was not independent.
 
 ### Related: clear relations only
 
