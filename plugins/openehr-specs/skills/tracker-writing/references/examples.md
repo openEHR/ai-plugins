@@ -1,6 +1,8 @@
 # Tracker writing: before and after
 
 Real texts from the October 2026 SPECPR clean-up, as first written and as the skill wants them.
+An issue and a pull request open with the summary part and continue with Details; a comment is
+summary only.
 
 ## Jira issue
 
@@ -25,7 +27,7 @@ Real texts from the October 2026 SPECPR clean-up, as first written and as the sk
 > coded value? If yes, we will turn it into a CR on the RM tracker. If no, resolve this ticket as
 > Won't Do and we remove the note from the UML source.
 
-### After (58 words)
+### After (summary part 58 words, Details about 120 words)
 
 Summary: `EHR Extract: EXTRACT_SPEC.priority as Integer or coded value?`
 
@@ -36,10 +38,30 @@ Summary: `EHR Extract: EXTRACT_SPEC.priority as Integer or coded value?`
 > `openehr_rm_*.bmm` files
 > Change: decide coded value or keep Integer; either way remove the note from the UML source
 > Origin: specifications-RM #40
+>
+> **Details**
+>
+> **Current state.** `EXTRACT_SPEC.priority: Integer`, documented as "Requested priority of this
+> request to be handled by server. Priority schemes are likely to be local, and use values
+> agreed by both ends." The class table carried the author note "TBD: alternative is standard
+> coded terms" until specifications-RM #40 removed it.
+>
+> **Problem.** The note left the type of `priority` undecided. The class table
+> (`docs/UML/classes/org.openehr.rm.ehr_extract.extract_spec.adoc`) is generated from the UML
+> model, so the note comes back at the next export unless the UML attribute documentation is
+> edited too. The mirrored `openehr_rm_*.bmm` files in specifications-ITS-BMM still carry it.
+>
+> **Proposal.**
+>
+> | Option | Effect | Next step |
+> |---|---|---|
+> | Coded value | `priority` changes type | Change Request on the RM tracker |
+> | Keep `Integer` | nothing changes for implementations | resolve Won't Do, remove the note from the UML source |
 
-What went: the origin paragraph (one link suffices), the quoted attribute documentation (the
-reader opens the class table), the two-branch instruction to the assignee (the field says who,
-the Change line says what).
+What went: the origin paragraph (one link suffices) and the instruction to the assignee (the
+field says who, the Change line says what). What moved to Details instead of being cut: the
+quoted attribute documentation, the note text, and why the note returns at the next export.
+The summary part still stands alone.
 
 ## Pull request
 
@@ -57,7 +79,7 @@ the Change line says what).
 > - [ ] `docs/BEL/master03-language.adoc`: do we need `Integer64` and `Real64`?
 > - ... (nine more)
 
-### After (34 words)
+### After (summary part 34 words, Details about 45 words)
 
 Title: `Remove leftover TBD author notes (editorial)`
 
@@ -65,9 +87,20 @@ Title: `Remove leftover TBD author notes (editorial)`
 > No normative change.
 > Why: each note now has a SPECPR ticket (SPECPR-495 to SPECPR-503).
 > Amendment record: not needed, editorial.
+>
+> **Details**
+>
+> **What changed.** Only `[.tbd]` blocks and one heading without content are removed. No other
+> sentence is touched.
+>
+> **Impact.** Fix. Nothing changes for implementations.
+>
+> **Open.** Whether each note is still a topic is asked in its ticket, SPECPR-495 to SPECPR-503,
+> not here.
 
 What went: the checklist (the tickets hold the notes), the question to the author (asked in the
-tickets, where the answer is tracked).
+tickets, where the answer is tracked). The Details are short because there is little to say; a
+section without content is left out.
 
 ## Jira comment
 
@@ -77,7 +110,7 @@ tickets, where the answer is tracked).
 > change that Sebastian approved, so from my side we can resolve this ticket as Fixed once the
 > merge is done. Let me know if you disagree.
 
-### After (14 words)
+### After (14 words, summary only)
 
 > Fixed by PR specifications-ITS-REST #133 (approved, merge pending). Resolving Fixed after merge.
 
