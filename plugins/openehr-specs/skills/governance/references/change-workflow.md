@@ -134,12 +134,28 @@ Comments can lead to new changes; each takes its normal path and can still go in
 release. Fixes are not announced one by one; a Minor change is announced once, for its week
 of notice. Neither triggers a release on its own.
 
+The ballot is one Discourse post from the template in `ballot-post.md`: what the release
+carries with every ticket linked, where to read it (the development build at
+`https://specifications.openehr.org/releases/<COMPONENT>/development/` and what changed since
+the previous release), how to comment, and the closing date. The SEC answers every comment in
+the thread. A release view that marks the changes on the Antora site is still to build:
+[antora-openehr #57](https://github.com/openEHR/antora-openehr/issues/57); until then point to the amendment records.
+
 ## Tickets and pull requests
 
 - Problem Reports are the public way in. Any SEC member can pick one up at any time; there is
   no fixed review round.
-- Pull requests carry a `fix` or `minor` label, so the SEC can list them. Any member can ask
-  for one to be reverted and raised as a Change Request.
+- Pull requests carry a `fix`, `minor` or `change-request` label, so the SEC can list them. Any
+  member can ask for one to be reverted and raised as a Change Request.
+- **Release allocation.** When a pull request is opened, set the Fix Version of the ticket it
+  implements (Problem Report or Change Request) to the next planned release of every component
+  the pull request touches, one Fix Version per component. On `SPECPR` the versions are named per
+  component (`AM version 2.4.0`, `RM Release 1.2.0`, `ITS-XML Release 2.1.0`); on a component
+  tracker they are that component's own (`Release 1.2.0`, `ADL 2.4.0`). Three pull requests for
+  one Problem Report, in three components, give it three Fix Versions. This is the default, done
+  on creation of the pull request; anyone may change it later to move the change out of a
+  release. The Fix Versions on the tickets are the running list of what the next release of each
+  component carries; GitHub release notes come from the merged pull requests on their own.
 - A Fix without a Problem Report has no ticket; the pull request is the record.
 - The proposal reduces the ticket states to Open, In Progress, Closed (Problem Report) and
   Open, In Progress, Review, Closed (Change Request). Jira still runs the old workflow, so

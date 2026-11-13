@@ -181,6 +181,10 @@ Use full URLs: a bare `repo#N` without the owner does not link across repositori
 `closes`/`fixes` keywords close issues, not pull requests. These lines belong to the summary
 part and do not count toward the cap.
 
+Opening a pull request also sets the Fix Version on its ticket, one per component the pull
+request touches (governance skill, Release allocation). Do it in Jira; it is not a line in the
+description.
+
 Do not list the changed files, the diff shows them; in Details, describe the change by document
 or model area. Do not add a checklist unless the reviewer has to tick something.
 
