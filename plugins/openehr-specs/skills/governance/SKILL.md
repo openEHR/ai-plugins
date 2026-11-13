@@ -4,8 +4,8 @@ description: >
   Manage openEHR specification governance: releases, change requests (CR/PR), versioning, and
   lifecycle states (Planning, Development, Trial, Stable, Paused, Retired). This skill should be
   used when the user asks to create, tag, or fix a release, update release entries in
-  `manifest.json`, raise or progress a CR/PR, classify a change as a Fix, Minor change or Change
-  Request, promote a spec's status, propose a new spec, or explain the SEC change process. Not
+  `manifest.json`, raise or progress a CR/PR, classify a change as a Fix, Minor change or Major
+  change, promote a spec's status, propose a new spec, or explain the SEC change process. Not
   for amendment entries (amendment-record), pre-release document review (review), local previews
   (authoring), or clinical/archetype governance.
 ---
@@ -18,7 +18,7 @@ specifications.openehr.org/governance.
 
 **Change workflow trial.** On 2026-11-09 the SEC approved a new change workflow as a one-month
 trial, until 2026-12-09: every change to a Trial or Stable specification is a Fix, a Minor
-change or a Change Request, decided by approvals on the pull request or, for Change Requests,
+change or a Major change, decided by approvals on the pull request or, for Major changes,
 by an SEC vote. Follow it; the published Change Process page still describes the earlier
 process. The full rules are in `references/change-workflow.md`.
 
@@ -80,33 +80,34 @@ without triggering a new release number.
 - CRs reference the PRs they address
 - Reference format in specs: `{spec_tickets}/SPECRM-NNN[SPECRM-NNN^]`
 - If the user is not an SEC member, direct them to raise a PR on the `SPECPR` tracker instead
+- A Major change (see Change Workflow) always has a CR; a Fix or a Minor change does not need one
 
 ## Change Workflow
 
-Three levels, sized to the change. Small changes are decided on the pull request; only Change
-Requests go to an SEC vote. Details, qualifying lists and the vote rules:
+Three levels, sized to the change. Small changes are decided on the pull request; only Major
+changes go to an SEC vote. Details, qualifying lists and the vote rules:
 `references/change-workflow.md`.
 
-| | Fix | Minor change | Change Request |
+| | Fix | Minor change | Major change |
 |---|---|---|---|
 | What | A correction, or a new entry in a list meant to grow | Compatible: everything that conforms today still conforms | New in kind, or breaking |
-| Ticket | Problem Report, optional | Problem Report | Change Request (SEC members only) |
-| Decided by | One SEC approval on the pull request | Two SEC approvals, then one week's notice on Discourse; a veto moves it up to a Change Request | SEC vote, then three SEC approvals on the pull request |
+| Ticket | Problem Report, optional | Problem Report | Change Request (SEC members only); optionally a Problem Report, if related to one |
+| Decided by | One SEC approval on the pull request | Two SEC approvals, then one week's notice on Discourse; a veto moves it up to a Major change | SEC vote, then three SEC approvals on the pull request |
 
 Classify in two steps: a correction or a new entry in a list meant to grow is a **Fix**; a
 compatible change that adds nothing new in kind is a **Minor change**; everything else is a
-**Change Request**. The size of the diff does not matter, and when in doubt go one level up.
+**Major change**. The size of the diff does not matter, and when in doubt go one level up.
 An SEC member who disagrees with the level moves the change up before the merge; nobody can
 block a change alone.
 
-A Change Request goes: candidate solutions, an optional 30-day ballot on Discourse for an
+A Major change goes: a Change Request ticket, candidate solutions, an optional 30-day ballot on Discourse for an
 impactful change, the SEC vote (at least half of the members present and two-thirds of those
 in favour, or two-thirds of the members on the ticket), then a pull request with three SEC
 approvals confirming the text matches the vote.
 
 Releases are not voted on. A minor or major release goes to a 30-day community ballot on
 Discourse before it is published; a patch release does not. Label pull requests `fix`,
-`minor` or `change-request` so the SEC can list them.
+`minor` or `major` so the SEC can list them.
 
 When one change needs pull requests in several repositories (text, BMM, schemas, OpenAPI), the
 one with the specification text is the **collection pull request**: it lists the others, they
@@ -208,7 +209,7 @@ All specifications must include:
 
 | Role | Responsibility |
 |------|---------------|
-| **SEC** (Specifications Editorial Committee) | Decides Change Requests by vote, defines releases, promotes specs |
-| **SEC members** | Approve Fixes and Minor changes on the pull request, vote on Change Requests, raise Change Requests |
+| **SEC** (Specifications Editorial Committee) | Decides Major changes by vote, defines releases, promotes specs |
+| **SEC members** | Approve Fixes and Minor changes on the pull request, vote on Major changes, raise Change Requests |
 | **Component Maintainer** | Supervises component specs |
 | **Community** | Raises PRs, comments in release ballots and on announced Minor changes on Discourse |

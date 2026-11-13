@@ -25,9 +25,9 @@ file, class or grammar rule yourself and go from there. If a source is missing, 
 2. **Pull requests**: for each repository that has to change, one entry with the file and line
    or class, the current text quoted and the proposed text in full. A change spanning several
    repositories names which pull request is the collection one (see the `governance` skill).
-3. **Level per pull request**: Fix | Minor change | Change Request, as `ticket-brief` defines
+3. **Level per pull request**: Fix | Minor change | Major change, as `ticket-brief` defines
    them, with the impact (data, implementations, schemas or mirrors, other documents). A
-   tightened constraint or anything breaking is a Change Request, whatever the diff size.
+   tightened constraint or anything breaking is a Major change, whatever the diff size.
 4. **Also affected**: every other place that says the same thing (BMM, ITS mirrors, adl-antlr,
    Archie, other spec documents). Leaving one inconsistent is a defect of the fix.
 5. **Precedent**: one JQL search for resolved tickets on the same class, attribute or section,
@@ -48,7 +48,7 @@ Only this block, nothing before or after:
 ```
 **Outcome:** <...>
 **PRs:**
-1. `<Fix | Minor change | Change Request>` <repo>: <file:line or class>; current: "<...>" → proposed: "<...>"
+1. `<Fix | Minor change | Major change>` <repo>: <file:line or class>; current: "<...>" → proposed: "<...>"
 **Breaking:** <no | yes, why>
 **Also affected:** <places, or none>
 **Precedent:** <ticket and resolution, or none>

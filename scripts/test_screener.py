@@ -11,7 +11,7 @@ screener = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(screener)
 
 NOW = datetime(2026, 11, 13, 12, 0, tzinfo=timezone.utc)
-NEEDS = {"fix": 1, "minor": 2, "change-request": 3}
+NEEDS = {"fix": 1, "minor": 2, "major": 3}
 WAIT = {"minor": 7}
 
 
@@ -40,8 +40,8 @@ class ReadinessTest(unittest.TestCase):
         self.assertIn(str(days_ago(9).date()), reason)
 
     def test_change_request_needs_three_and_no_week(self):
-        self.assertEqual(ready("change-request", [days_ago(1), days_ago(1)])[0], "OPEN")
-        self.assertEqual(ready("change-request", [days_ago(0)] * 3)[0], "READY")
+        self.assertEqual(ready("major", [days_ago(1), days_ago(1)])[0], "OPEN")
+        self.assertEqual(ready("major", [days_ago(0)] * 3)[0], "READY")
 
     def test_blockers_win_over_approvals(self):
         full = [days_ago(10), days_ago(9)]

@@ -29,9 +29,9 @@ Add the marketplace from this repository (or a fork), then install `openehr-spec
 | `its-rest` | ITS-REST OpenAPI YAML and operation descriptions |
 | `class-generation` | Generate class tables and UML diagrams from BMM via `bmm-publisher` |
 | `bmm-authoring` | Write or change a component's BMM schema (P_BMM JSON) and check it before rendering (needs `python3`) |
-| `tracker-writing` | Jira issues and GitHub pull requests: a capped summary (120/80 words), then Details of at most 5 to 7 minutes' reading; comments stay summary only (40 words); fixed structure, ask before going over |
+| `tracker-writing` | Jira issues and GitHub pull requests: a TL;DR line and a capped summary (120/80 words), then short Details (issue 600, PR 300 words at most); comments stay summary only (40 words); fixed structure, ask before going over |
 | `screener` | Read-only personal screen: what you can close first (pull requests with the approvals their level needs and, for a Minor change, the week of notice; tickets to resolve or close), then who is waiting on you (needs `python3` and a logged-in `gh`) |
-| `ticket-brief` | Read-only brief of a Jira ticket: ask, state checked against the spec repos, two-line fix proposal, level (Fix, Minor change, Change Request) and clearly related items; for one ticket it then has `fix-drafter` and `fix-challenger` work out the challenged proposal in the background |
+| `ticket-brief` | Read-only brief of a Jira ticket: ask, state checked against the spec repos, two-line fix proposal, level (Fix, Minor change, Major change) and clearly related items; for one ticket it then has `fix-drafter` and `fix-challenger` work out the challenged proposal in the background |
 
 ### User-only action skills
 

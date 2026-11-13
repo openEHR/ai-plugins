@@ -12,14 +12,14 @@ In this file "PR" means a GitHub pull request, and "Problem Report" is written o
 
 ## Three levels
 
-Every change is a Fix, a Minor change, or a Change Request. Small changes are decided by
-approvals on the pull request; only Change Requests go to an SEC vote.
+Every change is a Fix, a Minor change, or a Major change. Small changes are decided by
+approvals on the pull request; only Major changes go to an SEC vote.
 
-| | Fix | Minor change | Change Request |
+| | Fix | Minor change | Major change |
 |---|---|---|---|
 | What | A correction, or a new entry in a list meant to grow | Expectations change, but everything that conforms today still conforms | New in kind, or breaking |
 | Example | Typo, schema bug, inconsistency, missing unit or term | A class changed in the BMM, a cardinality relaxed in a class table | New ADL logic, FHIR value set adoption, removed attribute |
-| Ticket | Problem Report, optional | Problem Report | Change Request |
+| Ticket | Problem Report, optional | Problem Report | Change Request (optionally a Problem Report, if related to one) |
 | Decided by | One SEC member approving the pull request | Two SEC members approving the pull request, then one week's notice on Discourse | SEC vote |
 | Approvals to merge | One | Two | Three, confirming the text matches the vote |
 | Version effect | None | None | Minor or major |
@@ -27,7 +27,7 @@ approvals on the pull request; only Change Requests go to an SEC vote.
 ```
 Fix             pull request -> one SEC approval -> merge
 Minor change    pull request -> two SEC approvals -> one week's notice on Discourse -> merge
-Change Request  candidate solutions -> SEC vote -> pull request -> three SEC approvals -> merge
+Major change    Change Request ticket -> candidate solutions -> SEC vote -> pull request -> three SEC approvals -> merge
 ```
 
 ## Classifying a change
@@ -36,10 +36,10 @@ Change Request  candidate solutions -> SEC vote -> pull request -> three SEC app
    type, a translation)? Yes: **Fix**.
 2. Is it compatible? It changes what implementations are expected to do, but everything that
    conforms today still conforms, and it adds nothing new in kind. Yes: **Minor change**.
-   No: **Change Request**.
+   No: **Major change**.
 
 - The size of the diff does not matter. A one-line change that tightens a cardinality is a
-  Change Request.
+  Major change.
 - When in doubt, go one level up. Whoever approves confirms the level, not only the diff.
 - **Escalation.** An SEC member who disagrees with the level, or with the change itself, can
   move it up a level before the merge. Nobody can block a change alone; an objection only sends
@@ -67,25 +67,28 @@ A Problem Report says what is missing. A pull request names it and is approved b
 members other than the committer. Approving means the change is right and it is minor.
 
 The change is then announced on the Discourse specifications forum, and for one week anybody
-can veto it. A veto does not block the change; it moves it up to a Change Request. Without a
+can veto it. A veto does not block the change; it moves it up to a Major change. Without a
 veto the pull request is merged after the week, and the Problem Report closes.
 
 Qualifies: a change to a class in the BMM (attributes, types, functions); a cardinality
 relaxed, such as mandatory to optional or `1..*` to `0..*`; a relaxed pattern or uniqueness
 rule; a small optional addition that follows an existing pattern.
 
-Does not qualify, and is a Change Request: a cardinality tightened, or a single value turned
+Does not qualify, and is a Major change: a cardinality tightened, or a single value turned
 into a list (`0..1` to `0..*`), which both break existing data; a new concept, construct or
 behaviour; a new dependency on an external standard; anything else breaking.
 
-## Change Request
+## Major change
 
 For anything new in kind (new logic in ADL or AQL, FHIR value set adoption, a new class,
 serialisation or specification) or breaking (removing or renaming something, changing a type,
 tightening a constraint, changing a wire format, anything that needs data migration).
 
-1. An SEC member creates the Change Request on the component tracker (`SPECRM`, `SPECAM`, ...).
-   No Problem Report is needed.
+"Major change" is the level and the `major` label on the pull request. Its ticket is still a
+Change Request (CR) on the component tracker; "Change Request" always means that ticket.
+
+1. An SEC member creates the Change Request ticket on the component tracker (`SPECRM`, `SPECAM`, ...).
+   A Problem Report is optional; link it if the change relates to one.
 2. The SEC works out one or more candidate solutions.
 3. Optionally, for an impactful change, the candidates go to a 30-day ballot on Discourse.
 4. The SEC votes, and with several candidates chooses one.
@@ -102,7 +105,7 @@ A change often needs pull requests in several repositories: the specification te
 
 ## The SEC vote
 
-Only Change Requests are voted on, in one of two ways:
+Only Major changes are voted on, in one of two ways:
 
 - **In an SEC meeting:** at least half of the SEC members present, and two-thirds of those
   present in favour.
@@ -118,12 +121,12 @@ active. This is in the Terms of Reference draft, not in the change process.
 
 ## Releases and ballots
 
-The SEC votes on Change Requests, not on releases. A release publishes what was already
+The SEC votes on Major changes, not on releases. A release publishes what was already
 decided and puts it in front of the community.
 
 | | Minor or major release | Patch release |
 |---|---|---|
-| Contains | Change Requests, Minor changes, Fixes | Minor changes and Fixes only |
+| Contains | Major changes, Minor changes, Fixes | Minor changes and Fixes only |
 | Community ballot | Yes, 30 days | No |
 | SEC vote on the release | No | No |
 
@@ -145,8 +148,8 @@ the thread. A release view that marks the changes on the Antora site is still to
 
 - Problem Reports are the public way in. Any SEC member can pick one up at any time; there is
   no fixed review round.
-- Pull requests carry a `fix`, `minor` or `change-request` label, so the SEC can list them. Any
-  member can ask for one to be reverted and raised as a Change Request.
+- Pull requests carry a `fix`, `minor` or `major` label, so the SEC can list them. Any
+  member can ask for one to be reverted and raised as a Major change.
 - **Release allocation.** When a pull request is opened, set the Fix Version of the ticket it
   implements (Problem Report or Change Request) to the next planned release of every component
   the pull request touches, one Fix Version per component. On `SPECPR` the versions are named per

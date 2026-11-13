@@ -9,6 +9,6 @@
     "SPECLANG", "SPECPROC", "SPECPUB", "SPECQUERY", "SPECRM", "SPECTERM", "SPEC"
   ],
   "resolved_statuses": ["Resolved"],
-  "approvals": {"fix": 1, "minor": 2, "change-request": 3},
+  "approvals": {"fix": 1, "minor": 2, "major": 3},
   "wait_days": {"minor": 7}
 }

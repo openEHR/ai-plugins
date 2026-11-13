@@ -34,8 +34,8 @@ entry of part 1 and each "Answer" of part 2, and drop or annotate what does not 
   completed the set. The workflow counts it from the announcement on Discourse, which the
   script cannot see: look for the announcement and a veto (Discourse MCP or search), or tell
   the user to confirm both.
-- **Ready to merge, Change Request.** Three approvals confirm the text; the SEC vote is on
-  the ticket. Check that the vote is recorded there.
+- **Ready to merge, Major change.** Three approvals confirm the text; the SEC vote is on
+  the Change Request ticket. Check that the vote is recorded there.
 - **Resolve.** The pull request is merged and the ticket is open. Make sure the pull request
   implements the ticket and does not merely mention it (the script says when the key is in
   the description only), and that no other pull request for the ticket is still open.
@@ -80,7 +80,7 @@ that does not set `${CLAUDE_SKILL_DIR}`, use the directory that holds this SKILL
 
 | Entry | Rule |
 |---|---|
-| Pull request ready to merge | the user's open pull request, not a draft, no conflict, checks not failing, no changes requested, and the approvals its level label needs: `fix` 1, `minor` 2 and 7 days since the second approval, `change-request` 3 |
+| Pull request ready to merge | the user's open pull request, not a draft, no conflict, checks not failing, no changes requested, and the approvals its level label needs: `fix` 1, `minor` 2 and 7 days since the second approval, `major` 3 |
 | Resolve | a ticket named by a pull request of the user that was merged in the window, and that is not yet Resolved or Done |
 | Close | a Resolved ticket assigned to the user whose Fix Versions are all released |
 | Fix Version missing | a Resolved ticket assigned to the user without a Fix Version |
