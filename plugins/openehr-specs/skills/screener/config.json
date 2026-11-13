@@ -1,0 +1,14 @@
+{
+  "org": "openEHR",
+  "sec_team": "sec",
+  "repo_patterns": ["specifications-*"],
+  "extra_repos": ["adl-antlr", "terminology", "antora-openehr", "ai-plugins"],
+  "jira_base": "https://openehr.atlassian.net",
+  "jira_projects": [
+    "SPECPR", "SPECAM", "SPECBASE", "SPECCDS", "SPECCNF", "SPECINTG", "SPECITS",
+    "SPECLANG", "SPECPROC", "SPECPUB", "SPECQUERY", "SPECRM", "SPECTERM", "SPEC"
+  ],
+  "resolved_statuses": ["Resolved"],
+  "approvals": {"fix": 1, "minor": 2, "change-request": 3},
+  "wait_days": {"minor": 7}
+}

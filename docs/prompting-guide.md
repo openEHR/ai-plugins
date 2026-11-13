@@ -22,6 +22,7 @@ In the prompts, `<XX>` is a component id such as `RM`, `BASE` or `AM`, and `<spe
 | [Write a commit message](#write-a-commit-message) | the repository's `AGENTS.md` |
 | [Write a Jira issue, comment or pull request](#write-a-jira-issue-comment-or-pull-request) | `tracker-writing` |
 | [Understand a Jira ticket](#understand-a-jira-ticket) | `ticket-brief` |
+| [See what you can close and who waits on you](#see-what-you-can-close-and-who-waits-on-you) | `screener` |
 
 ## What makes a prompt work
 
@@ -212,3 +213,13 @@ Brief SPECRM-131 SPECRM-133 SPECPR-180.
 ```
 
 The `ticket-brief` skill only reads. For one ticket it returns the ask, the state checked against `master` of the spec repos, a two-line fix proposal, the level under the SEC change workflow (Fix, Minor change or Change Request) and the clearly related pull requests, tickets and Discourse threads. Several keys give a table. It works best from a directory that has the `specifications-*` clones next to each other, with `gh` logged in and the Atlassian MCP connected; it says which source it could not check.
+
+## See what you can close and who waits on you
+
+```text
+What can I close?
+Is anybody waiting on me?
+```
+
+The `screener` skill only reads. First it lists what you can finish: your pull requests that have the approvals their level needs (one for `fix`, two for `minor` plus the week of notice, three for `change-request`), tickets whose pull request is merged but which are still open, and Resolved tickets whose release is out. Then it lists who is waiting on you: review requests, unanswered questions on pull requests and Jira tickets, and requested changes. Claude checks each candidate before showing it and merges or closes nothing; say so when you want that done.
+

@@ -16,6 +16,7 @@ ai-plugins/
 ├── scripts/validate.py                # Manifest, frontmatter and template-set validation (CI)
 ├── scripts/test_scaffold.py           # Unit tests for the scaffold skill's script (CI)
 ├── scripts/test_check_bmm.py          # Unit tests for the bmm-authoring skill's checker (CI)
+├── scripts/test_screener.py           # Unit tests for the screener skill's readiness rules (CI)
 ├── CHANGELOG.md                       # Release notes per plugin
 └── plugins/<plugin-name>/             # One directory per plugin
     ├── .claude-plugin/plugin.json     # Claude Code plugin manifest
@@ -45,7 +46,7 @@ Full details: [docs/skill-authoring.md](docs/skill-authoring.md)
 
 ## Development
 
-Pure-content repository (JSON manifests + markdown skills) — no build step or package manager. Two skills bundle a script, each with unit tests: `scaffold` (`scripts/scaffold.py`) and `bmm-authoring` (`scripts/check_bmm.py`). `sec-waiting` (`openehr-specs-maintenance`) bundles a read-only script without unit tests, since it only queries GitHub and Jira. Run them with `python3 -m unittest discover -s scripts -p 'test_*.py'` (runs in CI).
+Pure-content repository (JSON manifests + markdown skills) — no build step or package manager. Three skills bundle a script, each with unit tests: `scaffold` (`scripts/scaffold.py`), `bmm-authoring` (`scripts/check_bmm.py`) and `screener` (`scripts/screener.py`, tests cover its readiness rules, not the GitHub and Jira queries). `sec-waiting` (`openehr-specs-maintenance`) bundles a read-only script without unit tests, since it only queries GitHub and Jira. Run them with `python3 -m unittest discover -s scripts -p 'test_*.py'` (runs in CI).
 
 - **Validation**: `python3 scripts/validate.py` (Claude + Cursor manifests, version sync, required skill/agent frontmatter fields, component paths, the `scaffold` template set's integrity, and that the BMM skills name every repo the template set excludes from BMM work — runs in CI; it does not check description length, inventories, or the release tag)
 - **Local testing**: [docs/testing.md](docs/testing.md); **versioning/releases**: [docs/versioning.md](docs/versioning.md)
@@ -63,6 +64,7 @@ gracefully when a tool is absent (each says so in its prompt):
 - **`sec-agenda`** (`openehr-specs-maintenance`) — needs the **Atlassian MCP** with write access to the Specifications space on Confluence; without it, it hands the draft over as text. It writes to Confluence only after the user confirms, and copies people's mentions from the previous page, never inventing an account id.
 - **`update-slides`** (`openehr-specs-maintenance`) — needs **`python3`** (standard library only) and a logged-in **`gh`** for its read-only `scripts/activity.py`; without them it asks the user for the figures. It writes the deck into the current directory and publishes nothing.
 - **`sec-waiting`** (`openehr-specs-maintenance`) — needs **`python3`** (standard library only) and a logged-in **`gh`** CLI; it reads Jira anonymously and says so and stops when a tool is missing. It ships no personal data: name maps and pinned tickets come from the user's own settings file.
+- **`screener`** — needs **`python3`** (standard library only) and a logged-in **`gh`** CLI to run its read-only `scripts/screener.py`; it reads Jira anonymously, so restricted tickets are not seen. It says so and stops when a tool is missing.
 - **`scaffold`** — needs **`python3`** (standard library only) to run its bundled `scripts/scaffold.py`, and says so and stops when it is missing. It writes into the repository it is run in, so it plans first and never overwrites a hand-edited file without being told to. For a new repository's BMM schema it asks **Docker** for the schemas the local `ghcr.io/openehr/bmm-publisher` image bundles, and never pulls the image. Without Docker or the image that one file is reported as blocked, and the rest are still written.
 - **`publish`** — needs **Docker** and sibling `specifications-AA_GLOBAL` and component checkouts. It runs the published `ghcr.io/openehr/asciidoctor` image, which bundles the toolchain and `spec_publish.sh`; the boilerplate and references are still read from the AA_GLOBAL checkout. It checks that each HTML output was rebuilt and that the log has no missing includes, because the script reports success even when it built nothing or dropped the class tables.
 
