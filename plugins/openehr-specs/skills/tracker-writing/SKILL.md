@@ -78,6 +78,13 @@ Summary line: `<Spec>: <defect or change in five to ten words>`. Examples:
 A question to a person goes in the Change line as a plain question, not a paragraph. The
 assignee is set in the field, not in the text.
 
+Fields: when the issue is created, set **Component/s**, **Affects Version/s** and, when the
+target release is known, **Fix Version/s**, if the location identifies them. Use only
+components and versions that already exist in the target Jira project: list them first (for
+example `GET /rest/api/3/project/<KEY>/components` and `.../versions`) and pick from that list.
+Never create a component or version, and leave the field empty when no existing value clearly
+fits.
+
 ### Jira comment
 
 ```
