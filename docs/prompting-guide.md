@@ -212,4 +212,3 @@ Brief SPECRM-131 SPECRM-133 SPECPR-180.
 ```
 
 The `ticket-brief` skill only reads. For one ticket it returns the ask, the state checked against `master` of the spec repos, a two-line fix proposal, the level under the SEC change workflow (Fix, Minor change or Change Request) and the clearly related pull requests, tickets and Discourse threads. Several keys give a table. It works best from a directory that has the `specifications-*` clones next to each other, with `gh` logged in and the Atlassian MCP connected; it says which source it could not check.
-
