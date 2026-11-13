@@ -1,0 +1,22 @@
+{
+  "name": "openehr-specs-maintenance",
+  "displayName": "openEHR Specifications Maintenance",
+  "version": "0.1.0",
+  "description": "Skills for the people who maintain the openEHR specifications as a body of work: Specifications Editorial Committee (SEC) housekeeping such as the list of pending pull request reviews and unanswered Jira questions.",
+  "author": {
+    "name": "Severin Kohler"
+  },
+  "homepage": "https://github.com/openEHR/ai-plugins",
+  "repository": "https://github.com/openEHR/ai-plugins",
+  "license": "Apache-2.0",
+  "keywords": [
+    "openehr",
+    "specifications",
+    "sec",
+    "maintenance",
+    "jira",
+    "github",
+    "reviews"
+  ],
+  "skills": "./skills/"
+}

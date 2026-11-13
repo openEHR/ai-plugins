@@ -9,6 +9,9 @@ Thumbs.db
 # Python bytecode (from the scaffold script and its tests)
 __pycache__/
 
+# Personal settings of the sec-waiting skill (name maps, pinned tickets)
+config.local.json
+
 # Claude Code local settings
 .claude/settings.local.json
 

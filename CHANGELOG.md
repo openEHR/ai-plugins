@@ -6,6 +6,7 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 
 ### Added
 
+- New plugin `openehr-specs-maintenance` (0.1.0), for the people who maintain the specifications, such as the SEC. Its first skill, `sec-waiting`, prints a read-only reminder list: per SEC member, the pull request reviews requested from them and the Jira questions put to them that are still open, ready to paste into Discourse. It ships without personal data; Discourse usernames and pinned tickets come from the user's own settings file (`SEC_WAITING_CONFIG` or `config.local.json`).
 - `tracker-writing` skill: Jira issues, Jira comments and GitHub pull request bodies in a fixed structure with hard word caps (issue 120, PR 80, comment 40). When content does not fit, the agent shows the draft and asks before posting; it never cuts silently. Before/after examples in `references/examples.md`.
 - `tracker-writing`: a new Jira issue gets Component/s, Affects Version/s and, when known, Fix Version/s, chosen only from the values that already exist in the target project. The agent never creates a component or version, and leaves the field empty when nothing fits.
 
