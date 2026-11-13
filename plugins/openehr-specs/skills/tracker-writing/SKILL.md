@@ -106,6 +106,23 @@ Amendment record: <entry n.n added | not needed: <reason>>
 [Check: <one thing the reviewer must verify, only if not obvious from the diff>]
 ```
 
+When one change needs pull requests in several repositories (see the governance skill,
+`references/change-workflow.md`, "One change, several pull requests"), add after `Why:`:
+
+- in the collection pull request:
+  ```
+  **Collection PR.** Approving this PR approves the whole change; the related PRs need no approvals of their own, only a check that they match. Merge all together, this one last.
+  Related:
+  - <full URL of each other pull request> (<what it changes>)
+  ```
+- in each other pull request:
+  ```
+  Part of collection PR <full URL>: approve there. This PR needs no approval of its own, only a check that it matches; it is merged together with the collection.
+  ```
+
+Use full URLs: a bare `repo#N` without the owner does not link across repositories, and GitHub's
+`closes`/`fixes` keywords close issues, not pull requests. These lines do not count toward the cap.
+
 Do not list the changed files, the diff shows them. Do not add a checklist unless the reviewer
 has to tick something.
 

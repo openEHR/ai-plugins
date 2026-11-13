@@ -98,7 +98,7 @@ part of the discussion. The Jira fields the tracker still asks for are in the go
 
 ## One change, several pull requests
 
-A change often needs pull requests in several repositories: the specification text, the BMM, the XML and JSON schemas, the OpenAPI files. Then one of them is the **collection pull request**, normally the one with the specification text. Its description lists the other pull requests, and each of them links back to it. Approvals are given on the collection and count for all of them; the others need no approvals of their own, only a check that they match. The SEC votes once, on the Change Request, never per pull request. The pull requests are merged together, the collection last. The ticket links the collection.
+A change often needs pull requests in several repositories: the specification text, the BMM, the XML and JSON schemas, the OpenAPI files. Then one of them is the **collection pull request**, normally the one with the specification text. Its description lists the other pull requests, and each of them links back to it. Approvals are given on the collection and count for all of them; the others need no approvals of their own, only a check that they match. The SEC votes once, on the Change Request, never per pull request. The pull requests are merged together, the collection last. The ticket links the collection. Say it in the descriptions: the collection states that approving it approves the whole change and lists the others by full URL under `Related:`; each other pull request names the collection and says to approve there. The wording is in the tracker-writing skill ("Pull request").
 
 ## The SEC vote
 
