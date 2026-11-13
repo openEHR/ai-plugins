@@ -165,10 +165,10 @@ The SEC promoted my spec from Development to Trial. What changes in manifest.jso
 ```
 
 ```text
-Should this change be a problem report or a change request, and who can raise it?
+Is this change a Fix, a Minor change or a Change Request, and what does it need before the merge?
 ```
 
-Only SEC members create change requests; anyone can raise a problem report on the `SPECPR` tracker. The Jira steps of a release are yours, and Claude asks you to confirm them. It asks before it pushes. For a fix release it confirms with you first, because the push overwrites the deployed release. The promotion criteria are the SEC's: Claude sets the new status in both files once you confirm that the SEC approved it.
+Since the SEC trial of 2026-11-09 every change is a Fix (one SEC approval on the pull request), a Minor change (two approvals, then one week's notice on Discourse) or a Change Request (SEC vote). Only SEC members create change requests; anyone can raise a problem report on the `SPECPR` tracker. The Jira steps of a release are yours, and Claude asks you to confirm them. It asks before it pushes. For a fix release it confirms with you first, because the push overwrites the deployed release. The promotion criteria are the SEC's: Claude sets the new status in both files once you confirm that the SEC approved it.
 
 ## Edit the ITS-REST API
 

@@ -4,9 +4,10 @@ description: >
   Manage openEHR specification governance: releases, change requests (CR/PR), versioning, and
   lifecycle states (Planning, Development, Trial, Stable, Paused, Retired). This skill should be
   used when the user asks to create, tag, or fix a release, update release entries in
-  `manifest.json`, raise or progress a CR/PR, promote a spec's status, propose a new spec, or
-  explain the SEC change process. Not for amendment entries (amendment-record), pre-release
-  document review (review), local previews (authoring), or clinical/archetype governance.
+  `manifest.json`, raise or progress a CR/PR, classify a change as a Fix, Minor change or Change
+  Request, promote a spec's status, propose a new spec, or explain the SEC change process. Not
+  for amendment entries (amendment-record), pre-release document review (review), local previews
+  (authoring), or clinical/archetype governance.
 ---
 
 # openEHR Specification Governance
@@ -14,6 +15,12 @@ description: >
 This skill covers the change process, release management, and lifecycle governance for
 openEHR specifications. It is based on the official governance documents at
 specifications.openehr.org/governance.
+
+**Change workflow trial.** On 2026-11-09 the SEC approved a new change workflow as a one-month
+trial, until 2026-12-09: every change to a Trial or Stable specification is a Fix, a Minor
+change or a Change Request, decided by approvals on the pull request or, for Change Requests,
+by an SEC vote. Follow it; the published Change Process page still describes the earlier
+process. The full rules are in `references/change-workflow.md`.
 
 ## Related Skills
 
@@ -63,7 +70,7 @@ without triggering a new release number.
 
 - Raised by **anyone** on the public `SPECPR` Jira tracker
 - Document issues, bugs, or requirements against existing specifications
-- The SEC reviews PRs every three months
+- Any SEC member can pick a PR up at any time; there is no fixed review round
 - Reference format in specs: `{spec_tickets}/SPECPR-NNN[SPECPR-NNN^]`
 
 ### Change Requests (CRs)
@@ -74,49 +81,34 @@ without triggering a new release number.
 - Reference format in specs: `{spec_tickets}/SPECRM-NNN[SPECRM-NNN^]`
 - If the user is not an SEC member, direct them to raise a PR on the `SPECPR` tracker instead
 
-## Change Request Lifecycle
+## Change Workflow
 
-### 1. Creation
-A CR requires: title, description, problem statement or PR references, affected component(s).
+Three levels, sized to the change. Small changes are decided on the pull request; only Change
+Requests go to an SEC vote. Details, qualifying lists and the vote rules:
+`references/change-workflow.md`.
 
-### 2. Acceptance
-The SEC determines if the CR addresses real needs. Accepted CRs receive:
-- Completion target date
-- Work estimate (days)
-- Assigned **Change Owner** (the component maintainer or designee)
-- Priority: minor, major, or critical
+| | Fix | Minor change | Change Request |
+|---|---|---|---|
+| What | A correction, or a new entry in a list meant to grow | Compatible: everything that conforms today still conforms | New in kind, or breaking |
+| Ticket | Problem Report, optional | Problem Report | Change Request (SEC members only) |
+| Decided by | One SEC approval on the pull request | Two SEC approvals, then one week's notice on Discourse; a veto moves it up to a Change Request | SEC vote, then three SEC approvals on the pull request |
 
-### 3. Work Execution
+Classify in two steps: a correction or a new entry in a list meant to grow is a **Fix**; a
+compatible change that adds nothing new in kind is a **Minor change**; everything else is a
+**Change Request**. The size of the diff does not matter, and when in doubt go one level up.
+An SEC member who disagrees with the level moves the change up before the merge; nobody can
+block a change alone.
 
-**Minor changes** (single-document, no semantic impact):
-- Edit directly on the working branch
-- Generate publication formats for review
+A Change Request goes: candidate solutions, an optional 30-day ballot on Discourse for an
+impactful change, the SEC vote (at least half of the members present and two-thirds of those
+in favour, or two-thirds of the members on the ticket), then a pull request with three SEC
+approvals confirming the text matches the vote.
 
-**Major changes** (cross-cutting or semantic):
-- Create a development branch
-- Track progress on a dedicated wiki page
-- 30-day open community review period required before approval
+Releases are not voted on. A minor or major release goes to a 30-day community ballot on
+Discourse before it is published; a patch release does not. Label pull requests `fix` or
+`minor` so the SEC can list them.
 
-### 4. Approval
-
-**Minor changes:**
-- Component Maintainer reviews
-- Pass → commit to specification library
-- Fail → one week to revise (max 3 rounds, then rejected)
-
-**Major changes:**
-- 30-day community review on Discourse specifications forum
-- Assignee revises within two weeks based on feedback
-- Two-thirds SEC majority vote required
-- Max 3 review rounds, then rejected
-
-### 5. Community Requirement
-
-From Release 1.0 onward, specification changes (excluding documentation-only text updates)
-must be announced on the Discourse specifications forum, and require implementation in at
-least one formal software, schema, or technical expression before adoption.
-
-### 6. Jira Ticket Flow: Resolve → Release → Close
+### Jira Ticket Flow: Resolve → Release → Close
 
 A CR or PR ticket is closed in two steps, never straight from Open or Analysis:
 
@@ -199,7 +191,7 @@ All specifications must include:
 
 | Role | Responsibility |
 |------|---------------|
-| **SEC** (Specifications Editorial Committee) | Reviews all changes, accepts/rejects CRs, manages release allocation, promotes specs |
-| **Component Maintainer** | Supervises component specs, assigns Change Owners, approves minor changes |
-| **Change Owner** | Develops impact assessments, executes work, revises based on feedback |
-| **Community** | Raises PRs, participates in open reviews on Discourse |
+| **SEC** (Specifications Editorial Committee) | Decides Change Requests by vote, defines releases, promotes specs |
+| **SEC members** | Approve Fixes and Minor changes on the pull request, vote on Change Requests, raise Change Requests |
+| **Component Maintainer** | Supervises component specs |
+| **Community** | Raises PRs, comments in release ballots and on announced Minor changes on Discourse |
