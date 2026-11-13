@@ -4,7 +4,7 @@ description: >
   Write Jira issues, Jira comments, and GitHub pull request titles and bodies for the openEHR
   specification trackers and repos. Use whenever text is about to be posted to Jira or GitHub:
   create or edit an issue, comment, open a PR, write a review comment. Issues and PRs open with
-  a capped summary, then a Details part of at most 5 to 7 minutes' reading; comments stay
+  a TL;DR line and a capped summary, then a short Details part; comments stay
   summary only. Fixed structure, ask before going over. Not for commit messages (repo AGENTS.md),
   amendment entries (amendment-record), or spec prose (authoring, content-patterns).
 argument-hint: "[issue | comment | pr] - what the text is about"
@@ -34,7 +34,8 @@ Jira issue and GitHub PR the same two parts: a short **summary** for everyone wh
 |---|---|---|
 | Jira issue, summary part | **120 words** | description field, everything above the Details heading |
 | Pull request, summary part | **80 words** | PR description, everything above the Details heading |
-| Details part (issue or PR) | **1,000 words** to aim for, **1,500 words** hard | everything below the Details heading; 5 to 7 minutes' reading |
+| Details part, Jira issue | **300 words** to aim for, **600 words** hard | everything below the Details heading |
+| Details part, pull request | **150 words** to aim for, **300 words** hard | everything below the Details heading |
 | Jira comment / PR review comment | **40 words** | comment body; no Details part |
 | Jira summary / PR title | **80 characters** | one line, no trailing period |
 
@@ -59,7 +60,7 @@ reproduction with several steps, a review that lists many defects. The rule is:
 A long form that was approved keeps the same structure, opens with a one-line TL;DR, and keeps
 each part to one paragraph.
 
-This applies to comments and to the summary part. A Details part over 1,500 words is not posted
+This applies to comments and to the summary part. A Details part over its hard cap is not posted
 either: say what it holds and its word count, and ask whether to cut named sections, split the
 topic into several tickets, or move the bulk to a linked page.
 
@@ -67,33 +68,35 @@ topic into several tickets, or move the bulk to a linked page.
 
 A Jira issue and a pull request body have two parts, in this order:
 
-1. **The summary part**: the structure given below for the text type, within its cap, with no
-   heading above it. It stands alone: a reader who stops there knows the defect or the change,
-   where it is, and what is asked.
-2. **Details**: under a heading `Details`, everything that was prepared and that the reader
-   needs in order to decide, review or implement, in readable form.
+1. **The summary part**: it opens with a `**TL;DR:**` line, one sentence a reader can stop
+   after, then the structure given below for the text type, within its cap, with no heading
+   above it. It stands alone: a reader who stops there knows the defect or the change, where it
+   is, and what is asked.
+2. **Details**: under a heading `Details`, only what the reader needs to decide, review or
+   implement and cannot see in the summary, the diff or the linked ticket.
 
-Details are for information, not for length:
+Details are brief and clear, without losing anything important:
 
-- **Complete.** Every fact, quote, option and check that was prepared for this ticket or PR and
-  that bears on the decision is there. The reader does not have to redo the analysis or ask
-  what was looked at.
-- **Precise.** Quote the exact spec wording with its location. Give the proposed wording or
-  model change exactly. Name what was verified and how, and what was not verified.
-- **Readable.** The sections below, each a short paragraph or a list. A table when two or more
-  things are compared. No section repeats the summary or another section.
-- **Not a bible.** No background the SEC already knows, no history of how the text was
-  produced, no hedging, no restating the diff. Leave a section out when it has nothing to say.
-  If the summary already says everything (a typo, a broken link), there is no Details part.
+- **One line per point.** Short bullets, not paragraphs. A sentence that does not change the
+  reader's decision goes.
+- **Important facts stay.** The level and what is affected, decisions taken where the ticket
+  left room (with the source that supports them), what was checked and what was not, and what
+  is left open. These are never cut to save words.
+- **Precise, not quoted at length.** Name class, attribute and section. Quote only the phrase
+  that changes, not whole old and new paragraphs; the diff holds the full text.
+- **No repetition.** Nothing the summary, the diff, the title or the ticket already says. No
+  background the SEC knows, no history of how the text was produced, no hedging. Leave a
+  section out when it has nothing to say; if the summary says everything (a typo, a broken
+  link), there is no Details part.
 
 Sections, in this order, each only when it has content:
 
 | Jira issue | Pull request |
 |---|---|
-| **Current state**: what the spec, model or schema says today, quoted, with location | **What changed**: by document or model area, not by file; old and new wording for a normative change |
+| **Current state**: what the spec, model or schema says today, quoted, with location | **What changed**: by document or model area, not by file; one line each; the changed phrase only for a normative change |
 | **Problem**: why that is wrong or insufficient, and what it causes | **Decisions**: the choices made where the ticket left room, and what was rejected and why |
-| **Proposal**: the change in exact terms; with several options, a table of option, effect, drawback, and which one is recommended | **Impact**: level (Fix, Minor change, Change Request) and what is affected |
-| **Impact**: level (Fix, Minor change, Change Request; see the governance skill) and what is affected: data, implementations, schemas, other documents | **Review**: what to look at first, what was checked (build, link check, schema check) with the result, and what was not checked |
+| **Proposal**: the change in exact terms; with several options, a table of option, effect, drawback, and which one is recommended | **Impact**: level (Fix, Minor change, Major change) and what is affected |
+| **Impact**: level (Fix, Minor change, Major change; see the governance skill) and what is affected: data, implementations, schemas, other documents | **Review**: what to look at first, what was checked (build, link check, schema check) with the result, and what was not checked |
 | **References**: tickets, pull requests and threads, each a link with one phrase on what it adds | **Open**: what this PR leaves for later, with the ticket if there is one |
 
 ## Structure per text type
@@ -104,7 +107,7 @@ parts.
 ### Jira issue (problem report or change request)
 
 ```
-<one sentence: what is wrong or what is asked>
+**TL;DR:** <one sentence: what is wrong or what is asked>
 
 Where: <spec> <release or branch>, <section or class.attribute>[, file path]
 Change: <what the text or model should say instead, or the question to decide>
@@ -154,7 +157,7 @@ Title: `<KEY>: <what changed>` for one ticket, `<KEY1>/<KEY2>: ...` for several,
 Body:
 
 ```
-<what changed, one or two sentences>
+**TL;DR:** <what changed and why, one sentence>
 Why: <ticket key with link, or the reason when there is no ticket>
 Amendment record: <entry n.n added | not needed: <reason>>
 [Check: <one thing the reviewer must verify, only if not obvious from the diff>]
@@ -204,9 +207,11 @@ same holds for Details: shared analysis is written once, and the other issues li
 ## Before posting
 
 - Word count within the cap, or the user has approved the long form.
-- First line stands alone: a reader who stops there knows the defect or the action.
+- First line is the `**TL;DR:**` and stands alone: a reader who stops there knows the defect or
+  the action.
 - Issue or PR: the summary part comes first and is complete without the Details. The Details
-  hold everything that was prepared, are within 1,500 words, and no section repeats another.
+  are within their cap, keep the important facts (level, decisions, checks, open points), and
+  no section repeats another or the summary.
 - Comment: summary only.
 - Every identifier (class, attribute, section, key, PR number) is one the agent has seen in the
   repo, the spec, or the tracker. No invented keys.
