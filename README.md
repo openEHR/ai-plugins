@@ -16,7 +16,7 @@ It is **not** a specification repository: the specifications live in the `specif
 | Plugin | Purpose |
 |--------|---------|
 | `openehr-specs` | Creating, editing, and reviewing openEHR specification documents (AsciiDoc and OpenAPI/ITS-REST), specification governance, content quality and convention compliance |
-| `openehr-specs-maintenance` | Housekeeping for the people who maintain the specifications, such as the SEC: the agenda of the next call, the list of pending pull request reviews and unanswered Jira questions |
+| `openehr-specs-maintenance` | Housekeeping for the people who maintain the specifications, such as the SEC: the agenda of the next call, the update slides for the SEC and the Board, the list of pending pull request reviews and unanswered Jira questions |
 
 ## Quick Install
 

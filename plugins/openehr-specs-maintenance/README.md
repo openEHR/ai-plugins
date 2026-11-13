@@ -22,6 +22,7 @@ Add the marketplace from this repository (or a fork), then install `openehr-spec
 | Skill | Purpose |
 |-------|---------|
 | `sec-waiting` | Read-only reminder list for the SEC: per member, the pull request reviews requested from them and the Jira questions put to them that are still open, as a message ready to paste into Discourse (needs `python3` and a logged-in `gh`) |
+| `update-slides` | Build the specification update decks as HTML slides: the SEC update and the Board update cut from it. Fixed sections, numbers from GitHub and Jira, a share-safe check (no per-person numbers, strategy or private links) and a summary for the call notes (numbers need `python3` and a logged-in `gh`) |
 | `sec-agenda` | Draft the Confluence page for the next SEC call from the standard template and carry over what the previous call left open: topics not reached, follow-ups and unchecked action items (needs the Atlassian MCP) |
 
 ## Usage
@@ -30,11 +31,13 @@ Invoke the skill as `/openehr-specs-maintenance:sec-waiting`, or ask for it ("wh
 
 Invoke `/openehr-specs-maintenance:sec-agenda <date>`, or ask for it ("draft the next SEC agenda"). It shows the draft first and creates or changes a Confluence page only when you confirm.
 
+Invoke `/openehr-specs-maintenance:update-slides sec <date>` or `board <date>`. The deck is written to `spec-update/<date>/` or `board-update/<date>/` in the current directory and stays local; sharing it is your decision, after the skill's share-safe check.
+
 `sec-waiting` ships without personal data. The names it needs to ping people on Discourse, and any pinned tickets, go in a personal settings file outside this repository; see "Configuration" in the [skill](skills/sec-waiting/SKILL.md).
 
 ## Dependencies
 
-- **`python3`** (3.8+, standard library only) runs the bundled `scripts/sec_waiting.py`.
+- **`python3`** (3.8+, standard library only) runs the bundled `scripts/sec_waiting.py` and `update-slides`' `scripts/activity.py`.
 - **`gh`** (GitHub CLI), logged in with an account that can read the `openEHR/sec` team.
 - Jira is read through the public REST API without a login; restricted tickets are not seen.
 - The **Atlassian MCP**: `sec-agenda` needs it, with write access to the Specifications space; without it the skill hands over the draft as text. For `sec-waiting` it is optional, used only to check pinned tickets of non-public projects.
