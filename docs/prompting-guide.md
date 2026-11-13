@@ -201,4 +201,4 @@ Raise a SPECPR for the missing EXPR_VALUE_REF table in BEL.
 Open the PR for this branch.
 ```
 
-The `tracker-writing` skill gives each text a fixed structure and a hard cap: 120 words for an issue, 80 for a PR body, 40 for a comment. When the content does not fit, Claude shows you the draft with its word count and asks whether to post it long or drop parts. It does not cut on its own.
+The `tracker-writing` skill gives each text a fixed structure. An issue and a PR body open with a summary part under a hard cap (120 and 80 words) and continue with Details: everything that was prepared, in short sections, at most 5 to 7 minutes' reading (1,500 words). A comment is summary only, 40 words. When the content does not fit, Claude shows you the draft with its word count and asks whether to post it long or drop parts. It does not cut on its own.
