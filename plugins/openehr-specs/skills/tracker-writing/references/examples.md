@@ -31,8 +31,8 @@ summary only.
 
 Summary: `EHR Extract: EXTRACT_SPEC.priority as Integer or coded value?`
 
-> `EXTRACT_SPEC.priority` is an `Integer` with locally agreed values; an author note proposed
-> standard coded terms instead.
+> **TL;DR:** `EXTRACT_SPEC.priority` is an `Integer` with locally agreed values; an author note
+> proposed standard coded terms instead.
 >
 > Where: RM EHR Extract, `EXTRACT_SPEC.priority`; note also in the UML source and the ITS-BMM
 > `openehr_rm_*.bmm` files
@@ -55,7 +55,7 @@ Summary: `EHR Extract: EXTRACT_SPEC.priority as Integer or coded value?`
 >
 > | Option | Effect | Next step |
 > |---|---|---|
-> | Coded value | `priority` changes type | Change Request on the RM tracker |
+> | Coded value | `priority` changes type | Major change, Change Request on the RM tracker |
 > | Keep `Integer` | nothing changes for implementations | resolve Won't Do, remove the note from the UML source |
 
 What went: the origin paragraph (one link suffices) and the instruction to the assignee (the
@@ -83,7 +83,7 @@ The summary part still stands alone.
 
 Title: `Remove leftover TBD author notes (editorial)`
 
-> Removes ten `[.tbd]` author notes from BEL, EL and BMM3, and one empty section heading.
+> **TL;DR:** Removes ten `[.tbd]` author notes from BEL, EL and BMM3, and one empty section heading.
 > No normative change.
 > Why: each note now has a SPECPR ticket (SPECPR-495 to SPECPR-503).
 > Amendment record: not needed, editorial.
