@@ -9,6 +9,12 @@ Notable changes to the plugins in this repository. The format follows [Keep a Ch
 - `tracker-writing` skill: Jira issues, Jira comments and GitHub pull request bodies in a fixed structure with hard word caps (issue 120, PR 80, comment 40). When content does not fit, the agent shows the draft and asks before posting; it never cuts silently. Before/after examples in `references/examples.md`.
 - `tracker-writing`: a new Jira issue gets Component/s, Affects Version/s and, when known, Fix Version/s, chosen only from the values that already exist in the target project. The agent never creates a component or version, and leaves the field empty when nothing fits.
 
+### Changed
+
+- `governance` skill: follows the change workflow the SEC approved on 2026-11-09 as a one-month trial. Every change to a Trial or Stable specification is a Fix (one SEC approval on the pull request), a Minor change (two approvals, then one week's notice on Discourse; a veto moves it up) or a Change Request (candidate solutions, optional ballot, SEC vote, pull request with three approvals). Releases are not voted on; minor and major releases get a 30-day community ballot. A change spanning several repositories has one collection pull request that carries the approvals for all. The full rules are in `references/change-workflow.md`; the Jira ticket flow stays until Jira is changed.
+- `tracker-writing` and `governance` skills: a change spread over several pull requests says so in the descriptions. The collection pull request states that approving it approves the whole change and lists the others by full URL under `Related:`; each other pull request names the collection and says to approve there.
+- `governance` skill: documents the Jira ticket flow Resolve → release → Close. A CR or PR is Resolved (Fixed, Fix Version set) when its change is merged, stays Resolved until the component release is published, and is Closed only then. The transition table lists the fields each step requires (Affects and Fix Version, Analyst, Due date, Priority, Impact Analysis, Change Description, Acceptance). The release checklist and release steps say the same.
+
 ## openehr-specs 0.6.0 (2026-10-09)
 
 ### Added
