@@ -99,7 +99,7 @@ def readiness(level, approvals, changes_requested, draft, conflicting, checks, n
     if checks in ("FAILURE", "ERROR"):
         return "OPEN", "checks failing"
     if level is None:
-        return "OPEN", "no level label (fix, minor, change-request); %d approval(s)" % len(approvals)
+        return "OPEN", "no level label (fix, minor, major); %d approval(s)" % len(approvals)
     need = needs[level]
     if len(approvals) < need:
         return "OPEN", "%s: %d of %d approvals" % (level, len(approvals), need)

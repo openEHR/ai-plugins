@@ -19,7 +19,7 @@ try it against your implementation, and comment by <date>. Comments, not votes; 
 gets an answer in this thread.
 
 **What is in it**
-- Change Requests: [<SPECXX-nnn> <title>](<url>), ...
+- Major changes: [<SPECXX-nnn> <title>](<url>), ...
 - Minor changes: [<SPECPR-nnn> <title>](<url>), ...
 - Fixes: [all tickets in this release](<Jira release page>), including patch releases <x.y.1, x.y.2>
   published since the last ballot
@@ -31,7 +31,7 @@ gets an answer in this thread.
 
 **How to comment**
 - Reply here, or raise a Problem Report on SPECPR and link it in this thread.
-- Each comment takes its normal path as a Fix, Minor change or Change Request, and can still go
+- Each comment takes its normal path as a Fix, Minor change or Major change, and can still go
   into this release.
 
 After <date> the SEC answers the comments here, makes the resulting changes, and publishes the
@@ -41,7 +41,7 @@ release. The release notes follow in this thread.
 ## After the ballot
 
 - Answer every comment in the thread, with the ticket or pull request it led to, or why not.
-- Changes from the ballot take their normal path (Fix, Minor change, Change Request) and keep
+- Changes from the ballot take their normal path (Fix, Minor change, Major change) and keep
   the same Fix Version.
 - Publish the release (release-checklist.md), then post the release notes as the last reply.
 

@@ -3,7 +3,7 @@ name: ticket-brief
 description: >
   Read-only briefing for an openEHR specification Jira ticket: the ask, the current state
   checked against the spec repos, a two-line fix proposal, its level (Fix, Minor change or
-  Change Request) and clearly related Jira, GitHub and Discourse items. Use when the user
+  Major change) and clearly related Jira, GitHub and Discourse items. Use when the user
   pastes a ticket key (SPECPR-483, SPECRM-46, SPECITS-96) or an openehr.atlassian.net URL, or
   asks "what is this ticket", "summarise SPECPR-x", "brief 475 476 478". Never changes
   anything. Not for writing the Jira or pull request text (use tracker-writing) or for the
@@ -49,7 +49,7 @@ State as checked against the published release, not `master`.
 **Fix (proposal):**
 1. <what should change>
 2. <where or how, or the split: what is a quick fix now vs. what needs its own ticket>
-**Level:** <Fix | Minor change | Change Request>, <impact in a few words: who or what is affected, breaking or not>
+**Level:** <Fix | Minor change | Major change>, <impact in a few words: who or what is affected, breaking or not>
 
 **Related:**
 - <Type>: [<item>](<url>) (<date or state>)
@@ -67,11 +67,12 @@ State as checked against the published release, not `master`.
   - **Minor change**: compatible; everything that conforms today still conforms, nothing new in
     kind (a cardinality relaxed, a class changed in the BMM, a small optional addition). Two SEC
     approvals, then one week of notice on Discourse.
-  - **Change Request**: new in kind, or breaking (tightened constraint, removed or renamed element,
-    new class, new dependency, data migration). SEC vote.
+  - **Major change**: new in kind, or breaking (tightened constraint, removed or renamed element,
+    new class, new dependency, data migration). Needs a Change Request ticket (optionally a Problem Report, if
+    related to one). SEC vote.
 
   The size of the diff does not matter; when in doubt, one level up. The level is also the label
-  the pull request will carry (`fix`, `minor`, `change-request`). The impact part names what is
+  the pull request will carry (`fix`, `minor`, `major`). The impact part names what is
   affected: data, implementations, schemas or mirrors, other documents. For a non-fix outcome
   (Won't Do, Duplicate) write `n/a`.
 - Add a **Discussion:** line between State and Fix only when there are comments with an open question, naming who asked what and whether it was answered.
@@ -114,7 +115,7 @@ Quick mode, no topic search (only the ticket, its links, its Development field a
 ```
 | Ticket | Status | Fix (proposal) | Level |
 |---|---|---|---|
-| [<title>](<url>) | <status>, <priority> | <one line> | <Fix / Minor / CR>, <impact> |
+| [<title>](<url>) | <status>, <priority> | <one line> | <Fix / Minor / Major>, <impact> |
 ```
 
 ## Example

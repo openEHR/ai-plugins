@@ -28,7 +28,7 @@ the `ticket-brief` skill.
 - **Fix**: breaking? Contradicts an SEC decision or an open Change Request? Leaves a second
   place inconsistent (BMM, ITS mirrors, adl-antlr, Archie)?
 - **Level**: right by the `ticket-brief` definitions, impact complete? When in doubt, one level
-  up. A Change Request needs its own SPECXX Change Request ticket; say whether one exists.
+  up. A Major change needs a Change Request ticket; say whether one exists.
 - **People**: who objected, is it still valid, who has to say yes?
 - **Cheaper outcome**: duplicate, fixed elsewhere, Won't Do with a reason on record, question
   already answered?
@@ -40,11 +40,11 @@ the `ticket-brief` skill.
 Only this block, nothing before or after:
 
 ```
-`<Quick win | Medium | High>` · `<Fix | Minor change | Change Request | Mixed>`
+`<Quick win | Medium | High>` · `<Fix | Minor change | Major change | Mixed>`
 
 **Proposal:** <one or two sentences: what we change and why>
 **PRs:**
-1. `<Fix | Minor change | Change Request>` <repo>, <file:line>: <the change in one line>
+1. `<Fix | Minor change | Major change>` <repo>, <file:line>: <the change in one line>
 **Draft comment:** <the Jira comment, one or two lines, reason first; not posted>
 **Challenger:** <no complaints | the points still open for the user, at most 3, one line each>
 **Open for you:** <the one decision the user has to make; omit if none>

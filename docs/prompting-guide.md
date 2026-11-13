@@ -167,10 +167,10 @@ The SEC promoted my spec from Development to Trial. What changes in manifest.jso
 ```
 
 ```text
-Is this change a Fix, a Minor change or a Change Request, and what does it need before the merge?
+Is this change a Fix, a Minor change or a Major change, and what does it need before the merge?
 ```
 
-Since the SEC trial of 2026-11-09 every change is a Fix (one SEC approval on the pull request), a Minor change (two approvals, then one week's notice on Discourse) or a Change Request (SEC vote). Only SEC members create change requests; anyone can raise a problem report on the `SPECPR` tracker. The Jira steps of a release are yours, and Claude asks you to confirm them. It asks before it pushes. For a fix release it confirms with you first, because the push overwrites the deployed release. The promotion criteria are the SEC's: Claude sets the new status in both files once you confirm that the SEC approved it.
+Since the SEC trial of 2026-11-09 every change is a Fix (one SEC approval on the pull request), a Minor change (two approvals, then one week's notice on Discourse) or a Major change (SEC vote, with a Change Request ticket). Only SEC members create change requests; anyone can raise a problem report on the `SPECPR` tracker. The Jira steps of a release are yours, and Claude asks you to confirm them. It asks before it pushes. For a fix release it confirms with you first, because the push overwrites the deployed release. The promotion criteria are the SEC's: Claude sets the new status in both files once you confirm that the SEC approved it.
 
 ## Edit the ITS-REST API
 
@@ -212,7 +212,7 @@ Brief SPECPR-483.
 Brief SPECRM-131 SPECRM-133 SPECPR-180.
 ```
 
-The `ticket-brief` skill only reads. For one ticket it returns the ask, the state checked against `master` of the spec repos, a two-line fix proposal, the level under the SEC change workflow (Fix, Minor change or Change Request) and the clearly related pull requests, tickets and Discourse threads. While you read the brief, two subagents work in the background: `fix-drafter` turns the fix proposal into concrete pull requests with the exact text, and `fix-challenger` checks that draft as a critical SEC member would and returns a short final proposal, labelled with the effort (Quick win, Medium, High) and the level of each pull request, with a draft Jira comment. Say "brief only" to skip them. Several keys give a table. It works best from a directory that has the `specifications-*` clones next to each other, with `gh` logged in and the Atlassian MCP connected; it says which source it could not check.
+The `ticket-brief` skill only reads. For one ticket it returns the ask, the state checked against `master` of the spec repos, a two-line fix proposal, the level under the SEC change workflow (Fix, Minor change or Major change) and the clearly related pull requests, tickets and Discourse threads. While you read the brief, two subagents work in the background: `fix-drafter` turns the fix proposal into concrete pull requests with the exact text, and `fix-challenger` checks that draft as a critical SEC member would and returns the final proposal, labelled with the effort (Quick win, Medium, High) and the level of each pull request, with a draft Jira comment. Say "brief only" to skip them. Several keys give a table. It works best from a directory that has the `specifications-*` clones next to each other, with `gh` logged in and the Atlassian MCP connected; it says which source it could not check.
 
 ## See what you can close and who waits on you
 
@@ -221,5 +221,5 @@ What can I close?
 Is anybody waiting on me?
 ```
 
-The `screener` skill only reads. First it lists what you can finish: your pull requests that have the approvals their level needs (one for `fix`, two for `minor` plus the week of notice, three for `change-request`), tickets whose pull request is merged but which are still open, and Resolved tickets whose release is out. Then it lists who is waiting on you: review requests, unanswered questions on pull requests and Jira tickets, and requested changes. Claude checks each candidate before showing it and merges or closes nothing; say so when you want that done.
+The `screener` skill only reads. First it lists what you can finish: your pull requests that have the approvals their level needs (one for `fix`, two for `minor` plus the week of notice, three for `major`), tickets whose pull request is merged but which are still open, and Resolved tickets whose release is out. Then it lists who is waiting on you: review requests, unanswered questions on pull requests and Jira tickets, and requested changes. Claude checks each candidate before showing it and merges or closes nothing; say so when you want that done.
 
