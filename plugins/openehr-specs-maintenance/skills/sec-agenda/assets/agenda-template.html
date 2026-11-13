@@ -1,0 +1,45 @@
+<!--
+  SEC call notes: page body for Confluence (Atlassian HTML format, not storage XML).
+  Replace every {{...}}. Remove this comment, and the AGENDA additions block when no topic
+  was moved. Standing rows: copy the presenter mention from the previous page; never invent
+  an account id. One <tr> per topic, in the order given in SKILL.md.
+-->
+<h2>Date</h2>
+<p><time datetime="{{YYYY-MM-DD}}">{{Month D, YYYY}}</time></p>
+<h2>Participants</h2>
+<ul><li><p></p></li></ul>
+<p><strong>AGENDA additions</strong></p>
+<p>The topics below were moved from the <a href="{{URL of the previous call page}}">{{YYYY-MM-DD of the previous call}} call</a>, where only {{topics discussed}} were discussed.</p>
+<h2>Discussion topics</h2>
+<table data-width="1800">
+  <thead>
+    <tr>
+      <th data-colwidth="95"><p>Time</p></th>
+      <th data-colwidth="254"><p>Presenter / Suggested by</p></th>
+      <th data-colwidth="430"><p>Issue</p></th>
+      <th data-colwidth="1021"><p>Notes</p></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td data-colwidth="95"><p></p></td>
+      <td data-colwidth="254"><p>{{presenter, copied from the previous page}}</p></td>
+      <td data-colwidth="430"><p>General</p></td>
+      <td data-colwidth="1021"><ul><li><p>check and work with: <a href="https://openehr.atlassian.net/jira/core/projects/SEC/board?filter=&amp;groupBy=status">SEC board</a></p></li></ul></td>
+    </tr>
+    <tr>
+      <td data-colwidth="95"><p></p></td>
+      <td data-colwidth="254"><p>{{presenter, copied from the previous page}}</p></td>
+      <td data-colwidth="430"><p>Specification status</p></td>
+      <td data-colwidth="1021"><p></p></td>
+    </tr>
+    <tr>
+      <td data-colwidth="95"><p>{{time, only if given}}</p></td>
+      <td data-colwidth="254"><p>{{presenter}}</p></td>
+      <td data-colwidth="430"><p>{{topic}}: <a href="{{ticket or pull request URL}}">{{KEY}}</a></p></td>
+      <td data-colwidth="1021"><ul><li><p>{{the problem in one line}}</p></li><li><p>{{the proposal}}</p></li><li><p>Decide: {{what the SEC is asked to decide}}</p></li></ul></td>
+    </tr>
+  </tbody>
+</table>
+<h2>Action items</h2>
+<ul data-type="task-list"><li data-type="task-item"><input type="checkbox"> </li></ul>
