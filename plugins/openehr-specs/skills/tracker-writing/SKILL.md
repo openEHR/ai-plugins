@@ -124,9 +124,10 @@ Summary line: `<Spec>: <defect or change in five to ten words>`. Examples:
 A question to a person goes in the Change line as a plain question, not a paragraph. The
 assignee is set in the field, not in the text.
 
-Fields: when the issue is created, set **Component/s** and **Affects Version/s**, if the
-location identifies them. Leave **Fix Version/s** empty: it is set when the ticket is solved
-(governance skill, Release allocation). Use only
+Fields: when the issue is created, set **Component/s** (one per affected specification), if
+the location identifies them. Leave **Affects Version/s** empty, and **Fix Version/s** too: the
+SEC sets it for a planned release, otherwise it is set when the ticket is solved (governance
+skill, Release allocation). Use only
 components and versions that already exist in the target Jira project: list them first (for
 example `GET /rest/api/3/project/<KEY>/components` and `.../versions`) and pick from that list.
 Never create a component or version, and leave the field empty when no existing value clearly
@@ -186,8 +187,9 @@ Use full URLs: a bare `repo#N` without the owner does not link across repositori
 part and do not count toward the cap.
 
 Opening a pull request sets Component/s on its ticket to the specification, not the Fix
-Version; that is set to `<Component> Release NEXT` (on a component tracker `Release NEXT`) when
-the ticket is closed after the merge (governance skill, Release allocation). Do it in Jira; it
+Version; that is set when the ticket is closed after the merge, to the component's planned
+version if there is one, otherwise `<Component> Release NEXT` (on a component tracker
+`Release NEXT`) (governance skill, Release allocation). Do it in Jira; it
 is not a line in the description.
 
 Do not list the changed files, the diff shows them; in Details, describe the change by document

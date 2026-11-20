@@ -121,24 +121,33 @@ the downstream artefacts (ITS-BMM mirrors, XML and JSON schemas, OpenAPI, the AD
 grammars, the terminology), and Archie. A step that is not affected is still checked, and the
 collection pull request records the result in one line.
 
-**Release allocation.** The Fix Version says which release carries a solved ticket. Only people
-with the Jira Resolve Issues permission can set it, and it is set in two cases only:
+**Release allocation.** The Fix Version says which release carries a ticket. Only people
+with the Jira Resolve Issues permission can set it (meant for SEC members), in these cases:
 
-1. **Solved → `Release NEXT`.** When a ticket (Problem Report or Change Request) is closed as
-   Fixed or Done, it gets the `Release NEXT` version of every component its merged pull requests
-   touched, one per component: on `SPECPR` `<Component> Release NEXT` (`RM Release NEXT`,
-   `AM Release NEXT`, `ITS-XML Release NEXT`), on a component tracker `Release NEXT` (on
+1. **Planned.** A planned release is a numbered, unreleased version in Jira (`AM version
+   2.4.0`). The SEC may give a ticket that version before it is solved; it then shows in the
+   ticket's Details. Stale unreleased versions that will not ship should be archived, or they
+   count as planned.
+2. **Solved.** When a ticket (Problem Report or Change Request) is closed as Fixed or Done, it
+   gets one Fix Version per component its merged pull requests touched: the planned version of
+   that component if there is one (the lowest, if several), otherwise its `Release NEXT`. On
+   `SPECPR` the names carry the component (`AM version 2.4.0`, `RM Release NEXT`,
+   `ITS-XML Release NEXT`); on a component tracker they do not (`ADL 2.4.0`, `Release NEXT`; on
    `SPECITS` one per ITS: `Release XML NEXT`, `Release REST NEXT`, `Release JSON NEXT`,
-   `Release BMM NEXT`). Three merged pull requests in three
-   components give three Fix Versions. Never pick a numbered version here: whether the next
-   release is 1.2.0 or 1.1.1 is only decided at release time.
-2. **Release number settled → numbered version.** The SEC moves the `Release NEXT` tickets it
-   takes into the release to the numbered version (`RM Release 1.2.0`), and adds the tickets it
-   wants in the release on top.
+   `Release BMM NEXT`). Three merged pull requests in three components give three Fix
+   Versions. `Release NEXT` means solved, release not decided yet.
+3. **Already fixed in a past release.** A ticket closed because an earlier change already
+   fixed it gets the released version that first contained that fix (check the release tag).
+   When that release cannot be established, leave the Fix Version empty.
+4. **Release number settled.** The SEC moves the `Release NEXT` tickets it takes into the
+   release to the numbered version (`RM Release 1.2.0`). `Release NEXT` is never renamed.
 
-No Fix Version means not solved and not in any release. Do not set one when a pull request is
-opened, or on a ticket closed as Won't Do or Duplicate. Also set **Component/s** to the affected
-specification (`RM - EHR IM`, `AM - ADL2`), one per specification touched. Use only versions and
+No Fix Version means neither planned nor solved. Do not set one when a pull request is opened
+(unless the ticket is planned), or on a ticket closed as Won't Do or Duplicate. A ticket with
+pull requests in several components may carry a component's version while it is still open
+for another component; split it into two tickets when that gets in the way.
+
+Also set **Component/s** to the affected specification (`RM - EHR IM`, `AM - ADL2`), one per specification touched. Use only versions and
 components that exist; when a component has no `Release NEXT` version yet, say so and leave the
 field for the user (never create one).
 
@@ -150,8 +159,8 @@ the ticket in the release.
 
 1. **Open the pull request**: set Component/s; leave the Fix Version empty.
 2. **Close on merge**: once every pull request for the ticket is merged, set the Fix Version to
-   `Release NEXT` of each component they touched (Release allocation above), comment with the
-   merged pull request(s) (tracker-writing skill), and close the ticket with resolution Fixed
+   planned version, or else `Release NEXT`, of each component they touched (Release allocation
+   above), comment with the merged pull request(s) (tracker-writing skill), and close the ticket with resolution Fixed
    (Done for a Change Request). Set the Fix Version before the Close transition: a Closed
    ticket cannot be edited, and on a component tracker it cannot be reopened either. Won't Do
    and Duplicate get no Fix Version. While a pull request
