@@ -127,7 +127,9 @@ with the Jira Resolve Issues permission can set it, and it is set in two cases o
 1. **Solved → `Release NEXT`.** When a ticket (Problem Report or Change Request) is closed as
    Fixed or Done, it gets the `Release NEXT` version of every component its merged pull requests
    touched, one per component: on `SPECPR` `<Component> Release NEXT` (`RM Release NEXT`,
-   `AM Release NEXT`), on a component tracker `Release NEXT`. Three merged pull requests in three
+   `AM Release NEXT`, `ITS-XML Release NEXT`), on a component tracker `Release NEXT` (on
+   `SPECITS` one per ITS: `Release XML NEXT`, `Release REST NEXT`, `Release JSON NEXT`,
+   `Release BMM NEXT`). Three merged pull requests in three
    components give three Fix Versions. Never pick a numbered version here: whether the next
    release is 1.2.0 or 1.1.1 is only decided at release time.
 2. **Release number settled → numbered version.** The SEC moves the `Release NEXT` tickets it
@@ -150,7 +152,9 @@ the ticket in the release.
 2. **Close on merge**: once every pull request for the ticket is merged, set the Fix Version to
    `Release NEXT` of each component they touched (Release allocation above), comment with the
    merged pull request(s) (tracker-writing skill), and close the ticket with resolution Fixed
-   (Done for a Change Request). Won't Do and Duplicate get no Fix Version. While a pull request
+   (Done for a Change Request). Set the Fix Version before the Close transition: a Closed
+   ticket cannot be edited, and on a component tracker it cannot be reopened either. Won't Do
+   and Duplicate get no Fix Version. While a pull request
    for the ticket is still open, the ticket stays open.
 
 A ticket must never end Closed without a resolution: Jira then counts it as Unresolved in every
