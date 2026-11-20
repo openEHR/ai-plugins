@@ -152,17 +152,16 @@ the thread. A release view that marks the changes on the Antora site is still to
   no fixed review round.
 - Pull requests carry a `fix`, `minor` or `major` label, so the SEC can list them. Any
   member can ask for one to be reverted and raised as a Major change.
-- **Release allocation.** When a pull request is opened, set the Fix Version of the ticket it
-  implements (Problem Report or Change Request) to the `Release NEXT` version of every component
-  the pull request touches, one Fix Version per component, and Component/s to the affected
-  specification. On `SPECPR` the versions are named per component (`RM Release NEXT`,
-  `AM Release NEXT`); on a component tracker `Release NEXT`. No numbered version is picked in
-  advance, because whether the next release is a minor or a patch release is decided only when
-  it is cut; then `Release NEXT` is renamed to the real number and a new one is created. Three pull requests for
-  one Problem Report, in three components, give it three Fix Versions. This is the default, done
-  on creation of the pull request; anyone may change it later to move the change out of a
-  release. The Fix Versions on the tickets are the running list of what the next release of each
-  component carries; GitHub release notes come from the merged pull requests on their own.
+- **Release allocation.** Only people with the Jira Resolve Issues permission set the Fix
+  Version, in two cases. (1) When a ticket (Problem Report or Change Request) is closed as
+  solved, it gets the `Release NEXT` version of every component its merged pull requests
+  touched, one per component. On `SPECPR` the versions are named per component
+  (`RM Release NEXT`, `AM Release NEXT`); on a component tracker `Release NEXT`. (2) Once the SEC
+  settles a release number, it moves the `Release NEXT` tickets it takes to the numbered version
+  (`RM Release 1.2.0`) and adds the tickets it wants in the release on top; a patch release
+  leaves Major changes on `Release NEXT`. No Fix Version means not solved, so none is set when a
+  pull request is opened. `Release NEXT` is the running list of what is solved and not yet
+  released; GitHub release notes come from the merged pull requests on their own.
 - A Fix without a Problem Report has no ticket; the pull request is the record.
 - The proposal reduces the ticket states to Open, In Progress, Closed (Problem Report) and
   Open, In Progress, Review, Closed (Change Request). A ticket closes when its pull requests
