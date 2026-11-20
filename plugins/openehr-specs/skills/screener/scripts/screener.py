@@ -8,7 +8,7 @@ Read-only. GitHub through the `gh` CLI (GraphQL), Jira through the public REST A
 
 Part 1, what can be closed: pull requests that have the approvals their level needs (and, for
 a Minor change, the week of notice), and Jira tickets whose pull request is merged (a ticket
-closes on merge, with its Fix Version set). Part 2, who waits on me: review requests, unanswered questions, rework.
+closes on merge; a solved one gets the Release NEXT Fix Version). Part 2, who waits on me: review requests, unanswered questions, rework.
 """
 import argparse
 import fnmatch
@@ -312,7 +312,7 @@ def screen_jira(my_name, merged, open_keys, args, now):
         line = "Close: %s is %s, but %s merged" % (
             issue_link(key, f["summary"]), status["name"], " and ".join(links))
         if not f.get("fixVersions"):
-            line += "; set the Fix Version first"
+            line += "; set the Fix Version to Release NEXT when closing"
         if key in open_keys:
             line += "; still open for it: %s" % " and ".join(open_keys[key])
         to_close.append(line)
@@ -320,16 +320,18 @@ def screen_jira(my_name, merged, open_keys, args, now):
     # 2. my tickets left Resolved under the old flow (Resolve, release, Close): close them now
     jql = "project in (%s) AND assignee is not EMPTY AND status in (%s)" % (
         projects, ", ".join('"%s"' % s for s in CONFIG["resolved_statuses"]))
-    for issue in jira_search(jql, "summary,assignee,fixVersions,status"):
+    for issue in jira_search(jql, "summary,assignee,fixVersions,status,resolution"):
         f = issue["fields"]
         if norm((f.get("assignee") or {}).get("displayName")) != norm(my_name):
             continue
         versions = f.get("fixVersions") or []
-        if versions:
+        solved = ((f.get("resolution") or {}).get("name") or "").lower() in ("fixed", "done")
+        if versions or not solved:
             to_close.append("Close: %s is %s, Fix Version %s" % (
-                issue_link(issue["key"], f["summary"]), f["status"]["name"], ", ".join(v["name"] for v in versions)))
+                issue_link(issue["key"], f["summary"]), f["status"]["name"],
+                ", ".join(v["name"] for v in versions) or "none (not solved)"))
         else:
-            to_close.append("Fix Version missing: %s is %s; set the Fix Version, then close" % (
+            to_close.append("Fix Version missing: %s is %s; set the Fix Version to Release NEXT, then close" % (
                 issue_link(issue["key"], f["summary"]), f["status"]["name"]))
 
     # 3. questions put to me in open tickets, not answered since

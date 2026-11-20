@@ -114,27 +114,48 @@ one with the specification text is the **collection pull request**: it lists the
 link back, approvals are given on it once and count for all, and the SEC votes once on the
 Change Request, never per pull request. Merge them together, the collection last.
 
-**Release allocation.** When you open a pull request, set the Fix Version of its ticket (Problem
-Report or Change Request) to the next planned release of every component the pull request
-touches, one per component: on `SPECPR` the per-component versions (`AM version 2.4.0`,
-`RM Release 1.2.0`), on a component tracker its own (`Release 1.2.0`, `ADL 2.4.0`). Three pull
-requests for one Problem Report, in three components, give it three Fix Versions: add the one
-for your component, keep the others. It is the default; anyone may move the ticket out of a
-release later by changing it. Pick the lowest unreleased version of the component; ask when
-more than one is open and the choice is not obvious.
+**Change checklist.** Before opening the pull request(s), go through
+`references/change-checklist.md`, in this order: the BMM first when a class, attribute, function
+or invariant changes (then regenerate the class tables), the hand-written text, the examples,
+the downstream artefacts (ITS-BMM mirrors, XML and JSON schemas, OpenAPI, the ADL and AQL
+grammars, the terminology), and Archie. A step that is not affected is still checked, and the
+collection pull request records the result in one line.
 
-### Jira Ticket Flow: Allocate → Merge → Close
+**Release allocation.** The Fix Version says which release carries a solved ticket. Only people
+with the Jira Resolve Issues permission can set it, and it is set in two cases only:
+
+1. **Solved → `Release NEXT`.** When a ticket (Problem Report or Change Request) is closed as
+   Fixed or Done, it gets the `Release NEXT` version of every component its merged pull requests
+   touched, one per component: on `SPECPR` `<Component> Release NEXT` (`RM Release NEXT`,
+   `AM Release NEXT`, `ITS-XML Release NEXT`), on a component tracker `Release NEXT` (on
+   `SPECITS` one per ITS: `Release XML NEXT`, `Release REST NEXT`, `Release JSON NEXT`,
+   `Release BMM NEXT`). Three merged pull requests in three
+   components give three Fix Versions. Never pick a numbered version here: whether the next
+   release is 1.2.0 or 1.1.1 is only decided at release time.
+2. **Release number settled → numbered version.** The SEC moves the `Release NEXT` tickets it
+   takes into the release to the numbered version (`RM Release 1.2.0`), and adds the tickets it
+   wants in the release on top.
+
+No Fix Version means not solved and not in any release. Do not set one when a pull request is
+opened, or on a ticket closed as Won't Do or Duplicate. Also set **Component/s** to the affected
+specification (`RM - EHR IM`, `AM - ADL2`), one per specification touched. Use only versions and
+components that exist; when a component has no `Release NEXT` version yet, say so and leave the
+field for the user (never create one).
+
+### Jira Ticket Flow: Merge → Close with Release NEXT
 
 A CR or PR ticket closes when its change is merged, as the change workflow says ("merging
 closes it"). The release does not wait on the ticket's status: the Fix Version is what lists
 the ticket in the release.
 
-1. **Allocate** when the pull request is opened: set the Fix Version to the next release of each
-   component the pull request touches (Release allocation above).
-2. **Close on merge**: once every pull request for the ticket is merged, check the Fix Version,
-   comment with the merged pull request(s) (tracker-writing skill), and close the ticket with
-   resolution Fixed (Done for a Change Request, Won't Do or Duplicate where that applies).
-   While a pull request for the ticket is still open, the ticket stays open.
+1. **Open the pull request**: set Component/s; leave the Fix Version empty.
+2. **Close on merge**: once every pull request for the ticket is merged, set the Fix Version to
+   `Release NEXT` of each component they touched (Release allocation above), comment with the
+   merged pull request(s) (tracker-writing skill), and close the ticket with resolution Fixed
+   (Done for a Change Request). Set the Fix Version before the Close transition: a Closed
+   ticket cannot be edited, and on a component tracker it cannot be reopened either. Won't Do
+   and Duplicate get no Fix Version. While a pull request
+   for the ticket is still open, the ticket stays open.
 
 A ticket must never end Closed without a resolution: Jira then counts it as Unresolved in every
 filter, and the direct "Closed" transition sets none. So:
@@ -150,10 +171,10 @@ The SPEC CR trackers' workflow, with the transition names and the fields each on
 
 | Transition | From → To | Set on the way |
 |---|---|---|
-| Assign | Open → Analysis | Affects Version/s, Fix Version/s, Analyst |
-| Commence | Analysis → In Progress | Due date, Priority, Impact Analysis (and Fix Version/s if still empty) |
+| Assign | Open → Analysis | Affects Version/s, Analyst (Fix Version/s stays empty; if Jira insists, `Release NEXT`) |
+| Commence | Analysis → In Progress | Due date, Priority, Impact Analysis |
 | Start Review | In Progress → In Review | Change Description (what changed, with the PR link) |
-| Approve | In Review → Resolved | resolution Done or Fixed; SEC members record their vote in the Acceptance field first |
+| Approve | In Review → Resolved | resolution Done or Fixed, Fix Version/s `Release NEXT`; SEC members record their vote in the Acceptance field first |
 | Closed | any → Closed | nothing, so no resolution either; use it only from Resolved |
 
 Impact Analysis and Change Description are rich-text fields: via the API they take an ADF
@@ -178,12 +199,13 @@ Read `references/release-checklist.md` for the full step-by-step checklist.
 
 The high-level process:
 
-1. **Jira** (a user task, not doable from the repo): ask the user to confirm that all CRs and PRs for the release are closed with a resolution and carry its Fix Version (see "Jira Ticket Flow"), and that the saved searches exist, then continue.
+1. **Jira** (an SEC task, not doable from the repo): once the release number is settled, the SEC moves the `Release NEXT` tickets it takes to the numbered version and adds the others it wants in (see "Release allocation"). Ask the user to confirm that every ticket with that version is closed with a resolution, and that the saved searches exist, then continue.
 1. **Ballot** (minor and major releases): draft the Discourse post from `references/ballot-post.md` for the user to publish; wait for the 30 days to pass and the comments to be answered before tagging.
 2. **manifest.json**: Set the release date, verify `spec_status` for each spec, ensure Jira links are correct, and prepend the next-cycle `releases` entry with an empty `date`.
 3. **Git**: Create a release branch (`Release-N.N.N`), publish in release mode with the exact command in the checklist (do not use `/openehr-specs:publish`; it builds previews only), commit, and create the annotated tag. Ask the user before pushing.
 4. **Webhook**: The push triggers the specifications.openehr.org server to pull and deploy.
-5. **Jira** (a user task): once deployed, mark the Fix Version as released.
+5. **Jira** (a user task): once deployed, mark the numbered version (`RM Release 1.2.0`)
+   released. `Release NEXT` stays and keeps the solved tickets the release did not take.
 
 ### Steps to Fix a Release
 

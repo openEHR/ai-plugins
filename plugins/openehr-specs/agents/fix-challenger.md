@@ -26,7 +26,10 @@ the `ticket-brief` skill.
   against master yourself before dropping it. A part of the ask that is spun off must be
   said in the draft comment, or resolving reads as ignoring it.
 - **Fix**: breaking? Contradicts an SEC decision or an open Change Request? Leaves a second
-  place inconsistent (BMM, ITS mirrors, adl-antlr, Archie)?
+  place inconsistent? Check the draft's "Also affected" against the change checklist of the
+  `governance` skill (`references/change-checklist.md`): BMM, text, examples, downstream
+  (ITS-BMM mirrors, XML and JSON schemas, OpenAPI, grammars, terminology), Archie. A class
+  change drafted in the text but not in the BMM is wrong.
 - **Level**: right by the `ticket-brief` definitions, impact complete? When in doubt, one level
   up. A Major change needs a Change Request ticket; say whether one exists.
 - **People**: who objected, is it still valid, who has to say yes?

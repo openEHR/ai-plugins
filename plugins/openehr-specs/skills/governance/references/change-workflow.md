@@ -103,6 +103,8 @@ part of the discussion. The Jira fields the tracker still asks for are in the go
 
 A change often needs pull requests in several repositories: the specification text, the BMM, the XML and JSON schemas, the OpenAPI files. Then one of them is the **collection pull request**, normally the one with the specification text. Its description lists the other pull requests, and each of them links back to it. Approvals are given on the collection and count for all of them; the others need no approvals of their own, only a check that they match. The SEC votes once, on the Change Request, never per pull request. The pull requests are merged together, the collection last. The ticket links the collection. Say it in the descriptions: the collection states that approving it approves the whole change and lists the others by full URL under `Related:`; each other pull request names the collection and says to approve there. The wording is in the tracker-writing skill ("Pull request").
 
+What a change has to touch, and in which order to work through it (BMM, text, examples, downstream schemas and grammars, Archie), is in `change-checklist.md`. That list is a working aid of this plugin, not part of the approved workflow.
+
 ## The SEC vote
 
 Only Major changes are voted on, in one of two ways:
@@ -150,15 +152,15 @@ the thread. A release view that marks the changes on the Antora site is still to
   no fixed review round.
 - Pull requests carry a `fix`, `minor` or `major` label, so the SEC can list them. Any
   member can ask for one to be reverted and raised as a Major change.
-- **Release allocation.** When a pull request is opened, set the Fix Version of the ticket it
-  implements (Problem Report or Change Request) to the next planned release of every component
-  the pull request touches, one Fix Version per component. On `SPECPR` the versions are named per
-  component (`AM version 2.4.0`, `RM Release 1.2.0`, `ITS-XML Release 2.1.0`); on a component
-  tracker they are that component's own (`Release 1.2.0`, `ADL 2.4.0`). Three pull requests for
-  one Problem Report, in three components, give it three Fix Versions. This is the default, done
-  on creation of the pull request; anyone may change it later to move the change out of a
-  release. The Fix Versions on the tickets are the running list of what the next release of each
-  component carries; GitHub release notes come from the merged pull requests on their own.
+- **Release allocation.** Only people with the Jira Resolve Issues permission set the Fix
+  Version, in two cases. (1) When a ticket (Problem Report or Change Request) is closed as
+  solved, it gets the `Release NEXT` version of every component its merged pull requests
+  touched, one per component. On `SPECPR` the versions are named per component
+  (`RM Release NEXT`, `AM Release NEXT`); on a component tracker `Release NEXT`. (2) Once the SEC
+  settles a release number, it moves the `Release NEXT` tickets it takes to the numbered version
+  (`RM Release 1.2.0`) and adds the tickets it wants in the release on top. No Fix Version means not solved, so none is set when a
+  pull request is opened. `Release NEXT` is the running list of what is solved and not yet
+  released; GitHub release notes come from the merged pull requests on their own.
 - A Fix without a Problem Report has no ticket; the pull request is the record.
 - The proposal reduces the ticket states to Open, In Progress, Closed (Problem Report) and
   Open, In Progress, Review, Closed (Change Request). A ticket closes when its pull requests

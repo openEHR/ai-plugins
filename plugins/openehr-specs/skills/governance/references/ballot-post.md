@@ -5,9 +5,9 @@ Every minor and major release goes to a 30-day community ballot before it is pub
 specifications forum, written from the template below. The community comments; it does not
 vote. Patch releases get no ballot.
 
-Fill the template from Jira: the Fix Versions on the tickets are the list of what the release
-carries (`fixVersion = "<Component> Release x.y.z"` on `SPECPR`, the matching version on the
-component tracker). Link every ticket. Link the development build, not a branch.
+Fill the template from Jira: the numbered Fix Version the SEC set for the release is the list
+of what it carries (`fixVersion = "<Component> Release N.N.N"` on `SPECPR`, `Release N.N.N` on
+the component tracker). Link every ticket. Link the development build, not a branch.
 
 ## Template
 

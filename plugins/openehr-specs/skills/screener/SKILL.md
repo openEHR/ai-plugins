@@ -41,7 +41,7 @@ entry of part 1 and each "Answer" of part 2, and drop or annotate what does not 
   and does not merely mention it (the script says when the key is in the description only),
   that no other pull request for the ticket is still open, and that the ticket is not an
   umbrella or collection ticket that other changes still feed.
-- **Fix Version missing.** Read the ticket; it needs the version before it is closed.
+- **Fix Version missing.** Read the ticket; a solved one (Fixed or Done) gets `<Component> Release NEXT` before it is closed (`governance` skill, "Release allocation").
 - **Answer.** The comment must put a question or a request to the user that nobody has
   settled since. Being named is not enough.
 
@@ -83,7 +83,7 @@ that does not set `${CLAUDE_SKILL_DIR}`, use the directory that holds this SKILL
 |---|---|
 | Pull request ready to merge | the user's open pull request, not a draft, no conflict, checks not failing, no changes requested, and the approvals its level label needs: `fix` 1, `minor` 2 and 7 days since the second approval, `major` 3 |
 | Close | a ticket named by a pull request of the user that was merged in the window, and that is not yet Resolved or Done (tickets close on merge); or a ticket of the user left Resolved by the old flow, which waited for the release |
-| Fix Version missing | a Resolved ticket of the user without a Fix Version: set it, then close (a merged ticket without one gets "set the Fix Version first" on its Close line) |
+| Fix Version missing | a Resolved ticket of the user, resolved Fixed or Done, without a Fix Version: set `Release NEXT`, then close (a merged ticket without one gets "set the Fix Version to Release NEXT when closing" on its Close line) |
 
 The levels and their approvals are those of the SEC change workflow (`governance` skill,
 `references/change-workflow.md`). Only approvals by members of the GitHub team `openEHR/sec`

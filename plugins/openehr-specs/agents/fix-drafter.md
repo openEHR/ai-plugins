@@ -28,8 +28,11 @@ file, class or grammar rule yourself and go from there. If a source is missing, 
 3. **Level per pull request**: Fix | Minor change | Major change, as `ticket-brief` defines
    them, with the impact (data, implementations, schemas or mirrors, other documents). A
    tightened constraint or anything breaking is a Major change, whatever the diff size.
-4. **Also affected**: every other place that says the same thing (BMM, ITS mirrors, adl-antlr,
-   Archie, other spec documents). Leaving one inconsistent is a defect of the fix.
+4. **Also affected**: every other place that says the same thing. Go through the change
+   checklist of the `governance` skill (`references/change-checklist.md`) in its order: BMM,
+   text and other spec documents, examples, downstream (ITS-BMM mirrors, XML and JSON schemas,
+   OpenAPI, grammars, terminology), Archie. Name each place that changes and each one checked
+   and not affected. Leaving one inconsistent is a defect of the fix.
 5. **Precedent**: one JQL search for resolved tickets on the same class, attribute or section,
    and the tickets the ticket links. A `Won't Do` on a proposed change means the change was
    declined and the current state stays; write "<current state> stays (<KEY>, Won't Do)",
@@ -50,7 +53,7 @@ Only this block, nothing before or after:
 **PRs:**
 1. `<Fix | Minor change | Major change>` <repo>: <file:line or class>; current: "<...>" → proposed: "<...>"
 **Breaking:** <no | yes, why>
-**Also affected:** <places, or none>
+**Also affected:** <places that change; then "not affected: <places checked>">, or none
 **Precedent:** <ticket and resolution, or none>
 **Other steps:** <numbered, or none>
 **Not checked:** <sources that were not available, or omit>

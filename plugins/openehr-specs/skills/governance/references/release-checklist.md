@@ -4,9 +4,9 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
 
 ## Pre-Release
 
-- [ ] All CRs allocated to this release are closed in Jira with a resolution and carry its Fix Version (they close on merge)
-- [ ] All PRs addressed by this release are closed in Jira with a resolution and carry its Fix Version
-- [ ] No ticket with this Fix Version is still open; move unfinished ones to the next version
+- [ ] The SEC has settled the release number: the numbered Fix Version exists (`RM Release 1.2.0` on `SPECPR`, `Release 1.2.0` on the component tracker)
+- [ ] The SEC has moved the `Release NEXT` tickets it takes to the numbered version and added the other tickets it wants in the release
+- [ ] Every ticket with the numbered version is closed with a resolution; one not finished in time loses the Fix Version again (it is not solved, so it gets none)
 - [ ] Create Jira saved searches (filters) for:
   - PRs fixed: `<jira-home>/projects/SPECPR/versions/NNNNN`
   - CRs done: `<jira-home>/projects/SPEC<COMPONENT>/versions/NNNNN`
@@ -60,7 +60,7 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
 ## Post-Release
 
 - [ ] Verify deployment at `https://specifications.openehr.org/releases/XX/Release-N.N.N/`
-- [ ] Mark the Fix Version as released in Jira (the tickets are already closed, see the governance skill)
+- [ ] In Jira, mark the numbered version released (the tickets are already closed, see the governance skill); `Release NEXT` stays with the solved tickets the release did not take
 - [ ] Switch back to `master`: `git checkout master`
 - [ ] Post the release notes as the last reply in the ballot thread (patch release: a short post on the Discourse specifications forum)
 
