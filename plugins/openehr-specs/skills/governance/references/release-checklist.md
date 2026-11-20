@@ -5,7 +5,7 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
 ## Pre-Release
 
 - [ ] The SEC has settled the release number: the numbered Fix Version exists (`RM Release 1.2.0` on `SPECPR`, `Release 1.2.0` on the component tracker)
-- [ ] The SEC has moved the `Release NEXT` tickets it takes to the numbered version (a patch release leaves Major changes on `Release NEXT`) and added the other tickets it wants in the release
+- [ ] The SEC has moved the `Release NEXT` tickets it takes to the numbered version and added the other tickets it wants in the release
 - [ ] Every ticket with the numbered version is closed with a resolution; one not finished in time loses the Fix Version again (it is not solved, so it gets none)
 - [ ] Create Jira saved searches (filters) for:
   - PRs fixed: `<jira-home>/projects/SPECPR/versions/NNNNN`

@@ -132,8 +132,7 @@ with the Jira Resolve Issues permission can set it, and it is set in two cases o
    release is 1.2.0 or 1.1.1 is only decided at release time.
 2. **Release number settled → numbered version.** The SEC moves the `Release NEXT` tickets it
    takes into the release to the numbered version (`RM Release 1.2.0`), and adds the tickets it
-   wants in the release on top. A patch release takes no Major change, so those stay on
-   `Release NEXT`.
+   wants in the release on top.
 
 No Fix Version means not solved and not in any release. Do not set one when a pull request is
 opened, or on a ticket closed as Won't Do or Duplicate. Also set **Component/s** to the affected

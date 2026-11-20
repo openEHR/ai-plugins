@@ -158,8 +158,7 @@ the thread. A release view that marks the changes on the Antora site is still to
   touched, one per component. On `SPECPR` the versions are named per component
   (`RM Release NEXT`, `AM Release NEXT`); on a component tracker `Release NEXT`. (2) Once the SEC
   settles a release number, it moves the `Release NEXT` tickets it takes to the numbered version
-  (`RM Release 1.2.0`) and adds the tickets it wants in the release on top; a patch release
-  leaves Major changes on `Release NEXT`. No Fix Version means not solved, so none is set when a
+  (`RM Release 1.2.0`) and adds the tickets it wants in the release on top. No Fix Version means not solved, so none is set when a
   pull request is opened. `Release NEXT` is the running list of what is solved and not yet
   released; GitHub release notes come from the merged pull requests on their own.
 - A Fix without a Problem Report has no ticket; the pull request is the record.
