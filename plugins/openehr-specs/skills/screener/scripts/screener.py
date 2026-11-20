@@ -7,8 +7,8 @@ Read-only. GitHub through the `gh` CLI (GraphQL), Jira through the public REST A
     python3 screener.py [--login LOGIN] [--jira-name NAME] [--all] [--no-jira] [--out FILE]
 
 Part 1, what can be closed: pull requests that have the approvals their level needs (and, for
-a Minor change, the week of notice), and Jira tickets whose pull request is merged or whose
-release is out. Part 2, who waits on me: review requests, unanswered questions, rework.
+a Minor change, the week of notice), and Jira tickets whose pull request is merged (a ticket
+closes on merge, with its Fix Version set). Part 2, who waits on me: review requests, unanswered questions, rework.
 """
 import argparse
 import fnmatch
@@ -302,20 +302,22 @@ def screen_jira(my_name, merged, open_keys, args, now):
     # 1. tickets named by my merged pull requests that are still open
     for key, links in merged.items():
         try:
-            f = jira_get("/rest/api/3/issue/%s" % key, {"fields": "summary,status"})["fields"]
+            f = jira_get("/rest/api/3/issue/%s" % key, {"fields": "summary,status,fixVersions"})["fields"]
         except urllib.error.HTTPError:
             unseen.append(key)
             continue
         status = f["status"]
         if status["statusCategory"]["key"] == "done" or status["name"].lower() in done_names:
             continue
-        line = "Resolve: %s is %s, but %s merged" % (
+        line = "Close: %s is %s, but %s merged" % (
             issue_link(key, f["summary"]), status["name"], " and ".join(links))
+        if not f.get("fixVersions"):
+            line += "; set the Fix Version first"
         if key in open_keys:
             line += "; still open for it: %s" % " and ".join(open_keys[key])
         to_close.append(line)
 
-    # 2. my resolved tickets whose release is out
+    # 2. my tickets left Resolved under the old flow (Resolve, release, Close): close them now
     jql = "project in (%s) AND assignee is not EMPTY AND status in (%s)" % (
         projects, ", ".join('"%s"' % s for s in CONFIG["resolved_statuses"]))
     for issue in jira_search(jql, "summary,assignee,fixVersions,status"):
@@ -323,11 +325,11 @@ def screen_jira(my_name, merged, open_keys, args, now):
         if norm((f.get("assignee") or {}).get("displayName")) != norm(my_name):
             continue
         versions = f.get("fixVersions") or []
-        if versions and all(v.get("released") for v in versions):
-            to_close.append("Close: %s is %s and released in %s" % (
+        if versions:
+            to_close.append("Close: %s is %s, Fix Version %s" % (
                 issue_link(issue["key"], f["summary"]), f["status"]["name"], ", ".join(v["name"] for v in versions)))
-        elif not versions:
-            to_close.append("Fix Version missing: %s is %s without a release" % (
+        else:
+            to_close.append("Fix Version missing: %s is %s; set the Fix Version, then close" % (
                 issue_link(issue["key"], f["summary"]), f["status"]["name"]))
 
     # 3. questions put to me in open tickets, not answered since
@@ -392,7 +394,7 @@ def main():
     out = ["# Screener for %s (%s)" % (my_name, now.date()), ""]
     out += ["## 1. What can be closed", ""]
     out += section("Pull requests ready to merge", ready)
-    out += section("Tickets to resolve or close", to_close, "nothing" if not args.no_jira else "Jira not checked")
+    out += section("Tickets to close", to_close, "nothing" if not args.no_jira else "Jira not checked")
     out += ["## 2. Who is waiting on you", ""]
     order = {"Review": 0, "Answer": 1, "Rework": 2}
     out += section("Reviews, answers, rework", sorted(on_me, key=lambda l: order.get(l.split(":")[0], 9)))

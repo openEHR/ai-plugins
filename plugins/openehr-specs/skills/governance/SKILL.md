@@ -123,19 +123,28 @@ for your component, keep the others. It is the default; anyone may move the tick
 release later by changing it. Pick the lowest unreleased version of the component; ask when
 more than one is open and the choice is not obvious.
 
-### Jira Ticket Flow: Resolve → Release → Close
+### Jira Ticket Flow: Allocate → Merge → Close
 
-A CR or PR ticket is closed in two steps, never straight from Open or Analysis:
+A CR or PR ticket closes when its change is merged, as the change workflow says ("merging
+closes it"). The release does not wait on the ticket's status: the Fix Version is what lists
+the ticket in the release.
 
-0. **Allocate** when the pull request is opened: set the Fix Version to the next release of each
-   component the pull request touches (Release allocation above). Resolve only confirms it.
-1. **Resolve** when the change is merged: walk the ticket to Resolved (Approve transition,
-   resolution Done or Fixed) with the Fix Version set to the release that will carry the
-   change. Comment with the merged PR (tracker-writing skill).
-2. **Release**: the ticket stays Resolved until that component release is published (see
-   Release Process). The release's Jira saved searches list these Resolved tickets.
-3. **Close** after the release is deployed. Closing earlier drops the ticket from the release
-   lists and hides that the change is still unreleased.
+1. **Allocate** when the pull request is opened: set the Fix Version to the next release of each
+   component the pull request touches (Release allocation above).
+2. **Close on merge**: once every pull request for the ticket is merged, check the Fix Version,
+   comment with the merged pull request(s) (tracker-writing skill), and close the ticket with
+   resolution Fixed (Done for a Change Request, Won't Do or Duplicate where that applies).
+   While a pull request for the ticket is still open, the ticket stays open.
+
+A ticket must never end Closed without a resolution: Jira then counts it as Unresolved in every
+filter, and the direct "Closed" transition sets none. So:
+
+- **`SPECPR`**: "Vorgang lösen" (Resolve, id 5) with `resolution` Fixed, then "Vorgang
+  schließen" (Close, id 701), which keeps the resolution.
+- **Component trackers** (`SPECRM`, `SPECAM`, ...): walk the CR to Resolved with the transitions
+  below (Approve sets the resolution), then "Closed" in the same go.
+
+Tickets still Resolved from the old flow (Resolve, release, Close) can be closed now.
 
 The SPEC CR trackers' workflow, with the transition names and the fields each one requires:
 
@@ -145,13 +154,13 @@ The SPEC CR trackers' workflow, with the transition names and the fields each on
 | Commence | Analysis → In Progress | Due date, Priority, Impact Analysis (and Fix Version/s if still empty) |
 | Start Review | In Progress → In Review | Change Description (what changed, with the PR link) |
 | Approve | In Review → Resolved | resolution Done or Fixed; SEC members record their vote in the Acceptance field first |
-| Closed | any → Closed | nothing; use only after the release |
+| Closed | any → Closed | nothing, so no resolution either; use it only from Resolved |
 
 Impact Analysis and Change Description are rich-text fields: via the API they take an ADF
 document, not a plain string. Set every field in the table even when a transition does not
 force it, so the ticket reads the same as the others in the tracker. A direct "Closed"
-transition exists from every state; do not use it before the release, and never from Open or
-Analysis, which leaves the ticket without Fix Version, resolution and change description.
+transition exists from every state; never use it from Open, Analysis or In Progress, which leaves
+the ticket without Fix Version, resolution and change description.
 
 ## Release Process
 
@@ -169,12 +178,12 @@ Read `references/release-checklist.md` for the full step-by-step checklist.
 
 The high-level process:
 
-1. **Jira** (a user task, not doable from the repo): ask the user to confirm that all CRs and PRs for the release are Resolved (not yet Closed, see "Jira Ticket Flow") and the saved searches exist, then continue.
+1. **Jira** (a user task, not doable from the repo): ask the user to confirm that all CRs and PRs for the release are closed with a resolution and carry its Fix Version (see "Jira Ticket Flow"), and that the saved searches exist, then continue.
 1. **Ballot** (minor and major releases): draft the Discourse post from `references/ballot-post.md` for the user to publish; wait for the 30 days to pass and the comments to be answered before tagging.
 2. **manifest.json**: Set the release date, verify `spec_status` for each spec, ensure Jira links are correct, and prepend the next-cycle `releases` entry with an empty `date`.
 3. **Git**: Create a release branch (`Release-N.N.N`), publish in release mode with the exact command in the checklist (do not use `/openehr-specs:publish`; it builds previews only), commit, and create the annotated tag. Ask the user before pushing.
 4. **Webhook**: The push triggers the specifications.openehr.org server to pull and deploy.
-5. **Jira** (a user task): once deployed, close the Resolved CRs and PRs that carry this Fix Version.
+5. **Jira** (a user task): once deployed, mark the Fix Version as released.
 
 ### Steps to Fix a Release
 
