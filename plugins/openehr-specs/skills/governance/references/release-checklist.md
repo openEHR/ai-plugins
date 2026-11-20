@@ -60,7 +60,7 @@ Step-by-step checklist for releasing an openEHR specification component (e.g., R
 ## Post-Release
 
 - [ ] Verify deployment at `https://specifications.openehr.org/releases/XX/Release-N.N.N/`
-- [ ] Mark the Fix Version as released in Jira (the tickets are already closed, see the governance skill)
+- [ ] In Jira, rename the component's `Release NEXT` version (on `SPECPR` `<Component> Release NEXT`, on the component tracker `Release NEXT`) to the released number, mark it released, and create a new `Release NEXT` (the tickets are already closed, see the governance skill)
 - [ ] Switch back to `master`: `git checkout master`
 - [ ] Post the release notes as the last reply in the ballot thread (patch release: a short post on the Discourse specifications forum)
 

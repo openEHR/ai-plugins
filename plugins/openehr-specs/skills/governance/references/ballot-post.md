@@ -6,7 +6,7 @@ specifications forum, written from the template below. The community comments; i
 vote. Patch releases get no ballot.
 
 Fill the template from Jira: the Fix Versions on the tickets are the list of what the release
-carries (`fixVersion = "<Component> Release x.y.z"` on `SPECPR`, the matching version on the
+carries (`fixVersion = "<Component> Release NEXT"` on `SPECPR`, `Release NEXT` on the
 component tracker). Link every ticket. Link the development build, not a branch.
 
 ## Template

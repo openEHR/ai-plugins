@@ -114,14 +114,25 @@ one with the specification text is the **collection pull request**: it lists the
 link back, approvals are given on it once and count for all, and the SEC votes once on the
 Change Request, never per pull request. Merge them together, the collection last.
 
+**Change checklist.** Before opening the pull request(s), go through
+`references/change-checklist.md`, in this order: the BMM first when a class, attribute, function
+or invariant changes (then regenerate the class tables), the hand-written text, the examples,
+the downstream artefacts (ITS-BMM mirrors, XML and JSON schemas, OpenAPI, the ADL and AQL
+grammars, the terminology), and Archie. A step that is not affected is still checked, and the
+collection pull request records the result in one line.
+
 **Release allocation.** When you open a pull request, set the Fix Version of its ticket (Problem
-Report or Change Request) to the next planned release of every component the pull request
-touches, one per component: on `SPECPR` the per-component versions (`AM version 2.4.0`,
-`RM Release 1.2.0`), on a component tracker its own (`Release 1.2.0`, `ADL 2.4.0`). Three pull
-requests for one Problem Report, in three components, give it three Fix Versions: add the one
-for your component, keep the others. It is the default; anyone may move the ticket out of a
-release later by changing it. Pick the lowest unreleased version of the component; ask when
-more than one is open and the choice is not obvious.
+Report or Change Request) to the `Release NEXT` version of every component the pull request
+touches, one per component: on `SPECPR` `<Component> Release NEXT` (`RM Release NEXT`,
+`AM Release NEXT`), on a component tracker `Release NEXT`. Never pick a numbered version: whether
+the next release is 1.2.0 or 1.1.1 is only decided at release time. Also set **Component/s** to
+the affected specification (`RM - EHR IM`, `AM - ADL2`), one per specification touched. Three
+pull requests for one Problem Report, in three components, give it three Fix Versions: add the
+one for your component, keep the others. It is the default; anyone may move the ticket out of a
+release later by changing it. Use only versions and components that exist; when a component has
+no `Release NEXT` version yet, say so and leave the field for the user (never create one).
+At release time the user renames `Release NEXT` to the real number (`RM Release 1.2.0`), marks
+it released and creates a fresh `Release NEXT` (release checklist).
 
 ### Jira Ticket Flow: Allocate → Merge → Close
 
@@ -129,8 +140,9 @@ A CR or PR ticket closes when its change is merged, as the change workflow says 
 closes it"). The release does not wait on the ticket's status: the Fix Version is what lists
 the ticket in the release.
 
-1. **Allocate** when the pull request is opened: set the Fix Version to the next release of each
-   component the pull request touches (Release allocation above).
+1. **Allocate** when the pull request is opened: set the Fix Version to `Release NEXT` of each
+   component the pull request touches, and Component/s to the specification (Release allocation
+   above).
 2. **Close on merge**: once every pull request for the ticket is merged, check the Fix Version,
    comment with the merged pull request(s) (tracker-writing skill), and close the ticket with
    resolution Fixed (Done for a Change Request, Won't Do or Duplicate where that applies).
@@ -183,7 +195,8 @@ The high-level process:
 2. **manifest.json**: Set the release date, verify `spec_status` for each spec, ensure Jira links are correct, and prepend the next-cycle `releases` entry with an empty `date`.
 3. **Git**: Create a release branch (`Release-N.N.N`), publish in release mode with the exact command in the checklist (do not use `/openehr-specs:publish`; it builds previews only), commit, and create the annotated tag. Ask the user before pushing.
 4. **Webhook**: The push triggers the specifications.openehr.org server to pull and deploy.
-5. **Jira** (a user task): once deployed, mark the Fix Version as released.
+5. **Jira** (a user task): once deployed, rename the component's `Release NEXT` version to the
+   released number (`RM Release 1.2.0`), mark it released, and create a new `Release NEXT`.
 
 ### Steps to Fix a Release
 
