@@ -35,7 +35,7 @@ file, class or grammar rule yourself and go from there. If a source is missing, 
    declined and the current state stays; write "<current state> stays (<KEY>, Won't Do)",
    never "<KEY> decided <X>".
 6. **Other steps**: Jira actions (spin-off tickets for parts that are a different problem,
-   label `discussion`; resolve after merge).
+   label `discussion`; close on merge).
 7. For a non-fix outcome: the reason, with the comment, pull request or decision behind it.
 
 One ticket is one concrete problem. If the ask mixes a text inconsistency with a redesign, the

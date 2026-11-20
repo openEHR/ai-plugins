@@ -161,9 +161,10 @@ the thread. A release view that marks the changes on the Antora site is still to
   component carries; GitHub release notes come from the merged pull requests on their own.
 - A Fix without a Problem Report has no ticket; the pull request is the record.
 - The proposal reduces the ticket states to Open, In Progress, Closed (Problem Report) and
-  Open, In Progress, Review, Closed (Change Request). Jira still runs the old workflow, so
-  until it is changed, walk tickets through the transitions in the governance skill
-  (Resolve when merged, Close after the release).
+  Open, In Progress, Review, Closed (Change Request). A ticket closes when its pull requests
+  are merged; the Fix Version, not the status, keeps it in the release. Jira still runs the old
+  workflow, so until it is changed, walk tickets through the transitions in the governance
+  skill to Resolved and on to Closed in one go, so the resolution is set.
 
 ## Open
 

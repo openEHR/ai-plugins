@@ -3,7 +3,7 @@ name: screener
 description: >
   Read-only personal screen of the openEHR specification work, in two parts: first what the
   user can close (their pull requests that have the approvals their level needs and, for a
-  Minor change, the week of notice; Jira tickets to resolve or close), then who is waiting on
+  Minor change, the week of notice; Jira tickets to close), then who is waiting on
   them (review requests, unanswered questions, requested changes). Use when the user asks
   "what can I close", "what can I merge", "what is open for me", "is anybody waiting on me",
   "screen my PRs and tickets". Not for the SEC-wide reminder list
@@ -36,11 +36,12 @@ entry of part 1 and each "Answer" of part 2, and drop or annotate what does not 
   the user to confirm both.
 - **Ready to merge, Major change.** Three approvals confirm the text; the SEC vote is on
   the Change Request ticket. Check that the vote is recorded there.
-- **Resolve.** The pull request is merged and the ticket is open. Make sure the pull request
-  implements the ticket and does not merely mention it (the script says when the key is in
-  the description only), and that no other pull request for the ticket is still open.
-- **Close / Fix Version missing.** Read the ticket; a Resolved ticket without a Fix Version
-  needs the version, not closing.
+- **Close.** The pull request is merged and the ticket is open (tickets close on merge,
+  `governance` skill, "Jira Ticket Flow"). Make sure the pull request implements the ticket
+  and does not merely mention it (the script says when the key is in the description only),
+  that no other pull request for the ticket is still open, and that the ticket is not an
+  umbrella or collection ticket that other changes still feed.
+- **Fix Version missing.** Read the ticket; it needs the version before it is closed.
 - **Answer.** The comment must put a question or a request to the user that nobody has
   settled since. Being named is not enough.
 
@@ -81,9 +82,8 @@ that does not set `${CLAUDE_SKILL_DIR}`, use the directory that holds this SKILL
 | Entry | Rule |
 |---|---|
 | Pull request ready to merge | the user's open pull request, not a draft, no conflict, checks not failing, no changes requested, and the approvals its level label needs: `fix` 1, `minor` 2 and 7 days since the second approval, `major` 3 |
-| Resolve | a ticket named by a pull request of the user that was merged in the window, and that is not yet Resolved or Done |
-| Close | a Resolved ticket assigned to the user whose Fix Versions are all released |
-| Fix Version missing | a Resolved ticket assigned to the user without a Fix Version |
+| Close | a ticket named by a pull request of the user that was merged in the window, and that is not yet Resolved or Done (tickets close on merge); or a ticket of the user left Resolved by the old flow, which waited for the release |
+| Fix Version missing | a Resolved ticket of the user without a Fix Version: set it, then close (a merged ticket without one gets "set the Fix Version first" on its Close line) |
 
 The levels and their approvals are those of the SEC change workflow (`governance` skill,
 `references/change-workflow.md`). Only approvals by members of the GitHub team `openEHR/sec`

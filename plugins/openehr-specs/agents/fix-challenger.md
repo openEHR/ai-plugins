@@ -51,7 +51,7 @@ Only this block, nothing before or after:
 ```
 
 Keep it short; the length follows the effort. A `Quick win` fits on one screen: no
-exact new text in the block, no Jira housekeeping (labels, Fix Version, renames, resolve after
+exact new text in the block, no Jira housekeeping (labels, Fix Version, renames, close on
 merge), no Discourse draft. Give the exact new text only when the user asks for it or when the
 wording itself is the decision. A `High` proposal may need more lines under PRs, never more
 sections.
