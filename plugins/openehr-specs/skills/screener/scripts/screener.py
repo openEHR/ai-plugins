@@ -312,7 +312,7 @@ def screen_jira(my_name, merged, open_keys, args, now):
         line = "Close: %s is %s, but %s merged" % (
             issue_link(key, f["summary"]), status["name"], " and ".join(links))
         if not f.get("fixVersions"):
-            line += "; set the Fix Version to Release NEXT when closing"
+            line += "; set the Fix Version (planned version or Release NEXT) when closing"
         if key in open_keys:
             line += "; still open for it: %s" % " and ".join(open_keys[key])
         to_close.append(line)
@@ -331,7 +331,7 @@ def screen_jira(my_name, merged, open_keys, args, now):
                 issue_link(issue["key"], f["summary"]), f["status"]["name"],
                 ", ".join(v["name"] for v in versions) or "none (not solved)"))
         else:
-            to_close.append("Fix Version missing: %s is %s; set the Fix Version to Release NEXT, then close" % (
+            to_close.append("Fix Version missing: %s is %s; set the Fix Version (planned version or Release NEXT), then close" % (
                 issue_link(issue["key"], f["summary"]), f["status"]["name"]))
 
     # 3. questions put to me in open tickets, not answered since
